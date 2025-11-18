@@ -1,0 +1,39 @@
+name: Deploy to Firebase Hosting on Push
+
+# El flujo de trabajo se dispara cuando hay un 'push' a la rama master
+on:
+  push:
+    branches:
+      - master 
+
+jobs:
+  build_and_deploy:
+    # Se ejecuta en el sistema operativo Linux de GitHub Actions
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Paso 1: Baja el código de GitHub
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Paso 2: Despliega el código a Firebase Hosting
+      # Esta acción usa el token secreto (Secreto del Paso 4)
+      - name: Deploy to Firebase
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          # Token de Permiso de GitHub (Automático)
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          
+          # Clave Secreta de Firebase (Debe coincidir con el Paso 4)
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_LAB_REDES_TURNOS }}'
+          
+          # Directorio Público (La raíz de tu repositorio)
+          publicDirectory: . 
+          
+          # ID del Proyecto Firebase
+          projectId: lab-redes-turnos
+          
+          # Canal de Despliegue (live = dominio principal)
+          channelId: live
+          
+          # El buildCommand se omite porque es un sitio estático (HTML puro)
