@@ -212,17 +212,80 @@
             "admin2@lab.edu": { name: "Admin Auxiliar" }
         };
 
-        // --- CORRECCIÓN: Nombres de grupo simplificados ---
+        // --- CORRECCIÓN: NOMBRES DE LOS GRUPOS CON LOS CORREOS ---
         const GRUPO_LIDERES = {
-            "lider1@uni.edu": { name: "Grupo A", color: "red" },
-            "lider2@uni.edu": { name: "Grupo B", color: "yellow" },
-            "lider3@uni.edu": { name: "Grupo C", color: "green" },
-            "lider4@uni.edu": { name: "Grupo D", color: "blue" },
-            "lider5@uni.edu": { name: "Grupo E", color: "indigo" },
-            "lider6@uni.edu": { name: "Grupo F", color: "purple" },
-            "lider7@uni.edu": { name: "Grupo G", color: "pink" }
-        };
+            "adromeroq@uce.edu.ec": { name: "Grupo 1", color: "red" },
+            "mpsafla@uce.edu.ec": { name: "Grupo 2", color: "yellow" },
+            "matercero@uce.edu.ec": { name: "Grupo 3", color: "green" },
+            "admanangon@uce.edu.ec": { name: "Grupo 4", color: "blue" },
+            "lspulamarin@uce.edu.ec": { name: "Grupo 5", color: "indigo" },
+            "eschaluisa@uce.edu.ec": { name: "Grupo 6", color: "purple" },
+            "batipanl@uce.edu.ec": { name: "Grupo 7", color: "orange" },
+            "dmjimenezb@uce.edu.ec": { name: "Grupo 8", color: "pink" }
+        }; 
         
+    
+        // --- DATOS DE LOS 8 GRUPOS CON INTEGRANTES ---
+            const GRUPOS_INTEGRANTES = {
+                "Grupo 1": [
+                    { nombre: "Alexis David Romero Quishpe", cedula: "1754302402" },
+                    { nombre: "Evelyn Alejandra Salas Ibarra", cedula: "1724298854" },
+                    { nombre: "Jessica Alicia Guaman Tigasi", cedula: "1753812666" },
+                    { nombre: "Danny Acosta", cedula: "1724391543" },
+                    { nombre: "Elian Steve Farinango Imbaquingo", cedula: "1755875877" }
+                ],
+                "Grupo 2": [
+                    { nombre: "Safla Almeida Mateo Patricio ", cedula: "1728992031" },
+                    { nombre: "Segovia Dávalos Kevin Ariel ", cedula: "1729348415" },
+                    { nombre: "Al-selwi Khulood ", cedula: "1760080331" },
+                    { nombre: "Nasimba Collaguazo Israel Xavier ", cedula: "1755011747" },
+                    { nombre: "Panchi Granda Wladimir Nikolai", cedula: "1724695315" }
+                ],
+                "Grupo 3": [
+                    { nombre: "Mariuxi Anabel Tercero Ayo", cedula: "1751816982" },
+                    { nombre: "Stalin Isaac Coral Valdiviezo", cedula: "000000000" },
+                    { nombre: "Andres Gualberto Cuji Muñoz", cedula: "1729276913" },
+                    { nombre: "Angel Garcia", cedula: "000000000" },
+                    { nombre: "Bryan Andrango", cedula: "1725855918" }
+                ],
+                "Grupo 4": [
+                    { nombre: "Anthony Manangon", cedula: "1726339953" },
+                    { nombre: "Marlon Argoti", cedula: "1726632720" },
+                    { nombre: "Boris Carrera ", cedula: "1753716891" },
+                    { nombre: "Noboa Condor Luisa Fernanda", cedula: "1728495407" },
+                    { nombre: "Sasig Erik", cedula: "000000000" },
+                    { nombre: "########", cedula: "0000000000" }
+                ],
+                "Grupo 5": [
+                    { nombre: "Lenin Stalin Pulamarin Cumbal", cedula: "1050467479" },
+                    { nombre: "Josue Viscaino", cedula: "1750238220" },
+                    { nombre: "Danny Lopez", cedula: "1755864392" },
+                    { nombre: "Dylan Sarmiento ", cedula: "1726392762" },
+                    { nombre: "Jonathan Carvajal ", cedula: "1726421470" }
+                ],
+                "Grupo 6": [
+                    { nombre: "Chaluisa Gaunotuña Estiven Sebastián", cedula: "1726658808" },
+                    { nombre: "Domínguez Domínguez Karla Sofía", cedula: "1753731643" },
+                    { nombre: "Simbaña Muzo Erick Francisco", cedula: "1725195620" },
+                    { nombre: "Silva Ruiz Stalin Jair", cedula: "1003595954" },
+                    { nombre: "Sopa Tenorio Kerlly Johanna", cedula: "1727452839" },
+                    { nombre: "Villalba Campaña Zamir Andres", cedula: "1726564568" }
+                ],
+                "Grupo 7": [
+                    { nombre: "Brandon Ariel Tipan Liquinchana", cedula: "1727431429" },
+                    { nombre: "Bernardo Jhoel Loachamin Freire", cedula: "1727661249" },
+                    { nombre: "Juan Esteban Chimarro Mejia", cedula: "1728082841" },
+                    { nombre: "Bryan Daniel Pérez Hoyos ", cedula: "1724742711" },
+                    { nombre: "David Arturo Hurtado Recalde", cedula: "1754254701" }
+                ],
+                "Grupo 8": [
+                    { nombre: "Danna Mikaela Jimenez Benitez", cedula: "2351060716" },
+                    { nombre: "Carlos Patricio Chipantashi Pallo", cedula: "1755817184" },
+                    { nombre: "Alexander Josué Flores Villamarín", cedula: "1728128453" },
+                    { nombre: "Darwin Stalin Quishpe Tupiza", cedula: "1750297143" },
+                    { nombre: "Andrea Gisell Suntaxi Chalco ", cedula: "1753987187" }
+                ]
+            };
         // Mapa de Colores Tailwind
         const COLOR_MAP = {
             // Usados por el Admin
@@ -232,6 +295,7 @@
             blue:   { bg: 'bg-blue-500', border: 'border-blue-700', text: 'text-white' },
             indigo: { bg: 'bg-indigo-500', border: 'border-indigo-700', text: 'text-white' },
             purple: { bg: 'bg-purple-500', border: 'border-purple-700', text: 'text-white' },
+            orange: { bg: 'bg-orange-500', border: 'border-orange-700', text: 'text-white'},
             pink:   { bg: 'bg-pink-500', border: 'border-pink-700', text: 'text-white' }
         };
 
@@ -803,6 +867,18 @@
                 }
             }
 
+            // --- FUNCIÓN SIMPLE PARA VER GRUPOS ---
+            function mostrarGrupos() {
+                let mensaje = "GRUPOS:\n";
+                Object.entries(GRUPOS_INTEGRANTES).forEach(([grupo, integrantes]) => {
+                    mensaje += `\n${grupo}:\n`;
+                    integrantes.forEach(int => {
+                        mensaje += `- ${int.nombre} (${int.cedula})\n`;
+                    });
+                });
+                alert(mensaje);
+            }
+
             // --- Lógica Común de Renderizado de Calendario (TABLA) ---
 
             function createHeaderCell(text) {
@@ -1300,6 +1376,10 @@
                             </button>
                             <button id="admin-unblock-btn" class="bg-green-600 hover:bg-green-700 font-bold py-2 px-4 rounded-lg shadow transition">
                                 <i class="fas fa-lock-open mr-2"></i> Desbloquear
+                            </button>
+                            <!-- Botón para ver grupos -->
+                            <button id="btnVerGrupos" class="bg-purple-600 hover:bg-purple-700 font-bold py-2 px-4 rounded-lg shadow transition ml-2">
+                                 <i class="fas fa-users mr-2"></i> Ver Grupos
                             </button>
                         </div>
                     </div>
