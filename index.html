@@ -43,6 +43,7 @@
         /* Leyenda Estática */
         .legend-item { display: flex; align-items: center; }
         .legend-slot { padding: 0.5rem; border-radius: 0.375rem; border: 2px solid; min-height: 40px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 0.875rem; font-weight: 500; line-height: 1.2; width: 33.3333%; margin-right: 0.75rem; cursor: default !important; }
+        .legend-item .slot-free:hover { background-color: #ffffff; border-color: #d1d5db; }
         
         /* Sidebar de Miembros */
         .sidebar {
@@ -54,12 +55,207 @@
         }
         .sidebar-overlay.open { display: block; }
 
+        .btn-primary { background-color: #2563eb; color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; }
     </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+    <!-- ==== VISTA DE LOGIN ==== -->
+    <div id="login-view" class="min-h-screen flex flex-col items-center justify-center p-4">
+        <header class="w-full max-w-md mb-6 text-center">
+            <div class="bg-slate-800 p-4 rounded-t-xl flex items-center justify-center text-white space-x-3">
+                <span class="text-4xl">🌐</span>
+                <div>
+                    <h1 class="text-xl font-bold">Universidad Central del Ecuador</h1>
+                    <p class="text-sm text-slate-300">Gestión de Turnos - Laboratorio de Redes</p>
+                </div>
+            </div>
+        </header>
+
+        <div class="max-w-md w-full bg-white rounded-b-xl rounded-t-lg shadow-xl overflow-hidden fade-in">
+            <form onsubmit="window.handleLogin(event)" class="p-8 space-y-6">
+                <h2 class="text-2xl font-bold text-center text-slate-700">Acceso al Sistema</h2>
+                <div id="message-box" class="hidden"></div>
+                <div class="space-y-4">
+                    <div>
+                        <label for="login-email" class="block text-sm font-medium text-gray-700 mb-1">Correo Institucional</label>
+                        <input type="email" id="login-email" placeholder="ej: lider1@uce.edu.ec" class="w-full border border-gray-300 p-3 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    <div>
+                        <label for="login-password" class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+                        <input type="password" id="login-password" placeholder="••••••••" class="w-full border border-gray-300 p-3 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold text-base hover:bg-blue-700 shadow-md transition duration-300">Ingresar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==== VISTA DE CARGA ==== -->
+    <div id="loading-view" class="hidden min-h-screen flex items-center justify-center">
+        <div class="text-center">
+            <i class="fas fa-spinner fa-spin text-4xl text-slate-600"></i>
+            <p class="mt-3 text-lg font-medium text-slate-700">Cargando...</p>
+        </div>
+    </div>
+    
+    <!-- Encabezado reutilizable -->
+    <template id="app-header-template">
+        <header class="bg-slate-800 text-white shadow-md sticky top-0 z-10">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-2xl">🌐</span>
+                        <div>
+                            <h1 class="text-lg font-bold">Gestión de Turnos - Laboratorio de Redes</h1>
+                            <p class="text-xs text-slate-300" id="header-subtitle"></p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <span class="text-sm font-medium hidden sm:block" id="header-name-display"></span>
+                        <button onclick="window.handleLogout()" class="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium transition">
+                            <i class="fas fa-sign-out-alt mr-1 sm:mr-2"></i>
+                            <span class="hidden sm:inline">Salir</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+    </template>
+    
+    <!-- ==== VISTA ESTUDIANTE ==== -->
+    <div id="student-dashboard" class="hidden">
+        <header id="student-header-placeholder"></header>
+
+        <main class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Columna Izquierda -->
+                <div class="lg:col-span-2">
+                    <div class="flex justify-between items-center mb-4 p-4 bg-white rounded-lg shadow-xl">
+                        <button id="student-prev-week" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg shadow transition">
+                            <i class="fas fa-chevron-left"></i> Semana Ant.
+                        </button>
+                        <h2 id="student-week-title" class="text-xl sm:text-2xl font-extrabold text-slate-700 text-center"></h2>
+                        <button id="student-next-week" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg shadow transition">
+                            Semana Sig. <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-xl overflow-hidden">
+                        <table class="calendar-table">
+                            <thead id="student-calendar-head"></thead>
+                            <tbody id="student-calendar-body"></tbody>
+                        </table>
+                    </div>
+
+                    <div id="student-request-box" class="hidden mt-6 p-4 bg-yellow-100 border-l-4 border-yellow-400 rounded-lg shadow-md flex justify-between items-center">
+                        <p id="student-request-count" class="text-lg font-semibold text-yellow-800">X hora(s) seleccionada(s).</p>
+                        <button id="submit-request-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg shadow transition" disabled>
+                            <i class="fas fa-paper-plane mr-2"></i> Enviar Solicitud
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Columna Derecha -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white p-6 rounded-lg shadow-xl sticky top-20">
+                        <h3 class="text-xl font-extrabold text-slate-800 border-b pb-3 mb-4">Leyenda de Estados</h3>
+                        <div class="space-y-4">
+                            <div class="legend-item">
+                                <div class="legend-slot slot-free border-gray-300">Disponible</div>
+                                <span class="text-sm text-gray-700 font-medium">- Disponible (Blanco).</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-slot slot-selected">Seleccionado</div>
+                                <span class="text-sm text-gray-700 font-medium">- Horas por solicitar.</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-slot slot-approved-self">Mi Turno</div>
+                                <span class="text-sm text-gray-700 font-medium">- Confirmado (Verde).</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-slot slot-pending">Pendiente</div>
+                                <span class="text-sm text-gray-700 font-medium">- Esperando aprobación.</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-slot slot-approved-other">Reservado</div>
+                                <span class="text-sm text-gray-700 font-medium">- Ocupado por otro (Rojo).</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-slot slot-blocked">No Disponible</div>
+                                <span class="text-sm text-gray-700 font-medium">- Bloqueado o pasado (Gris).</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ==== VISTA ADMINISTRADOR ==== -->
+    <div id="admin-dashboard" class="hidden">
+        <header id="admin-header-placeholder"></header>
+        
+        <main class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2">
+                    <div class="flex justify-between items-center mb-4 p-4 bg-white rounded-lg shadow-xl">
+                        <button id="admin-prev-week" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg shadow transition">
+                            <i class="fas fa-chevron-left"></i> Semana Ant.
+                        </button>
+                        <h2 id="admin-week-title" class="text-xl sm:text-2xl font-extrabold text-slate-700 text-center"></h2>
+                        <button id="admin-next-week" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg shadow transition">
+                            Semana Sig. <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-xl overflow-hidden">
+                        <table class="calendar-table">
+                            <thead id="admin-calendar-head"></thead>
+                            <tbody id="admin-calendar-body"></tbody>
+                        </table>
+                    </div>
+                    
+                    <div id="admin-action-box" class="hidden mt-6 p-4 bg-gray-700 text-white rounded-lg shadow-md flex justify-between items-center">
+                        <p id="admin-selection-count" class="text-lg font-semibold">X hora(s) seleccionada(s).</p>
+                        <div class="space-x-2">
+                            <button id="admin-block-btn" class="bg-red-600 hover:bg-red-700 font-bold py-2 px-4 rounded-lg shadow transition">
+                                <i class="fas fa-lock mr-2"></i> Bloquear
+                            </button>
+                            <button id="admin-unblock-btn" class="bg-green-600 hover:bg-green-700 font-bold py-2 px-4 rounded-lg shadow transition">
+                                <i class="fas fa-lock-open mr-2"></i> Desbloquear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="lg:col-span-1">
+                    <div class="bg-white p-6 rounded-lg shadow-xl sticky top-20">
+                        <h3 class="text-xl font-extrabold text-slate-800 border-b pb-3 mb-4 shadow-sm px-2">
+                            <i class="fas fa-tasks mr-2 text-blue-600"></i>
+                            Solicitudes Pendientes
+                        </h3>
+                        <div id="admin-requests-list" class="space-y-3 max-h-[70vh] overflow-y-auto"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- SIDEBAR DE MIEMBROS -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden z-40" onclick="window.closeMembersModal()"></div>
+    <div id="members-sidebar" class="fixed top-0 right-0 h-full w-80 bg-white shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out z-50 p-6 overflow-y-auto">
+        <div class="flex justify-between items-center mb-6 border-b pb-4">
+            <h3 id="sidebar-title" class="text-xl font-bold text-slate-800">Integrantes</h3>
+            <button onclick="window.closeMembersModal()" class="text-gray-500 hover:text-red-500 text-xl"><i class="fas fa-times"></i></button>
+        </div>
+        <div id="sidebar-content" class="space-y-4"></div>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, where, onSnapshot, updateDoc, doc, deleteDoc, serverTimestamp, writeBatch, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, where, onSnapshot, updateDoc, doc, deleteDoc, serverTimestamp, writeBatch, getDocs, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCR4Kk7kIBpSW3cF02b8zUHegvV4WQNuyI",
