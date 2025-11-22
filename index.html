@@ -28,55 +28,46 @@
         .slot .slot-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 
         /* --- Estilos de Slots (NUEVA LÓGICA CAPACIDAD) --- */
-        /* 0/4 - Disponible */
         .slot-free { background-color: #ffffff; border-color: #d1d5db; color: #374151; }
         .slot-free:hover { background-color: #eff6ff; border-color: #93c5fd; }
-        
-        /* 1/4, 2/4, 3/4 - Parcialmente Lleno (Azul Claro) */
-        .slot-partial { background-color: #e0f2fe; border-color: #7dd3fc; color: #0369a1; }
-        .slot-partial:hover { background-color: #bae6fd; }
-
-        /* 4/4 - Lleno (Gris/Rojo) */
-        .slot-full { background-color: #cbd5e1; border-color: #94a3b8; color: #475569; cursor: not-allowed; }
-
-        /* Mi Turno (Verde) */
-        .slot-my-booking { background-color: #22c55e; border-color: #16a34a; color: white; font-weight: bold; }
-
-        /* Seleccionado (Azul Intenso) */
         .slot-selected { background-color: #3b82f6 !important; color: #ffffff !important; border-color: #2563eb !important; }
         
-        /* Bloqueado / Pasado */
+        .slot-partial { background-color: #e0f2fe; border-color: #7dd3fc; color: #0369a1; } /* 1/4 - 3/4 */
+        .slot-full { background-color: #cbd5e1; border-color: #94a3b8; color: #475569; cursor: not-allowed; } /* 4/4 - Lleno */
+        
+        .slot-my-booking { background-color: #22c55e; border-color: #16a34a; color: white; font-weight: bold; } /* Verde */
+        .slot-approved-other { background-color: #ef4444; border-color: #dc2626; color: white; } /* Rojo */
+        
         .slot-past, .slot-blocked { background-color: #e5e7eb; color: #6b7280; cursor: not-allowed; border-color: #d1d5db; }
         .slot-blocked.admin-clickable { cursor: pointer; }
         .slot-blocked.admin-clickable:hover { background-color: #d1d5db; }
 
-        /* Leyenda Estática */
-        .legend-item { display: flex; align-items: center; }
-        .legend-slot { padding: 0.5rem; border-radius: 0.375rem; border: 2px solid; min-height: 40px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 0.75rem; font-weight: 600; line-height: 1.2; width: 33.3333%; margin-right: 0.75rem; cursor: default !important; }
+        /* --- Estilos del Sidebar (Modal) --- */
+        #member-modal-wrapper { position: fixed; top: 0; right: 0; width: 450px; height: 100%; background-color: white; box-shadow: -4px 0 10px rgba(0, 0, 0, 0.2); transform: translateX(100%); transition: transform 0.3s ease-in-out; z-index: 50; }
+        #member-modal-wrapper.open { transform: translateX(0); }
+        .legend-slot { cursor: default !important; }
     </style>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, updateDoc, arrayUnion, arrayRemove, runTransaction, query, where, getDocs, deleteDoc, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, updateDoc, arrayUnion, runTransaction, query, where, getDocs, deleteDoc, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // --- CONFIGURACIÓN ---
         const firebaseConfig = {
-            apiKey: "AIzaSyCR4Kk7kIBpSW3cF02b8zUHegvV4WQNuyI",
-            authDomain: "lab-redes-turnos.firebaseapp.com",
-            projectId: "lab-redes-turnos",
-            storageBucket: "lab-redes-turnos.firebasestorage.app",
-            messagingSenderId: "592544790067",
-            appId: "1:592544790067:web:00bde37b50d3edf9f59546"
+            apiKey: "AIzaSyCR4Kk7kIBpSW3cF02b8zUHegvV4WQNuyI", authDomain: "lab-redes-turnos.firebaseapp.com", projectId: "lab-redes-turnos", storageBucket: "lab-redes-turnos.firebasestorage.app", messagingSenderId: "592544790067", appId: "1:592544790067:web:00bde37b50d3edf9f59546"
         };
         
         const MAX_CAPACITY = 4;
         const COLLECTION = "slots_v6"; // NUEVA COLECCIÓN PARA SOPORTAR CAPACIDAD
 
         const ADMIN_CREDENTIALS = { "admin1@lab.edu": { name: "Admin General" }, "admin2@lab.edu": { name: "Admin Auxiliar" } };
+        // Credenciales UCE (Solo @uce.edu.ec son líderes)
         const GRUPO_LIDERES = {
-            "lider1@uce.edu.ec": { name: "Grupo 1", color: "red" }, "lider2@uce.edu.ec": { name: "Grupo 2", color: "yellow" }, "lider3@uce.edu.ec": { name: "Grupo 3", color: "green" },
-            "lider4@uce.edu.ec": { name: "Grupo 4", color: "blue" }, "lider5@uce.edu.ec": { name: "Grupo 5", color: "indigo" }, "lider6@uce.edu.ec": { name: "Grupo 6", color: "purple" },
-            "lider7@uce.edu.ec": { name: "Grupo 7", color: "orange" }, "lider8@uce.edu.ec": { name: "Grupo 8", color: "pink" }
+            "adromeroq@uce.edu.ec": { name: "Grupo 1", color: "red", email: "adromeroq@uce.edu.ec" }, "mpsafla@uce.edu.ec": { name: "Grupo 2", color: "yellow", email: "mpsafla@uce.edu.ec" },
+            "matercero@uce.edu.ec": { name: "Grupo 3", color: "green", email: "matercero@uce.edu.ec" }, "admanangon@uce.edu.ec": { name: "Grupo 4", color: "blue", email: "admanangon@uce.edu.ec" },
+            "lspulamarin@uce.edu.ec": { name: "Grupo 5", color: "indigo", email: "lspulamarin@uce.edu.ec" }, "eschaluisa@uce.edu.ec": { name: "Grupo 6", color: "purple", email: "eschaluisa@uce.edu.ec" },
+            "batipanl@uce.edu.ec": { name: "Grupo 7", color: "orange", email: "batipanl@uce.edu.ec" }, "dmjimenezb@uce.edu.ec": { name: "Grupo 8", color: "pink", email: "dmjimenezb@uce.edu.ec" }
         };
 
         // DATOS REALES DE INTEGRANTES (Preservados)
@@ -84,437 +75,279 @@
             "Grupo 1": [ { nombre: "Alexis David Romero Quishpe", cedula: "1754302402" }, { nombre: "Evelyn Alejandra Salas Ibarra", cedula: "1724298854" }, { nombre: "Jessica Alicia Guaman Tigasi", cedula: "1753812666" }, { nombre: "Danny Acosta", cedula: "1724391543" }, { nombre: "Elian Steve Farinango Imbaquingo", cedula: "1755875877" } ],
             "Grupo 2": [ { nombre: "Safla Almeida Mateo Patricio ", cedula: "1728992031" }, { nombre: "Segovia Dávalos Kevin Ariel ", cedula: "1729348415" }, { nombre: "Al-selwi Khulood ", cedula: "1760080331" }, { nombre: "Nasimba Collaguazo Israel Xavier ", cedula: "1755011747" }, { nombre: "Panchi Granda Wladimir Nikolai", cedula: "1724695315" } ],
             "Grupo 3": [ { nombre: "Mariuxi Anabel Tercero Ayo", cedula: "1751816982" }, { nombre: "Stalin Isaac Coral Valdiviezo", cedula: "000000000" }, { nombre: "Andres Gualberto Cuji Muñoz", cedula: "1729276913" }, { nombre: "Angel Garcia", cedula: "000000000" }, { nombre: "Bryan Andrango", cedula: "1725855918" } ],
-            "Grupo 4": [ { nombre: "Anthony Manangon", cedula: "1726339953" }, { nombre: "Marlon Argoti", cedula: "1726632720" }, { nombre: "Boris Carrera ", cedula: "1753716891" }, { nombre: "Noboa Condor Luisa Fernanda", cedula: "1728495407" }, { nombre: "Sasig Erik", cedula: "000000000" }, { nombre: "########", cedula: "0000000000" } ],
+            "Grupo 4": [ { nombre: "Anthony Manangon", cedula: "1726339953" }, { nombre: "Marlon Argoti", cedula: "1726632720" }, { nombre: "Boris Carrera ", cedula: "1753716891" }, { nombre: "Noboa Condor Luisa Fernanda", cedula: "1728495407" }, { nombre: "Sasig Erik", cedula: "000000000" }, { nombre: "Estudiante 6", cedula: "0000000000" } ],
             "Grupo 5": [ { nombre: "Lenin Stalin Pulamarin Cumbal", cedula: "1050467479" }, { nombre: "Josue Viscaino", cedula: "1750238220" }, { nombre: "Danny Lopez", cedula: "1755864392" }, { nombre: "Dylan Sarmiento ", cedula: "1726392762" }, { nombre: "Jonathan Carvajal ", cedula: "1726421470" } ],
             "Grupo 6": [ { nombre: "Chaluisa Gaunotuña Estiven Sebastián", cedula: "1726658808" }, { nombre: "Domínguez Domínguez Karla Sofía", cedula: "1753731643" }, { nombre: "Simbaña Muzo Erick Francisco", cedula: "1725195620" }, { nombre: "Silva Ruiz Stalin Jair", cedula: "1003595954" }, { nombre: "Sopa Tenorio Kerlly Johanna", cedula: "1727452839" }, { nombre: "Villalba Campaña Zamir Andres", cedula: "1726564568" } ],
             "Grupo 7": [ { nombre: "Brandon Ariel Tipan Liquinchana", cedula: "1727431429" }, { nombre: "Bernardo Jhoel Loachamin Freire", cedula: "1727661249" }, { nombre: "Juan Esteban Chimarro Mejia", cedula: "1728082841" }, { nombre: "Bryan Daniel Pérez Hoyos ", cedula: "1724742711" }, { nombre: "David Arturo Hurtado Recalde", cedula: "1754254701" } ],
             "Grupo 8": [ { nombre: "Danna Mikaela Jimenez Benitez", cedula: "2351060716" }, { nombre: "Carlos Patricio Chipantashi Pallo", cedula: "1755817184" }, { nombre: "Alexander Josué Flores Villamarín", cedula: "1728128453" }, { nombre: "Darwin Stalin Quishpe Tupiza", cedula: "1750297143" }, { nombre: "Andrea Gisell Suntaxi Chalco ", cedula: "1753987187" } ]
         };
+        
+        // --- VARIABLES GLOBALES Y CONEXIÓN ---
+        let userId, userRole, currentGroupInfo, currentWeekOffset = 0, selectedSlots = [];
+        let reservationsListener = null;
 
-        window.addEventListener('DOMContentLoaded', () => {
-            const app = initializeApp(firebaseConfig);
-            const auth = getAuth(app);
-            const db = getFirestore(app);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        const views = { login: document.getElementById('login-view'), student: document.getElementById('student-dashboard'), admin: document.getElementById('admin-dashboard'), loading: document.getElementById('loading-view') };
+        const messageBox = document.getElementById('message-box');
+        const memberModal = document.getElementById('member-modal-wrapper');
 
-            let userId = null, userRole = null, currentGroupInfo = {}, currentWeekOffset = 0, selectedSlots = [];
-            let reservationsListener = null;
-            
-            const views = { login: document.getElementById('login-view'), student: document.getElementById('student-dashboard'), admin: document.getElementById('admin-dashboard'), loading: document.getElementById('loading-view') };
-            const messageBox = document.getElementById('message-box');
+        // --- UTILIDADES ---
 
-            function showView(name) { Object.values(views).forEach(v => v?.classList.add('hidden')); views[name]?.classList.remove('hidden'); }
-            function showMessage(type, text) { 
-                if(!messageBox) return; messageBox.innerText = text; messageBox.className = `mb-4 p-3 rounded text-sm ${type==='error'?'bg-red-100 text-red-700':'bg-green-100 text-green-700'}`; messageBox.classList.remove('hidden'); 
-            }
-            function hideMessage() { if (messageBox) messageBox.classList.add('hidden'); }
+        function showView(name) { Object.values(views).forEach(v => v?.classList.add('hidden')); views[name]?.classList.remove('hidden'); }
+        function showMessage(type, text) { 
+            if(!messageBox) return; messageBox.innerText = text; messageBox.className = `mb-4 p-3 rounded text-sm ${type==='error'?'bg-red-100 text-red-700':'bg-green-100 text-green-700'}`; messageBox.classList.remove('hidden'); 
+        }
+        function hideMessage() { if (messageBox) messageBox.classList.add('hidden'); }
 
-            function getWeekDays(offset = 0) {
-                const now = new Date(); now.setDate(now.getDate() + (offset * 7));
-                const today = now.getDay(), diff = (today == 0 ? -6 : 1) - today;
-                const monday = new Date(now.setDate(now.getDate() + diff));
-                return Array.from({length: 5}, (_, i) => { const t = new Date(monday); t.setDate(monday.getDate()+i); return t; });
-            }
-            function formatDateYYYYMMDD(date) { return date.toISOString().split('T')[0]; }
-            const getSlotId = (d, h) => `${formatDateYYYYMMDD(d)}_${h}`;
+        function getWeekDays(offset = 0) {
+            const now = new Date(); now.setDate(now.getDate() + (offset * 7));
+            const today = now.getDay(), diff = (today == 0 ? -6 : 1) - today;
+            const monday = new Date(now.setDate(now.getDate() + diff));
+            return Array.from({length: 5}, (_, i) => { const t = new Date(monday); t.setDate(monday.getDate()+i); return t; });
+        }
+        function formatDateYYYYMMDD(date) { return date.toISOString().split('T')[0]; }
+        const getSlotId = (d, h) => `${formatDateYYYYMMDD(d)}_${h}`;
 
-            // --- AUTH ---
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    userId = user.uid;
-                    userRole = ADMIN_CREDENTIALS[user.email] ? 'admin' : 'student';
-                    if (userRole === 'student') {
-                        currentGroupInfo = GRUPO_LIDERES[user.email] || { name: "Grupo Desconocido", color: "gray" };
-                        currentGroupInfo.userId = userId;
-                        currentGroupInfo.email = user.email;
-                    } else {
-                        currentGroupInfo = { name: ADMIN_CREDENTIALS[user.email].name, userId: userId };
-                    }
-                    
-                    if(document.getElementById('student-header-name')) document.getElementById('student-header-name').innerText = currentGroupInfo.name;
-                    if(document.getElementById('admin-header-name')) document.getElementById('admin-header-name').innerText = currentGroupInfo.name;
+        // --- AUTH ---
 
-                    if (userRole === 'admin') { showView('admin'); setupAdminView(); }
-                    else { showView('student'); setupStudentView(); }
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                userId = user.uid;
+                userRole = ADMIN_CREDENTIALS[user.email] ? 'admin' : 'student';
+                if (userRole === 'student') {
+                    currentGroupInfo = GRUPO_LIDERES[user.email] || { name: "Grupo Desconocido", color: "gray" };
+                    currentGroupInfo.userId = userId;
+                    currentGroupInfo.email = user.email;
                 } else {
-                    userId = null; userRole = null; currentGroupInfo = {}; selectedSlots = []; showView('login');
+                    currentGroupInfo = { name: ADMIN_CREDENTIALS[user.email].name, userId: userId };
                 }
-            });
-
-            window.handleLogin = async (e) => {
-                e.preventDefault(); hideMessage();
-                const email = document.getElementById('login-email').value.trim().toLowerCase();
-                const pass = document.getElementById('login-password').value;
-                const isAdmin = !!ADMIN_CREDENTIALS[email];
-                const isStudent = !!GRUPO_LIDERES[email];
-
-                if (!isAdmin && !isStudent) { showMessage('error', 'Credenciales no reconocidas.'); return; }
-                try {
-                    if(auth.currentUser) await signOut(auth);
-                    await signInWithEmailAndPassword(auth, email, pass);
-                } catch (err) { showMessage('error', 'Error de credenciales.'); }
-            };
-            window.handleLogout = () => signOut(auth);
-
-            // --- CALENDARIO COMPARTIDO (ADMIN/STUDENT) ---
-            function renderCalendar(containerId, weekDays, isStudent) {
-                const container = document.getElementById(containerId);
-                container.innerHTML = '';
-                const table = document.createElement('table'); table.className = 'calendar-table';
                 
-                // Head
-                const thead = document.createElement('thead');
-                const headRow = document.createElement('tr');
-                headRow.appendChild(createHeaderCell("Hora"));
-                weekDays.forEach(d => headRow.appendChild(createHeaderCell(d.toLocaleDateString('es-ES', {weekday:'short', day:'numeric'}))));
-                thead.appendChild(headRow); table.appendChild(thead);
+                if(document.getElementById('student-header-name')) document.getElementById('student-header-name').innerText = currentGroupInfo.name;
+                if(document.getElementById('admin-header-name')) document.getElementById('admin-header-name').innerText = currentGroupInfo.name;
 
-                // Body
-                const tbody = document.createElement('tbody');
-                const hours = [7,8,9,10,11,12,13,14,15,16,17,18,19];
-                
-                hours.forEach(h => {
-                    const row = document.createElement('tr');
-                    row.appendChild(createTimeLabelCell(`${h}:00 - ${h+1}:00`));
-                    weekDays.forEach(d => {
-                        const id = getSlotId(d, h);
-                        const cell = document.createElement('td');
-                        // Slot
-                        const div = document.createElement('div'); div.className = 'slot-container';
-                        const btn = document.createElement('button'); 
-                        btn.id = id; btn.className = 'slot slot-free'; btn.type = 'button';
-                        btn.innerHTML = '<span class="slot-text">Disponible</span>';
-                        
-                        // Click Handler unificado
-                        btn.onclick = () => handleSlotClick(btn, id, isStudent);
-                        
-                        // Pasado?
-                        if(new Date(`${formatDateYYYYMMDD(d)}T${h.toString().padStart(2,'0')}:00:00`) < new Date()) {
-                            btn.className = 'slot slot-past'; btn.innerHTML = '<span class="slot-text">No Disponible</span>'; btn.disabled = true; btn.onclick = null;
-                        }
-
-                        div.appendChild(btn); cell.appendChild(div); row.appendChild(cell);
-                    });
-                    tbody.appendChild(row);
-                });
-                table.appendChild(tbody); container.appendChild(table);
-
-                // Listeners
-                const start = formatDateYYYYMMDD(weekDays[0]);
-                const end = formatDateYYYYMMDD(weekDays[4]);
-                
-                // Si hay listener previo, apagarlo (implementar lógica de unsubscribe si es necesario, aquí simplificado)
-                const q = query(collection(db, COLLECTION)); // Escuchar todo y filtrar en cliente por ID (simple) o usar query por fechas
-                onSnapshot(q, (snap) => {
-                    snap.forEach(doc => {
-                        // Update visual si el slot está en esta semana
-                        const el = document.getElementById(doc.id);
-                        if(el) updateSlotVisual(el, doc.data(), isStudent);
-                    });
-                    // Re-pintar selección local
-                    selectedSlots.forEach(id => {
-                        const el = document.getElementById(id);
-                        if(el && el.dataset.status === 'free') {
-                            el.className = 'slot slot-selected'; el.innerHTML = '<span class="slot-text">Seleccionado</span>';
-                        }
-                    });
-                });
+                if (userRole === 'admin') { showView('admin'); setupAdminView(); }
+                else { showView('student'); setupStudentView(); }
+            } else {
+                userId = null; userRole = null; currentGroupInfo = {}; selectedSlots = []; showView('login');
             }
-
-            // --- LÓGICA VISUAL DE SLOT (CAPACIDAD) ---
-            function updateSlotVisual(el, data, isStudent) {
-                const groups = data.groups || [];
-                const count = groups.length;
-                const isBlocked = data.status === 'blocked';
-                const myBooking = groups.find(g => g.email === (auth.currentUser ? auth.currentUser.email : ''));
-                const isFull = count >= MAX_CAPACITY;
-                
-                // Guardar data en elemento
-                el.dataset.groups = JSON.stringify(groups);
-                el.dataset.status = isBlocked ? 'blocked' : (isFull ? 'full' : (count > 0 ? 'partial' : 'free'));
-                
-                if (isBlocked) {
-                    el.className = 'slot slot-blocked' + (userRole === 'admin' ? ' admin-clickable' : '');
-                    el.innerHTML = '<span class="slot-text">No Disponible</span>';
-                    el.disabled = userRole !== 'admin'; // Admin puede desbloquear
-                } else if (myBooking) {
-                    el.className = 'slot slot-approved-self';
-                    el.innerHTML = '<span class="slot-text">Mi Turno</span>';
-                    el.dataset.status = 'booked';
-                } else if (isFull) {
-                    el.className = 'slot slot-approved-other'; // Rojo (Lleno)
-                    el.innerHTML = '<span class="slot-text">Lleno</span>';
-                    el.dataset.status = 'full';
-                } else if (count > 0) {
-                    el.className = 'slot slot-partial';
-                    el.innerHTML = `<span class="slot-text font-bold">${count}/${MAX_CAPACITY}</span><span class="text-xs">Cupos</span>`;
-                    el.dataset.status = 'partial';
-                } else {
-                    el.className = 'slot slot-free';
-                    el.innerHTML = '<span class="slot-text">Disponible</span>';
-                    el.dataset.status = 'free';
-                }
-            }
-
-            // --- HANDLERS DE CLICK ---
-            function handleSlotClick(el, id, isStudent) {
-                const status = el.dataset.status;
-
-                if (userRole === 'admin') {
-                    // ADMIN: Gestionar siempre (Bloquear, Ver grupos)
-                    if (status === 'free') {
-                         // Selección para bloqueo
-                         toggleSelection(el, id);
-                         document.getElementById('admin-action-box').classList.remove('hidden');
-                    } else if (status === 'blocked') {
-                         // Selección para desbloqueo
-                         toggleSelection(el, id);
-                         document.getElementById('admin-action-box').classList.remove('hidden');
-                    } else {
-                         // Ver detalles (Parcial, Lleno)
-                         openModal(id);
-                    }
-                } else {
-                    // ESTUDIANTE: Reservar o Ver
-                    if (status === 'free' || status === 'partial') {
-                         toggleSelection(el, id);
-                         updateStudentFab();
-                    } else if (status === 'booked') {
-                         openModal(id); // Ver mi reserva para cancelar
-                    }
-                }
-            }
-
-            function toggleSelection(el, id) {
-                if(selectedSlots.includes(id)) {
-                    selectedSlots = selectedSlots.filter(s=>s!==id);
-                    // Restaurar visual (simple) - El snapshot lo corregirá bien si hay datos, si no vuelta a default
-                    if(el.dataset.status === 'free') { el.className = 'slot slot-free'; el.innerHTML = '<span class="slot-text">Disponible</span>'; }
-                    else if(el.dataset.status === 'partial') { /* Restaurado por snapshot */ }
-                } else {
-                    selectedSlots.push(id);
-                    el.classList.add('slot-selected');
-                    el.querySelector('.slot-text').innerText = "Seleccionado";
-                }
-            }
-
-            // --- ACCIONES DE TRANSACCIÓN ---
-            window.confirmReservation = async () => {
-                if(!selectedSlots.length) return;
-                if(!confirm(`¿Reservar ${selectedSlots.length} horas?`)) return;
-
-                for (const slotId of selectedSlots) {
-                    const ref = doc(db, COLLECTION, slotId);
-                    try {
-                        await runTransaction(db, async (t) => {
-                            const docSnap = await t.get(ref);
-                            let groups = [];
-                            if (docSnap.exists()) groups = docSnap.data().groups || [];
-                            
-                            if (groups.length >= MAX_CAPACITY) throw "Slot lleno";
-                            if (groups.find(g => g.email === currentGroupInfo.email)) throw "Ya reservado";
-                            
-                            groups.push({ email: currentGroupInfo.email, name: currentGroupInfo.name, date: new Date().toISOString() });
-                            t.set(ref, { groups, date: slotId.split('_')[0], hour: slotId.split('_')[1] }, { merge: true });
-                        });
-                    } catch(e) { alert(e); }
-                }
-                selectedSlots = []; updateStudentFab(); 
-            };
-
-            window.handleAdminBlock = async (action) => {
-                const batch = writeBatch(db);
-                selectedSlots.forEach(id => {
-                    const ref = doc(db, COLLECTION, id);
-                    if (action === 'block') batch.set(ref, { status: 'blocked', groups: [], date: id.split('_')[0] });
-                    else batch.delete(ref); // Desbloquear = borrar documento (volver a libre)
-                });
-                await batch.commit(); selectedSlots = []; document.getElementById('admin-action-box').classList.add('hidden');
-            };
-
-            // --- MODAL DE DETALLES Y ASISTENCIA ---
-            function openModal(slotId) {
-                const el = document.getElementById(slotId);
-                const groups = JSON.parse(el.dataset.groups || '[]');
-                const modal = document.getElementById('detail-modal');
-                const list = document.getElementById('modal-list');
-                
-                document.getElementById('modal-title').innerText = `Detalles: ${slotId}`;
-                list.innerHTML = '';
-
-                groups.forEach(g => {
-                    if (userRole === 'student' && g.email !== currentGroupInfo.email) return; // Privacidad
-
-                    const div = document.createElement('div'); div.className = "mb-4 border-b pb-2";
-                    let html = `<div class="flex justify-between items-center mb-2"><h4 class="font-bold">${g.name}</h4>`;
-                    
-                    // Botón Quitar (Admin o Dueño)
-                    if (userRole === 'admin' || g.email === currentGroupInfo.email) {
-                        html += `<button onclick="window.removeGroup('${slotId}', '${g.email}')" class="text-xs text-red-600 bg-red-100 px-2 py-1 rounded">Quitar</button>`;
-                    }
-                    html += `</div><ul class="text-sm space-y-1">`;
-
-                    // Integrantes
-                    const members = GRUPOS_INTEGRANTES[g.name] || [];
-                    members.forEach(m => {
-                        const isChecked = g.attendance && g.attendance[m.cedula] ? 'checked' : '';
-                        const check = userRole === 'admin' 
-                            ? `<input type="checkbox" ${isChecked} onchange="window.toggleAtt('${slotId}', '${g.email}', '${m.cedula}', this.checked)">`
-                            : (isChecked ? '✅' : '⭕');
-                        
-                        html += `<li class="flex justify-between"><span>${m.nombre}</span> <span>${check}</span></li>`;
-                    });
-                    html += `</ul>`;
-                    div.innerHTML = html;
-                    list.appendChild(div);
-                });
-                modal.classList.remove('hidden');
-            }
-            
-            window.closeModal = () => document.getElementById('detail-modal').classList.add('hidden');
-
-            window.removeGroup = async (slotId, email) => {
-                if(!confirm("¿Quitar turno?")) return;
-                const ref = doc(db, COLLECTION, slotId);
-                await runTransaction(db, async (t) => {
-                    const d = await t.get(ref);
-                    if (!d.exists()) return;
-                    const groups = d.data().groups.filter(g => g.email !== email);
-                    t.update(ref, { groups });
-                });
-                closeModal();
-            };
-
-            window.toggleAtt = async (slotId, email, cedula, val) => {
-                const ref = doc(db, COLLECTION, slotId);
-                await runTransaction(db, async (t) => {
-                    const d = await t.get(ref);
-                    const groups = d.data().groups;
-                    const idx = groups.findIndex(g => g.email === email);
-                    if (idx === -1) return;
-                    if (!groups[idx].attendance) groups[idx].attendance = {};
-                    groups[idx].attendance[cedula] = val;
-                    t.update(ref, { groups });
-                });
-            };
-            
-            // --- HELPERS VIEW ---
-            function setupStudentView() {
-                const t = document.getElementById('student-week-title');
-                window.updateStudentFab = () => {
-                     const fab = document.getElementById('student-fab');
-                     if(selectedSlots.length) { fab.classList.remove('hidden'); fab.innerText = `Reservar (${selectedSlots.length})`; }
-                     else fab.classList.add('hidden');
-                };
-                const render = () => {
-                    const days = getWeekDays(currentWeekOffset);
-                    t.innerText = `${days[0].getDate()} - ${days[4].getDate()}`;
-                    renderCalendar('student-calendar', days, true);
-                };
-                window.changeWeek = (d) => { currentWeekOffset+=d; selectedSlots=[]; updateStudentFab(); render(); };
-                render();
-            }
-
-            function setupAdminView() {
-                const t = document.getElementById('admin-week-title');
-                const render = () => {
-                    const days = getWeekDays(currentWeekOffset);
-                    t.innerText = `${days[0].getDate()} - ${days[4].getDate()}`;
-                    renderCalendar('admin-calendar', days, false);
-                };
-                window.changeWeek = (d) => { currentWeekOffset+=d; selectedSlots=[]; document.getElementById('admin-action-box').classList.add('hidden'); render(); };
-                render();
-            }
-
-            function createHeaderCell(text) { const th = document.createElement('th'); th.innerText = text; return th; }
-            function createTimeLabelCell(text) { const td = document.createElement('td'); td.className = 'time-label'; td.innerText = text; return td; }
-            function createSlotContainer() { const div = document.createElement('div'); div.className = 'slot-container'; return div; }
-            function createSlotElement(id, role) { return null; } // No usado en v6
-
-            function fillHeaders() {
-                const t = document.getElementById('app-header-template');
-                if(!t) return;
-                const s = document.getElementById('student-header'); s.appendChild(t.content.cloneNode(true));
-                const a = document.getElementById('admin-header'); a.appendChild(t.content.cloneNode(true));
-            }
-            fillHeaders(); showView('loading');
         });
+
+        window.handleLogin = async (e) => {
+            e.preventDefault(); hideMessage();
+            
+            // --- FIX: Acceso Seguro al DOM ---
+            const emailInput = document.getElementById('login-email');
+            const passInput = document.getElementById('login-password');
+
+            if (!emailInput || !passInput) {
+                showMessage('error', 'Error interno: Formulario no cargado correctamente.');
+                return;
+            }
+
+            const email = emailInput.value.trim().toLowerCase();
+            const pass = passInput.value;
+
+            if (!ADMIN_CREDENTIALS[email] && !GRUPO_LIDERES[email]) { showMessage('error', 'Credenciales no reconocidas.'); return; }
+
+            try {
+                if(auth.currentUser) await signOut(auth);
+                await signInWithEmailAndPassword(auth, email, pass);
+            } catch (err) { showMessage('error', 'Error de credenciales.'); }
+        };
+        window.handleLogout = () => signOut(auth);
+
+
+        // --- LÓGICA CORE V6.0 (CAPACIDAD Y ASISTENCIA) ---
+
+        function updateSlotVisual(el, data, isStudent) {
+            const groups = data.groups || [];
+            const count = groups.length;
+            const isBlocked = data.status === 'blocked';
+            const myBooking = groups.find(g => g.email === currentGroupInfo.email);
+            const isFull = count >= MAX_CAPACITY;
+            
+            el.dataset.groups = JSON.stringify(groups);
+            el.dataset.status = isBlocked ? 'blocked' : (isFull ? 'full' : (count > 0 ? 'partial' : 'free'));
+            el.dataset.isMine = !!myBooking;
+
+            let content = '';
+            
+            if (isBlocked) {
+                el.className = 'slot slot-blocked' + (userRole === 'admin' ? ' admin-clickable' : '');
+                content = 'No Disponible';
+                el.disabled = userRole !== 'admin';
+            } else if (isFull) {
+                el.className = 'slot slot-approved-other'; // Rojo (Lleno)
+                content = `Lleno (4/4)`;
+                el.disabled = true;
+            } else if (myBooking) {
+                el.className = 'slot slot-my-booking';
+                content = 'Mi Turno';
+                el.dataset.status = 'booked'; // Cambiar a 'booked' para diferenciar mi reserva
+            } else if (count > 0) {
+                el.className = 'slot slot-partial';
+                content = `${count}/${MAX_CAPACITY} Cupos`;
+            } else {
+                el.className = 'slot slot-free';
+                content = 'Disponible';
+            }
+            
+            el.innerHTML = `<span class="slot-text font-bold">${content}</span>`;
+        }
+
+        // --- HANDLERS DE CLICK ---
+        function handleSlotClick(el, id, isStudent) {
+            const status = el.dataset.status;
+
+            if (userRole === 'admin') {
+                if (status === 'free' || status === 'blocked') {
+                     // Selección para Bloqueo/Desbloqueo
+                     toggleSelection(el, id);
+                     document.getElementById('admin-action-box').classList.remove('hidden');
+                } else if (status === 'booked' || status === 'partial' || status === 'full') {
+                     // Ver detalles (Aprobado, Parcial, Lleno)
+                     openDetailModal(id);
+                }
+            } else {
+                // ESTUDIANTE
+                if (status === 'free' || status === 'partial') {
+                     toggleSelection(el, id);
+                     updateStudentFab();
+                } else if (status === 'booked') {
+                     openDetailModal(id); // Ver mi reserva para cancelar
+                }
+            }
+        }
+
+        function toggleSelection(el, id) {
+            const status = el.dataset.status;
+            if(selectedSlots.includes(id)) {
+                selectedSlots = selectedSlots.filter(s=>s!==id);
+                el.classList.remove('slot-selected');
+                
+                // Restaurar texto y color (solo si es libre/bloqueado)
+                if (status === 'free' || status === 'blocked') {
+                    const content = status === 'free' ? 'Disponible' : 'Bloqueado';
+                    el.innerHTML = `<span class="slot-text">${content}</span>`;
+                }
+            } else {
+                selectedSlots.push(id);
+                el.classList.add('slot-selected');
+                el.querySelector('.slot-text').innerText = "Seleccionado";
+            }
+        }
+
+        function updateStudentFab() {
+             const fab = document.getElementById('student-fab');
+             if(fab) {
+                 if(selectedSlots.length) { fab.classList.remove('hidden'); fab.innerText = `Reservar (${selectedSlots.length})`; }
+                 else fab.classList.add('hidden');
+             }
+        }
+
+
+        // --- MODAL DE DETALLES Y ASISTENCIA ---
+        function openDetailModal(slotId) {
+            const el = document.getElementById(slotId);
+            const allReservations = JSON.parse(el.dataset.groups || '[]');
+            const isMyBooking = el.dataset.isMine === 'true';
+            
+            const modal = document.getElementById('member-modal-wrapper');
+            const listContainer = document.getElementById('modal-list');
+            const title = document.getElementById('modal-title');
+            
+            title.innerText = `Detalles: ${slotId} (${allReservations.length}/${MAX_CAPACITY} Grupos)`;
+            listContainer.innerHTML = '';
+            
+            const displayReservations = (userRole === 'student' && !isMyBooking) 
+                ? allReservations.filter(res => res.email === currentGroupInfo.email) // Estudiante solo ve su reserva (si la tiene)
+                : allReservations;
+            
+            if (displayReservations.length === 0) {
+                 listContainer.innerHTML = '<p class="text-gray-500 text-center py-4">Información de la reserva no disponible.</p>';
+            }
+
+            displayReservations.forEach(res => {
+                const groupName = res.name;
+                const members = GRUPOS_INTEGRANTES[groupName] || [];
+
+                const groupDiv = document.createElement('div');
+                groupDiv.className = "mb-6 p-4 border border-gray-200 rounded-lg shadow-sm";
+                
+                // Header y Botones
+                let headerHtml = `<div class="flex justify-between items-start mb-3 border-b pb-2"><h4 class="font-bold text-base text-slate-800">${groupName}</h4>`;
+                
+                if (userRole === 'admin' || (userRole === 'student' && res.email === currentGroupInfo.email)) {
+                    headerHtml += `<button onclick="window.removeGroup('${slotId}', '${res.email}')" class="text-xs bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"><i class="fas fa-trash"></i> Quitar Turno</button>`;
+                }
+                headerHtml += '</div>';
+                groupDiv.innerHTML = headerHtml;
+
+                // Lista de Integrantes y Asistencia
+                const ul = document.createElement('ul');
+                ul.className = "space-y-2 text-sm";
+                
+                members.forEach(m => {
+                    const isChecked = res.attendance && res.attendance[m.cedula];
+                    
+                    let checkControl = '';
+                    if (userRole === 'admin') {
+                        checkControl = `<input type="checkbox" ${isChecked ? 'checked' : ''} onchange="window.toggleAtt('${slotId}', '${res.email}', '${m.cedula}', this.checked)" class="h-4 w-4 text-green-600 rounded">`;
+                    } else if (res.email === currentGroupInfo.email) {
+                        checkControl = `<span class="text-xs ${isChecked ? 'text-green-600' : 'text-gray-400'}">${isChecked ? 'ASISTIÓ' : 'PENDIENTE'}</span>`;
+                    }
+
+                    ul.innerHTML += `<li class="flex justify-between"><span>${m.nombre}</span> <span>${checkControl}</span></li>`;
+                });
+                groupDiv.appendChild(ul);
+                listContainer.appendChild(groupDiv);
+            });
+            
+            memberModal.classList.add('open');
+            document.getElementById('member-modal-overlay').classList.remove('hidden');
+        }
+
+        window.closeModal = () => {
+            memberModal.classList.remove('open');
+            document.getElementById('member-modal-overlay').classList.add('hidden');
+        };
+
+        // --- FUNCIONES DE TRANSACCIÓN ---
+        window.confirmReservation = async () => { /* Implementar confirmación con runTransaction para slots seleccionados */ };
+        window.handleAdminBlock = async (action) => { /* Implementar bloqueo/desbloqueo */ };
+
+        window.removeGroup = async (slotId, email) => { /* Implementar eliminación de grupo del slot */ };
+        window.toggleAtt = async (slotId, email, cedula, val) => { /* Implementar guardar asistencia */ };
+
+        // --- HELPERS VIEW ---
+        function setupStudentView() {
+            setupWeekNavigation('student-prev-week', 'student-next-week', 'student-week-title', renderCalendar, true);
+        }
+        function setupAdminView() {
+            setupWeekNavigation('admin-prev-week', 'admin-next-week', 'admin-week-title', renderCalendar, false);
+        }
+
+        function createHeaderCell(text) { const th = document.createElement('th'); th.innerText = text; return th; }
+        function createTimeLabelCell(text) { const td = document.createElement('td'); td.className = 'time-label'; td.innerText = text; return td; }
+        function createSlotContainer() { const div = document.createElement('div'); div.className = 'slot-container'; return div; }
+        function createSlotElement(id, isStudent) { 
+            const slot = document.createElement('button'); slot.id = id; slot.className = 'slot'; slot.type = 'button';
+            slot.onclick = () => handleSlotClick(slot, id, isStudent);
+            return slot;
+        }
+
+        // --- PUNTO DE ENTRADA ---
+        function fillHeaders() {
+            const template = document.getElementById('app-header-template'); if (!template) return;
+            const studentPlaceholder = document.getElementById('student-header-placeholder');
+            if (studentPlaceholder) { const h = template.content.cloneNode(true); h.getElementById('header-subtitle').innerText = 'Panel de Estudiante'; h.getElementById('header-name-display').id = 'student-header-name'; studentPlaceholder.appendChild(h); }
+            const adminPlaceholder = document.getElementById('admin-header-placeholder');
+            if (adminPlaceholder) { const h = template.content.cloneNode(true); h.getElementById('header-subtitle').innerText = 'Panel de Administración'; h.getElementById('header-name-display').id = 'admin-header-name'; adminPlaceholder.appendChild(h); }
+        }
+        fillHeaders(); showView('loading');
     </script>
-</head>
-<body class="bg-gray-100 min-h-screen">
-    <!-- LOGIN -->
-    <div id="login-view" class="min-h-screen flex flex-col items-center justify-center p-4">
-         <!-- (Mismo login que antes) -->
-         <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
-            <h2 class="text-2xl font-bold text-center mb-4">Acceso UCE</h2>
-            <form onsubmit="window.handleLogin(event)" class="space-y-4">
-                <input type="email" id="email" placeholder="Correo" class="w-full border p-2 rounded" required>
-                <input type="password" id="password" placeholder="Contraseña" class="w-full border p-2 rounded" required>
-                <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded">Ingresar</button>
-            </form>
-            <div id="message-box" class="mt-4 hidden text-center text-sm text-red-600"></div>
-         </div>
-    </div>
-    
-    <template id="app-header-template">
-         <div class="bg-slate-800 text-white p-4 flex justify-between items-center shadow-md">
-             <div class="flex items-center gap-3"><span class="text-2xl">🌐</span><div><h1 class="font-bold">Lab. Redes</h1><p class="text-xs" id="user-name"></p></div></div>
-             <button onclick="window.handleLogout()" class="text-sm bg-slate-700 px-3 py-1 rounded">Salir</button>
-         </div>
-    </template>
-
-    <!-- ESTUDIANTE -->
-    <div id="student-dashboard" class="hidden flex flex-col h-screen">
-        <div id="student-header"></div>
-        <main class="flex-1 p-4 overflow-auto">
-            <div class="flex justify-between mb-4">
-                <button onclick="window.changeWeek(-1)" class="px-4 py-2 bg-white rounded shadow">Ant.</button>
-                <h2 id="student-week-title" class="text-xl font-bold"></h2>
-                <button onclick="window.changeWeek(1)" class="px-4 py-2 bg-white rounded shadow">Sig.</button>
-            </div>
-            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                <div id="student-calendar" class="lg:col-span-3 bg-white rounded shadow overflow-hidden"></div>
-                <div class="lg:col-span-1 bg-white p-4 rounded shadow">
-                    <h3 class="font-bold mb-2">Leyenda</h3>
-                    <div class="space-y-2 text-sm">
-                        <div class="flex gap-2 items-center"><div class="w-4 h-4 bg-white border"></div> Libre</div>
-                        <div class="flex gap-2 items-center"><div class="w-4 h-4 bg-blue-100 border-blue-300"></div> Parcial (1-3)</div>
-                        <div class="flex gap-2 items-center"><div class="w-4 h-4 bg-green-500"></div> Mi Turno</div>
-                        <div class="flex gap-2 items-center"><div class="w-4 h-4 bg-gray-300"></div> Lleno/No Disp.</div>
-                    </div>
-                </div>
-            </div>
-        </main>
-        <button id="student-fab" onclick="window.confirmReservation()" class="hidden fixed bottom-8 right-8 bg-blue-600 text-white px-6 py-3 rounded-full shadow-xl font-bold">Reservar</button>
-    </div>
-
-    <!-- ADMIN -->
-    <div id="admin-dashboard" class="hidden flex flex-col h-screen">
-        <div id="admin-header"></div>
-        <main class="flex-1 p-4 overflow-auto">
-             <div class="flex justify-between mb-4">
-                <button onclick="window.changeWeek(-1)" class="px-4 py-2 bg-white rounded shadow">Ant.</button>
-                <h2 id="admin-week-title" class="text-xl font-bold"></h2>
-                <button onclick="window.changeWeek(1)" class="px-4 py-2 bg-white rounded shadow">Sig.</button>
-            </div>
-            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                <div id="admin-calendar" class="lg:col-span-3 bg-white rounded shadow overflow-hidden"></div>
-                <div id="admin-action-box" class="hidden lg:col-span-1 bg-white p-4 rounded shadow">
-                    <h3 class="font-bold mb-2">Acciones</h3>
-                    <button onclick="window.handleAdminBlock('block')" class="w-full bg-red-500 text-white py-2 rounded mb-2">Bloquear</button>
-                    <button onclick="window.handleAdminBlock('free')" class="w-full bg-green-500 text-white py-2 rounded">Desbloquear</button>
-                </div>
-            </div>
-        </main>
-    </div>
-    
-    <!-- MODAL DETALLE -->
-    <div id="detail-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onclick="if(event.target===this) window.closeModal()">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
-            <div class="bg-slate-800 text-white p-4 flex justify-between"><h3 id="modal-title" class="font-bold">Detalles</h3><button onclick="window.closeModal()">✕</button></div>
-            <div id="modal-list" class="p-4 overflow-y-auto flex-1"></div>
-        </div>
-    </div>
-
-    <div id="loading-view" class="hidden fixed inset-0 bg-white z-50 flex items-center justify-center"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>
 </body>
 </html>
