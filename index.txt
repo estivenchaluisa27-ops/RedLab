@@ -1,41 +1,72 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Gestión de Turnos - UCE</title>
-    
+
     <!-- Favicon de Redes (Globo terráqueo estilizado) -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌐</text></svg>">
-    
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌐</text></svg>">
+
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
-    
+
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .fade-in { animation: fadeIn 0.5s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         /* --- Estilos de la Tabla Calendario (Estilo Registro Civil) --- */
         .calendar-table {
             width: 100%;
             border-collapse: collapse;
-            table-layout: fixed; /* Tablas no dinámicas */
+            table-layout: fixed;
+            /* Tablas no dinámicas */
         }
-        .calendar-table th, .calendar-table td {
-            border: 1px solid #d1d5db; /* border-gray-300 */
-            padding: 0; /* Padding se maneja en el div interno */
+
+        .calendar-table th,
+        .calendar-table td {
+            border: 1px solid #d1d5db;
+            /* border-gray-300 */
+            padding: 0;
+            /* Padding se maneja en el div interno */
             text-align: center;
             vertical-align: top;
-            height: 60px; /* Altura de fila fija */
+            height: 60px;
+            /* Altura de fila fija */
         }
+
         .calendar-table th {
-            background-color: #f3f4f6; /* bg-gray-100 */
-            font-weight: 600; /* font-semibold */
-            padding: 0.75rem 0.5rem; /* p-3 px-2 */
-            font-size: 0.875rem; /* text-sm */
+            background-color: #f3f4f6;
+            /* bg-gray-100 */
+            font-weight: 600;
+            /* font-semibold */
+            padding: 0.75rem 0.5rem;
+            /* p-3 px-2 */
+            font-size: 0.875rem;
+            /* text-sm */
         }
+
         .calendar-table .time-label {
             background-color: #f3f4f6;
             font-weight: 500;
@@ -46,7 +77,7 @@
             justify-content: center;
             height: 100%;
         }
-        
+
         /* Contenedor del Slot (dentro del <td>) */
         .slot-container {
             width: 100%;
@@ -58,7 +89,8 @@
         .slot {
             width: 100%;
             height: 100%;
-            border-radius: 0.375rem; /* rounded-md */
+            border-radius: 0.375rem;
+            /* rounded-md */
             border: 2px solid transparent;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -67,11 +99,15 @@
             align-items: center;
             justify-content: center;
             text-align: center;
-            font-size: 0.875rem; /* text-sm */
-            font-weight: 500; /* font-medium */
+            font-size: 0.875rem;
+            /* text-sm */
+            font-weight: 500;
+            /* font-medium */
             line-height: 1.2;
-            overflow: hidden; /* Para truncar texto */
+            overflow: hidden;
+            /* Para truncar texto */
         }
+
         .slot .slot-text {
             white-space: nowrap;
             overflow: hidden;
@@ -82,59 +118,89 @@
         /* --- Estilos de Slots (Colores Sólidos) --- */
         /* Blanco - Disponible */
         .slot-free {
-            background-color: #ffffff; /* bg-white */
-            border-color: #d1d5db; /* border-gray-300 */
-            color: #374151; /* text-gray-700 */
+            background-color: #ffffff;
+            /* bg-white */
+            border-color: #d1d5db;
+            /* border-gray-300 */
+            color: #374151;
+            /* text-gray-700 */
         }
+
         .slot-free:hover {
-            background-color: #eff6ff; /* hover:bg-blue-50 */
-            border-color: #93c5fd; /* hover:border-blue-300 */
+            background-color: #eff6ff;
+            /* hover:bg-blue-50 */
+            border-color: #93c5fd;
+            /* hover:border-blue-300 */
         }
+
         .slot-selected {
-            background-color: #3b82f6 !important; /* bg-blue-500 */
-            color: #ffffff !important; /* text-white */
-            border-color: #2563eb !important; /* border-blue-600 */
+            background-color: #3b82f6 !important;
+            /* bg-blue-500 */
+            color: #ffffff !important;
+            /* text-white */
+            border-color: #2563eb !important;
+            /* border-blue-600 */
         }
-        
+
         /* Gris - No disponible (Pasado o Bloqueado) */
-        .slot-past, .slot-blocked {
-            background-color: #e5e7eb; /* bg-gray-200 */
-            color: #6b7280; /* text-gray-500 */
+        .slot-past,
+        .slot-blocked {
+            background-color: #e5e7eb;
+            /* bg-gray-200 */
+            color: #6b7280;
+            /* text-gray-500 */
             cursor: not-allowed;
             border-color: #d1d5db;
         }
-        
+
         /* Amarillo - Pendiente */
         .slot-pending {
-            background-color: #fef9c3; /* bg-yellow-100 */
-            border-color: #facc15; /* border-yellow-400 */
-            color: #713f12; /* text-yellow-900 */
+            background-color: #fef9c3;
+            /* bg-yellow-100 */
+            border-color: #facc15;
+            /* border-yellow-400 */
+            color: #713f12;
+            /* text-yellow-900 */
         }
-        
+
         /* Verde - Reservado - Mío */
         .slot-approved-self {
-            background-color: #22c55e; /* bg-green-500 */
-            border-color: #16a34a; /* border-green-600 */
+            background-color: #22c55e;
+            /* bg-green-500 */
+            border-color: #16a34a;
+            /* border-green-600 */
             color: white;
         }
-        
+
         /* Rojo - Reservado - Ajeno */
         .slot-approved-other {
-            background-color: #ef4444; /* bg-red-500 */
-            border-color: #dc2626; /* border-red-600 */
+            background-color: #ef4444;
+            /* bg-red-500 */
+            border-color: #dc2626;
+            /* border-red-600 */
             color: white;
         }
-        
+
         /* Admin viendo colores de grupo */
-        .slot-admin-view-pending { border-style: dashed; border-width: 2px; }
-        .slot-admin-view-approved { font-weight: 600; } /* font-bold */
-        
+        .slot-admin-view-pending {
+            border-style: dashed;
+            border-width: 2px;
+        }
+
+        .slot-admin-view-approved {
+            font-weight: 600;
+        }
+
+        /* font-bold */
+
         /* CORRECCIÓN: Permitir click en slot bloqueado para admin */
         .slot-blocked.admin-clickable {
             cursor: pointer;
         }
+
         .slot-blocked.admin-clickable:hover {
-            background-color: #d1d5db; /* hover:bg-gray-300 */
+            background-color: #d1d5db;
+            /* hover:bg-gray-300 */
         }
 
 
@@ -143,9 +209,11 @@
             display: flex;
             align-items: center;
         }
+
         .legend-slot {
             padding: 0.5rem;
-            border-radius: 0.375rem; /* rounded-md */
+            border-radius: 0.375rem;
+            /* rounded-md */
             border: 2px solid;
             min-height: 40px;
             display: flex;
@@ -155,939 +223,1053 @@
             font-size: 0.875rem;
             font-weight: 500;
             line-height: 1.2;
-            width: 33.3333%; /* w-1/3 */
-            margin-right: 0.75rem; /* mr-3 */
-            cursor: default !important; /* No seleccionable */
+            width: 33.3333%;
+            /* w-1/3 */
+            margin-right: 0.75rem;
+            /* mr-3 */
+            cursor: default !important;
+            /* No seleccionable */
         }
+
         /* Quitar hover del slot libre solo en la leyenda */
         .legend-item .slot-free:hover {
             background-color: #ffffff;
             border-color: #d1d5db;
         }
 
+        /* --- Estilos del Modal --- */
+        .student-modal-backdrop {
+            backdrop-filter: blur(4px);
+        }
+
+        .student-item {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            padding: 0.5rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .student-item:last-child {
+            border-bottom: none;
+        }
+
+        .student-info {
+            flex: 1;
+        }
+
+        .student-name {
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .student-cedula {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
     </style>
 
-    <script type="module">
-        // --- IMPORTACIONES DE FIREBASE (CDN) ---
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { 
-            getAuth, 
-            signInWithEmailAndPassword, 
-            onAuthStateChanged, 
-            signOut 
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { 
-            getFirestore, 
-            collection, 
-            addDoc, 
-            query, 
-            where, 
-            onSnapshot, 
-            updateDoc, 
-            doc, 
-            deleteDoc,
-            serverTimestamp,
-            writeBatch,
-            getDocs,
-            getDoc,
-            setDoc
-            // 'orderBy' se quita intencionalmente para evitar error de índice
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+       
+    <script type="module">
+        // --- IMPORTACIONES DE FIREBASE (CDN) ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import {
+            getAuth,
+            signInWithEmailAndPassword,
+            onAuthStateChanged,
+            signOut
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import {
+            getFirestore,
+            collection,
+            addDoc,
+            query,
+            where,
+            onSnapshot,
+            updateDoc,
+            doc,
+            deleteDoc,
+            serverTimestamp,
+            writeBatch,
+            getDocs,
+            getDoc,
+            setDoc
+            // 'orderBy' se quita intencionalmente para evitar error de índice
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- CONFIGURACIÓN DE FIREBASE (TUS DATOS REALES) ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyCR4Kk7kIBpSW3cF02b8zUHegvV4WQNuyI",
-            authDomain: "lab-redes-turnos.firebaseapp.com",
-            projectId: "lab-redes-turnos",
-            storageBucket: "lab-redes-turnos.firebasestorage.app",
-            messagingSenderId: "592544790067",
-            appId: "1:592544790067:web:00bde37b50d3edf9f59546"
-        };
-        
-        // --- DATOS DE USUARIOS Y ESTÉTICA (Simulación de DB) ---
-        
-        // Credenciales de Administradores
-        const ADMIN_CREDENTIALS = {
-            "admin1@lab.edu": { name: "Admin General" },
-            "admin2@lab.edu": { name: "Admin Auxiliar" }
-        };
+        // --- CONFIGURACIÓN DE FIREBASE (TUS DATOS REALES) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCR4Kk7kIBpSW3cF02b8zUHegvV4WQNuyI",
+            authDomain: "lab-redes-turnos.firebaseapp.com",
+            projectId: "lab-redes-turnos",
+            storageBucket: "lab-redes-turnos.firebasestorage.app",
+            messagingSenderId: "592544790067",
+            appId: "1:592544790067:web:00bde37b50d3edf9f59546"
+        };
 
-        // --- CORRECCIÓN: Nombres de grupo simplificados ---
-        const GRUPO_LIDERES = {
-            "lider1@uni.edu": { name: "Grupo A", color: "red" },
-            "lider2@uni.edu": { name: "Grupo B", color: "yellow" },
-            "lider3@uni.edu": { name: "Grupo C", color: "green" },
-            "lider4@uni.edu": { name: "Grupo D", color: "blue" },
-            "lider5@uni.edu": { name: "Grupo E", color: "indigo" },
-            "lider6@uni.edu": { name: "Grupo F", color: "purple" },
-            "lider7@uni.edu": { name: "Grupo G", color: "pink" }
-        };
-        
-        // Mapa de Colores Tailwind
-        const COLOR_MAP = {
-            // Usados por el Admin
-            red:    { bg: 'bg-red-500', border: 'border-red-700', text: 'text-white' },
-            yellow: { bg: 'bg-yellow-500', border: 'border-yellow-700', text: 'text-gray-900' },
-            green:  { bg: 'bg-green-500', border: 'border-green-700', text: 'text-white' },
-            blue:   { bg: 'bg-blue-500', border: 'border-blue-700', text: 'text-white' },
-            indigo: { bg: 'bg-indigo-500', border: 'border-indigo-700', text: 'text-white' },
-            purple: { bg: 'bg-purple-500', border: 'border-purple-700', text: 'text-white' },
-            pink:   { bg: 'bg-pink-500', border: 'border-pink-700', text: 'text-white' }
-        };
+        // --- DATOS DE USUARIOS Y ESTÉTICA (Simulación de DB) ---
 
-        // --- RUTAS DE BASE DE DATOS (CONSTANTES) ---
-        const RESERVATIONS_COLLECTION = "reservations";
-        
-        // ==================================================================
-        // --- INICIO DE LA APLICACIÓN (ESPERAR A QUE EL HTML ESTÉ LISTO) ---
-        // ==================================================================
-        
-        window.addEventListener('DOMContentLoaded', () => {
-        
-            // --- INICIALIZACIÓN DE FIREBASE ---
-            const app = initializeApp(firebaseConfig);
-            const auth = getAuth(app);
-            const db = getFirestore(app);
+        // Credenciales de Administradores
+        const ADMIN_CREDENTIALS = {
+            "admin1@lab.edu": { name: "Admin General" },
+            "admin2@lab.edu": { name: "Admin Auxiliar" }
+        };
 
-            // --- ESTADO GLOBAL DE LA APLICACIÓN ---
-            let userId = null;
-            let userRole = null; // 'admin' o 'student'
-            let currentGroupInfo = {};
-            let currentWeekOffset = 0; // 0 = Semana Actual, -1 = Semana Pasada, 1 = Semana Siguiente
-            let selectedSlots = []; // Para selección múltiple (Estudiante y Admin)
-            let reservationsListener = null; // Para detener el listener al cambiar de semana
-            
-            // --- Referencias al DOM (AHORA SEGURAS) ---
-            const views = {
-                login: document.getElementById('login-view'),
-                student: document.getElementById('student-dashboard'),
-                admin: document.getElementById('admin-dashboard'),
-                loading: document.getElementById('loading-view')
-            };
-            const messageBox = document.getElementById('message-box');
+        // --- CORRECCIÓN: NOMBRES DE LOS GRUPOS CON LOS CORREOS ---
+        const GRUPO_LIDERES = {
+            "adromeroq@uce.edu.ec": { name: "Grupo 1", color: "red" },
+            "mpsafla@uce.edu.ec": { name: "Grupo 2", color: "yellow" },
+            "matercero@uce.edu.ec": { name: "Grupo 3", color: "green" },
+            "admanangon@uce.edu.ec": { name: "Grupo 4", color: "blue" },
+            "lspulamarin@uce.edu.ec": { name: "Grupo 5", color: "indigo" },
+            "eschaluisa@uce.edu.ec": { name: "Grupo 6", color: "purple" },
+            "batipanl@uce.edu.ec": { name: "Grupo 7", color: "orange" },
+            "dmjimenezb@uce.edu.ec": { name: "Grupo 8", color: "pink" }
+        };
 
-            // --- FUNCIONES DE UTILIDAD (Mensajes, Vistas, Fechas) ---
+        // --- DATOS DE LOS 8 GRUPOS CON INTEGRANTES ---
+        const GRUPOS_INTEGRANTES = {
+            "Grupo 1": [
+                { nombre: "Alexis David Romero Quishpe", cedula: "1754302402" },
+                { nombre: "Evelyn Alejandra Salas Ibarra", cedula: "1724298854" },
+                { nombre: "Jessica Alicia Guaman Tigasi", cedula: "1753812666" },
+                { nombre: "Danny Acosta", cedula: "1724391543" },
+                { nombre: "Elian Steve Farinango Imbaquingo", cedula: "1755875877" }
+            ],
+            "Grupo 2": [
+                { nombre: "Safla Almeida Mateo Patricio ", cedula: "1728992031" },
+                { nombre: "Segovia Dávalos Kevin Ariel ", cedula: "1729348415" },
+                { nombre: "Al-selwi Khulood ", cedula: "1760080331" },
+                { nombre: "Nasimba Collaguazo Israel Xavier ", cedula: "1755011747" },
+                { nombre: "Panchi Granda Wladimir Nikolai", cedula: "1724695315" }
+            ],
+            "Grupo 3": [
+                { nombre: "Mariuxi Anabel Tercero Ayo", cedula: "1751816982" },
+                { nombre: "Stalin Isaac Coral Valdiviezo", cedula: "000000000" },
+                { nombre: "Andres Gualberto Cuji Muñoz", cedula: "1729276913" },
+                { nombre: "Angel Garcia", cedula: "000000000" },
+                { nombre: "Bryan Andrango", cedula: "1725855918" }
+            ],
+            "Grupo 4": [
+                { nombre: "Anthony Manangon", cedula: "1726339953" },
+                { nombre: "Marlon Argoti", cedula: "1726632720" },
+                { nombre: "Boris Carrera ", cedula: "1753716891" },
+                { nombre: "Noboa Condor Luisa Fernanda", cedula: "1728495407" },
+                { nombre: "Sasig Erik", cedula: "000000000" },
+                { nombre: "########", cedula: "0000000000" }
+            ],
+            "Grupo 5": [
+                { nombre: "Lenin Stalin Pulamarin Cumbal", cedula: "1050467479" },
+                { nombre: "Josue Viscaino", cedula: "1750238220" },
+                { nombre: "Danny Lopez", cedula: "1755864392" },
+                { nombre: "Dylan Sarmiento ", cedula: "1726392762" },
+                { nombre: "Jonathan Carvajal ", cedula: "1726421470" }
+            ],
+            "Grupo 6": [
+                { nombre: "Chaluisa Gaunotuña Estiven Sebastián", cedula: "1726658808" },
+                { nombre: "Domínguez Domínguez Karla Sofía", cedula: "1753731643" },
+                { nombre: "Simbaña Muzo Erick Francisco", cedula: "1725195620" },
+                { nombre: "Silva Ruiz Stalin Jair", cedula: "1003595954" },
+                { nombre: "Sopa Tenorio Kerlly Johanna", cedula: "1727452839" },
+                { nombre: "Villalba Campaña Zamir Andres", cedula: "1726564568" }
+            ],
+            "Grupo 7": [
+                { nombre: "Brandon Ariel Tipan Liquinchana", cedula: "1727431429" },
+                { nombre: "Bernardo Jhoel Loachamin Freire", cedula: "1727661249" },
+                { nombre: "Juan Esteban Chimarro Mejia", cedula: "1728082841" },
+                { nombre: "Bryan Daniel Pérez Hoyos ", cedula: "1724742711" },
+                { nombre: "David Arturo Hurtado Recalde", cedula: "1754254701" }
+            ],
+            "Grupo 8": [
+                { nombre: "Danna Mikaela Jimenez Benitez", cedula: "2351060716" },
+                { nombre: "Carlos Patricio Chipantashi Pallo", cedula: "1755817184" },
+                { nombre: "Alexander Josué Flores Villamarín", cedula: "1728128453" },
+                { nombre: "Darwin Stalin Quishpe Tupiza", cedula: "1750297143" },
+                { nombre: "Andrea Gisell Suntaxi Chalco ", cedula: "1753987187" }
+            ]
+        };
 
-            function showView(viewName) {
-                // Ocultar todas las vistas
-                Object.values(views).forEach(el => {
-                    if (el) { // <-- Verificación de seguridad
-                        el.classList.add('hidden');
-                    }
-                });
-                
-                // Mostrar la vista solicitada
-                if (views[viewName]) {
-                    views[viewName].classList.remove('hidden', 'fade-in');
-                    // Forzar reflow para reiniciar la animación
-                    void views[viewName].offsetWidth;
-                    views[viewName].classList.add('fade-in');
-                } else {
-                    console.error(`Error: Vista "${viewName}" no encontrada.`);
-                }
-            }
+        // Mapa de Colores Tailwind
+        const COLOR_MAP = {
+            // Usados por el Admin
+            red: { bg: 'bg-red-500', border: 'border-red-700', text: 'text-white' },
+            yellow: { bg: 'bg-yellow-500', border: 'border-yellow-700', text: 'text-gray-900' },
+            green: { bg: 'bg-green-500', border: 'border-green-700', text: 'text-white' },
+            blue: { bg: 'bg-blue-500', border: 'border-blue-700', text: 'text-white' },
+            indigo: { bg: 'bg-indigo-500', border: 'border-indigo-700', text: 'text-white' },
+            purple: { bg: 'bg-purple-500', border: 'border-purple-700', text: 'text-white' },
+            orange: { bg: 'bg-orange-500', border: 'border-orange-700', text: 'text-white' },
+            pink: { bg: 'bg-pink-500', border: 'border-pink-700', text: 'text-white' }
+        };
 
-            function showMessage(type, text) {
-                if (!messageBox) return; // <-- Verificación de seguridad
-                messageBox.innerHTML = text;
-                messageBox.className = 'p-4 rounded-md text-sm font-medium mb-4';
-                if (type === 'error') {
-                    messageBox.classList.add('bg-red-100', 'text-red-700');
-                } else if (type === 'success') {
-                    messageBox.classList.add('bg-green-100', 'text-green-700');
-                }
-                messageBox.classList.remove('hidden');
-            }
+        // --- RUTAS DE BASE DE DATOS (CONSTANTES) ---
+        const RESERVATIONS_COLLECTION = "reservations";
 
-            function hideMessage() {
-                if (messageBox) { // <-- Verificación de seguridad
-                    messageBox.classList.add('hidden');
-                }
-            }
+        // ==================================================================
+        // --- INICIO DE LA APLICACIÓN (ESPERAR A QUE EL HTML ESTÉ LISTO) ---
+        // ==================================================================
 
-            function getWeekDays(offset = 0) {
-                const now = new Date();
-                now.setDate(now.getDate() + (offset * 7)); // Moverse N semanas
-                const today = now.getDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
-                const dayOffset = (today === 0) ? -6 : 1 - today; // Si es Domingo (-6), si no (1 - N)
-                
-                const monday = new Date(now.setDate(now.getDate() + dayOffset));
-                const week = [];
-                for (let i = 0; i < 5; i++) { // Solo Lunes (0) a Viernes (4)
-                    const day = new Date(monday);
-                    day.setDate(day.getDate() + i);
-                    week.push(day);
-                }
-                return week;
-            }
+        window.addEventListener('DOMContentLoaded', () => {
 
-            function formatDateYYYYMMDD(date) {
-                return date.toISOString().split('T')[0];
-            }
+            // --- INICIALIZACIÓN DE FIREBASE ---
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            const db = getFirestore(app);
 
-            // --- LÓGICA DE AUTENTICACIÓN Y SESIÓN ---
+            // --- ESTADO GLOBAL DE LA APLICACIÓN ---
+            let userId = null;
+            let userRole = null; // 'admin' o 'student'
+            let currentGroupInfo = {};
+            let currentWeekOffset = 0; // 0 = Semana Actual, -1 = Semana Pasada, 1 = Semana Siguiente
+            let selectedSlots = []; // Para selección múltiple (Estudiante y Admin)
+            let reservationsListener = null; // Para detener el listener al cambiar de semana
 
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    // Usuario está logueado
-                    userId = user.uid;
-                    userRole = ADMIN_CREDENTIALS[user.email] ? 'admin' : 'student';
-                    
-                    if (userRole === 'student') {
-                        // Asignar grupo basado en el email
-                        currentGroupInfo = GRUPO_LIDERES[user.email] || { name: "Grupo Desconocido", color: "gray" };
-                        // Asignar ID de usuario único de Firebase
-                        currentGroupInfo.userId = userId;
-                    } else {
-                        currentGroupInfo = { name: ADMIN_CREDENTIALS[user.email].name, userId: userId };
-                    }
+            // --- Referencias al DOM (AHORA SEGURAS) ---
+            const views = {
+                login: document.getElementById('login-view'),
+                student: document.getElementById('student-dashboard'),
+                admin: document.getElementById('admin-dashboard'),
+                loading: document.getElementById('loading-view')
+            };
+            const messageBox = document.getElementById('message-box');
 
-                    initializeDatabaseListener(); // Iniciar la carga de datos
-                    
-                } else {
-                    // Usuario no está logueado
-                    userId = null;
-                    userRole = null;
-                    currentGroupInfo = {};
-                    selectedSlots = [];
-                    showView('login'); // Mostrar vista de login
-                }
-            });
-            
-            // Asignar al objeto window para que el HTML (onclick) lo vea
-            window.handleLogin = async (event) => {
-                event.preventDefault();
-                hideMessage();
-                const email = document.getElementById('login-email').value;
-                const password = document.getElementById('login-password').value;
+            // --- FUNCIONES DE UTILIDAD (Mensajes, Vistas, Fechas) ---
 
-                // Determinar rol basado en las credenciales
-                const isAdmin = !!ADMIN_CREDENTIALS[email];
-                const isStudent = !!GRUPO_LIDERES[email];
+            function showView(viewName) {
+                // Ocultar todas las vistas
+                Object.values(views).forEach(el => {
+                    if (el) { // <-- Verificación de seguridad
+                        el.classList.add('hidden');
+                    }
+                });
 
-                if (!isAdmin && !isStudent) {
-                    showMessage('error', 'Credenciales no reconocidas. Verifique el correo electrónico.');
-                    return;
-                }
+                // Mostrar la vista solicitada
+                if (views[viewName]) {
+                    views[viewName].classList.remove('hidden', 'fade-in');
+                    // Forzar reflow para reiniciar la animación
+                    void views[viewName].offsetWidth;
+                    views[viewName].classList.add('fade-in');
+                } else {
+                    console.error(`Error: Vista "${viewName}" no encontrada.`);
+                }
+            }
 
-                try {
-                    // 1. Limpiar cualquier sesión anónima o anterior
-                    if (auth.currentUser) {
-                        await signOut(auth);
-                    }
-                    
-                    // 2. Iniciar sesión con Email y Contraseña
-                    await signInWithEmailAndPassword(auth, email, password);
-                    
-                    // 3. onAuthStateChanged se encargará del resto (asignar roles y mostrar vistas)
+            function showMessage(type, text) {
+                if (!messageBox) return; // <-- Verificación de seguridad
+                messageBox.innerHTML = text;
+                messageBox.className = 'p-4 rounded-md text-sm font-medium mb-4';
+                if (type === 'error') {
+                    messageBox.classList.add('bg-red-100', 'text-red-700');
+                } else if (type === 'success') {
+                    messageBox.classList.add('bg-green-100', 'text-green-700');
+                }
+                messageBox.classList.remove('hidden');
+            }
 
-                } catch (error) {
-                    console.error("Error de autenticación:", error.code);
-                    let msg = 'Error al iniciar sesión. Verifique sus credenciales.';
-                    if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
-                        msg = 'Correo o contraseña incorrectos.';
-                    } else if (error.code === 'auth/too-many-requests') {
-                        msg = 'Demasiados intentos fallidos. Intente más tarde.';
-                    }
-                    showMessage('error', msg);
-                }
-            };
+            function hideMessage() {
+                if (messageBox) { // <-- Verificación de seguridad
+                    messageBox.classList.add('hidden');
+                }
+            }
 
-            window.handleLogout = async () => {
-                await signOut(auth);
-                // onAuthStateChanged se encargará de limpiar el estado y mostrar el login
-            };
+            function getWeekDays(offset = 0) {
+                const now = new Date();
+                now.setDate(now.getDate() + (offset * 7)); // Moverse N semanas
+                const today = now.getDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
+                const dayOffset = (today === 0) ? -6 : 1 - today; // Si es Domingo (-6), si no (1 - N)
 
-            // --- LÓGICA PRINCIPAL (CARGA DE DATOS) ---
+                const monday = new Date(now.setDate(now.getDate() + dayOffset));
+                const week = [];
+                for (let i = 0; i < 5; i++) { // Solo Lunes (0) a Viernes (4)
+                    const day = new Date(monday);
+                    day.setDate(day.getDate() + i);
+                    week.push(day);
+                }
+                return week;
+            }
 
-            function initializeDatabaseListener() {
-                if (!auth.currentUser) {
-                     showView('login');
-                     return;
-                }
-                
-                if (userRole === 'admin') {
-                    const adminNameEl = document.getElementById('admin-header-name');
-                    if(adminNameEl) adminNameEl.innerText = currentGroupInfo.name;
-                    
-                    showView('admin');
-                    setupAdminView(); // Configurar la vista de admin
-                } else {
-                    const studentNameEl = document.getElementById('student-header-name');
-                    if(studentNameEl) studentNameEl.innerText = currentGroupInfo.name;
-                    
-                    showView('student');
-                    setupStudentView(); // Configurar la vista de estudiante
-                }
-            }
-            
-            function setupWeekNavigation(prevBtnId, nextBtnId, titleId, calendarRenderer) {
-                const prevWeekBtn = document.getElementById(prevBtnId);
-                const nextWeekBtn = document.getElementById(nextBtnId);
-                const weekTitle = document.getElementById(titleId);
+            function formatDateYYYYMMDD(date) {
+                return date.toISOString().split('T')[0];
+            }
 
-                if (!prevWeekBtn || !nextWeekBtn || !weekTitle) {
-                    console.error("Error: Elementos de navegación de semana no encontrados.");
-                    return;
-                }
+            // --- LÓGICA DE AUTENTICACIÓN Y SESIÓN ---
 
-                const render = () => {
-                    const weekDays = getWeekDays(currentWeekOffset);
-                    const start = weekDays[0].toLocaleDateString('es-ES', { month: 'short', day: 'numeric' });
-                    const end = weekDays[4].toLocaleDateString('es-ES', { month: 'short', day: 'numeric' });
-                    weekTitle.innerText = `${start} - ${end}`;
-                    
-                    calendarRenderer(weekDays);
-                };
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    // Usuario está logueado
+                    userId = user.uid;
+                    userRole = ADMIN_CREDENTIALS[user.email] ? 'admin' : 'student';
 
-                prevWeekBtn.onclick = () => {
-                    currentWeekOffset--;
-                    selectedSlots = []; // Limpiar selección al cambiar de semana
-                    render();
-                };
-                
-                nextWeekBtn.onclick = () => {
-                    currentWeekOffset++;
-                    selectedSlots = []; // Limpiar selección al cambiar de semana
-                    render();
-                };
+                    if (userRole === 'student') {
+                        // Asignar grupo basado en el email
+                        currentGroupInfo = GRUPO_LIDERES[user.email] || { name: "Grupo Desconocido", color: "gray" };
+                        // Asignar ID de usuario único de Firebase
+                        currentGroupInfo.userId = userId;
+                    } else {
+                        currentGroupInfo = { name: ADMIN_CREDENTIALS[user.email].name, userId: userId };
+                    }
 
-                render(); // Carga inicial
-            }
-            
-            // --- LÓGICA DEL PANEL DE ESTUDIANTE (MODIFICADO) ---
+                    initializeDatabaseListener(); // Iniciar la carga de datos
 
-            function setupStudentView() {
-                setupWeekNavigation('student-prev-week', 'student-next-week', 'student-week-title', renderStudentCalendar);
-                const submitBtn = document.getElementById('submit-request-btn');
-                if(submitBtn) submitBtn.onclick = handleSubmitRequest;
-            }
+                } else {
+                    // Usuario no está logueado
+                    userId = null;
+                    userRole = null;
+                    currentGroupInfo = {};
+                    selectedSlots = [];
+                    showView('login'); // Mostrar vista de login
+                }
+            });
 
-            function renderStudentCalendar(weekDays) {
-                const tableBody = document.getElementById('student-calendar-body');
-                const tableHead = document.getElementById('student-calendar-head');
-                
-                if(!tableBody || !tableHead) return;
-                
-                tableHead.innerHTML = ''; // Limpiar cabecera
-                tableBody.innerHTML = ''; // Limpiar cuerpo
+            // Asignar al objeto window para que el HTML (onclick) lo vea
+            window.handleLogin = async (event) => {
+                event.preventDefault();
+                hideMessage();
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
 
-                if (reservationsListener) reservationsListener(); 
+                // Determinar rol basado en las credenciales
+                const isAdmin = !!ADMIN_CREDENTIALS[email];
+                const isStudent = !!GRUPO_LIDERES[email];
 
-                // Crear Encabezados (Lunes 17/11, Martes 18/11...)
-                const headRow = document.createElement('tr');
-                headRow.appendChild(createHeaderCell("Hora"));
-                weekDays.forEach(day => {
-                    headRow.appendChild(createHeaderCell(
-                        `${day.toLocaleDateString('es-ES', { weekday: 'short' })} ${day.getDate()}/${day.getMonth() + 1}`
-                    ));
-                });
-                tableHead.appendChild(headRow);
+                if (!isAdmin && !isStudent) {
+                    showMessage('error', 'Credenciales no reconocidas. Verifique el correo electrónico.');
+                    return;
+                }
 
-                const hours = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
-                const slotMap = new Map();
+                try {
+                    // 1. Limpiar cualquier sesión anónima o anterior
+                    if (auth.currentUser) {
+                        await signOut(auth);
+                    }
 
-                hours.forEach(hour => {
-                    const row = document.createElement('tr');
-                    // Crear Etiqueta de Hora (07:00 - 08:00)
-                    row.appendChild(createTimeLabelCell(`${String(hour).padStart(2, '0')}:00 - ${String(hour + 1).padStart(2, '0')}:00`));
-                    
-                    // Crear 5 celdas (L-V) para esta hora
-                    weekDays.forEach(day => {
-                        const slotId = `${formatDateYYYYMMDD(day)}_${hour}`;
-                        const cell = document.createElement('td');
-                        const slotContainer = createSlotContainer();
-                        const slot = createSlotElement(slotId, 'student');
-                        
-                        slotContainer.appendChild(slot);
-                        cell.appendChild(slotContainer);
-                        row.appendChild(cell);
-                        
-                        slotMap.set(slotId, slot);
-                    });
-                    tableBody.appendChild(row);
-                });
+                    // 2. Iniciar sesión con Email y Contraseña
+                    await signInWithEmailAndPassword(auth, email, password);
 
-                const startOfWeek = formatDateYYYYMMDD(weekDays[0]);
-                const endOfWeek = formatDateYYYYMMDD(weekDays[4]);
+                    // 3. onAuthStateChanged se encargará del resto (asignar roles y mostrar vistas)
 
-                // Query para obtener todas las reservas de la semana (independiente del estado)
-                const q = query(
-                    collection(db, RESERVATIONS_COLLECTION),
-                    where("date", ">=", startOfWeek),
-                    where("date", "<=", endOfWeek)
-                );
+                } catch (error) {
+                    console.error("Error de autenticación:", error.code);
+                    let msg = 'Error al iniciar sesión. Verifique sus credenciales.';
+                    if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+                        msg = 'Correo o contraseña incorrectos.';
+                    } else if (error.code === 'auth/too-many-requests') {
+                        msg = 'Demasiados intentos fallidos. Intente más tarde.';
+                    }
+                    showMessage('error', msg);
+                }
+            };
 
-                reservationsListener = onSnapshot(q, (snapshot) => {
-                    resetCalendarSlots(slotMap, 'student');
-                    
-                    // 1. Agrupar todas las reservas por slot (Date_Hour)
-                    const aggregatedSlots = new Map();
-                    
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        data.id = doc.id; 
-                        const slotId = `${data.date}_${data.hour}`;
-                        
-                        if (!aggregatedSlots.has(slotId)) {
-                            aggregatedSlots.set(slotId, []);
-                        }
-                        aggregatedSlots.get(slotId).push(data);
-                    });
-                    
-                    // 2. Iterar sobre los slots y aplicar la lógica de visualización de Estudiante
-                    aggregatedSlots.forEach((reservations, slotId) => {
-                        const slotElement = slotMap.get(slotId);
-                        if (!slotElement || slotElement.dataset.status === 'past') return;
-                        
-                        // Encontrar la reserva dominante
-                        let dominantReservation = null;
-                        
-                        // Orden de prioridad: Bloqueado > Mío Aprobado > Otros Aprobados > Mío Pendiente > Otros Pendientes
-                        const blocked = reservations.find(r => r.status === 'blocked');
-                        const myApproved = reservations.find(r => r.status === 'approved' && r.userId === userId);
-                        const otherApproved = reservations.find(r => r.status === 'approved' && r.userId !== userId);
-                        const myPending = reservations.find(r => r.status === 'pending' && r.userId === userId);
-                        const otherPending = reservations.find(r => r.status === 'pending' && r.userId !== userId);
-                        
-                        if (blocked) {
-                            dominantReservation = blocked;
-                        } else if (myApproved) {
-                            dominantReservation = myApproved;
-                        } else if (otherApproved) {
-                            dominantReservation = otherApproved;
-                        } else if (myPending) {
-                            dominantReservation = myPending;
-                        } else if (otherPending) {
-                            dominantReservation = otherPending;
-                        }
-                        
-                        // Si hay una reserva dominante, actualizar el slot (y limpiar si es 'selected')
-                        if (dominantReservation) {
-                            updateSlotAppearance(slotElement, dominantReservation, 'student');
-                        }
-                    });
-                    
-                    // Asegurar que los slots seleccionados se mantengan (si no hay conflicto)
-                    selectedSlots.forEach(slotId => {
-                        const slot = slotMap.get(slotId);
-                        if (slot && slot.dataset.status === 'free') {
-                            slot.classList.add('slot-selected');
-                            slot.dataset.status = 'selected';
-                            slot.innerHTML = '<span class="slot-text">Seleccionado</span>';
-                        }
-                    });
-                    
-                    updateSubmitBox();
-                    
-                }, (error) => {
-                    console.error("Error al cargar reservaciones: ", error);
-                    showMessage('error', 'Error al conectar con la base de datos de turnos.');
-                });
-            }
-            
-            function handleStudentSlotClick(slot) {
-                const slotId = slot.id;
-                const status = slot.dataset.status;
+            window.handleLogout = async () => {
+                await signOut(auth);
+                // onAuthStateChanged se encargará de limpiar el estado y mostrar el login
+            };
 
-                if (status === 'free') {
-                    // --- CORRECCIÓN: Agregar texto 'Seleccionado' al bloque azul ---
-                    slot.innerHTML = '<span class="slot-text">Seleccionado</span>';
-                    slot.classList.add('slot-selected');
-                    slot.dataset.status = 'selected';
-                    selectedSlots.push(slotId);
-                } else if (status === 'selected') {
-                    // --- CORRECCIÓN: Remover texto al deseleccionar ---
-                    slot.innerHTML = ''; 
-                    slot.classList.remove('slot-selected');
-                    slot.dataset.status = 'free';
-                    selectedSlots = selectedSlots.filter(s => s !== slotId);
-                } else if (slot.dataset.owner === 'self' && (status === 'pending' || status === 'approved')) {
-                    // Permitir al usuario cancelar su propia solicitud PENDIENTE o APROBADA
-                    const statusText = status === 'pending' ? 'solicitud PENDIENTE' : 'reserva APROBADA';
-                    if (confirm(`¿Estás seguro de que quieres ANULAR esta ${statusText}?`)) {
-                        cancelReservation(slot.dataset.docId);
-                    }
-                }
-                
-                updateSubmitBox();
-            }
-            
-            function updateSubmitBox() {
-                const box = document.getElementById('student-request-box');
-                const btn = document.getElementById('submit-request-btn');
-                const text = document.getElementById('student-request-count');
-                
-                if (!box || !btn || !text) return; 
+            // --- LÓGICA PRINCIPAL (CARGA DE DATOS) ---
 
-                if (selectedSlots.length > 0) {
-                    text.innerText = `${selectedSlots.length} hora(s) seleccionada(s).`;
-                    btn.disabled = false;
-                    box.classList.remove('hidden', 'fade-in');
-                    void box.offsetWidth;
-                    box.classList.add('fade-in');
-                } else {
-                    box.classList.add('hidden');
-                    btn.disabled = true;
-                }
-            }
-            
-            async function handleSubmitRequest() {
-                if (selectedSlots.length === 0) return;
+            function initializeDatabaseListener() {
+                if (!auth.currentUser) {
+                    showView('login');
+                    return;
+                }
 
-                const batch = writeBatch(db);
-                let hasConflicts = false;
-                let conflictSlot = null;
+                if (userRole === 'admin') {
+                    const adminNameEl = document.getElementById('admin-header-name');
+                    if (adminNameEl) adminNameEl.innerText = currentGroupInfo.name;
 
-                for (const slotId of selectedSlots) {
-                    const slotElement = document.getElementById(slotId);
-                    if (slotElement && slotElement.dataset.status !== 'free' && slotElement.dataset.status !== 'selected') {
-                        hasConflicts = true;
-                        conflictSlot = slotId;
-                        break;
-                    }
-                }
+                    showView('admin');
+                    setupAdminView(); // Configurar la vista de admin
+                } else {
+                    const studentNameEl = document.getElementById('student-header-name');
+                    if (studentNameEl) studentNameEl.innerText = currentGroupInfo.name;
 
-                if (hasConflicts) {
-                    showMessage('error', `El turno ${conflictSlot} ya no está disponible. Por favor, refresca tu selección.`);
-                    selectedSlots = [];
-                    document.querySelectorAll('.slot-selected').forEach(s => {
-                        s.classList.remove('slot-selected');
-                        s.dataset.status = 'free';
-                    });
-                    updateSubmitBox();
-                    return;
-                }
-                
-                selectedSlots.forEach(slotId => {
-                    const [date, hourStr] = slotId.split('_');
-                    const hour = parseInt(hourStr);
-                    const newDocRef = doc(collection(db, RESERVATIONS_COLLECTION));
-                    
-                    batch.set(newDocRef, {
-                        date: date,
-                        hour: hour,
-                        status: 'pending',
-                        userId: userId,
-                        groupName: currentGroupInfo.name,
-                        groupColor: currentGroupInfo.color,
-                        createdAt: serverTimestamp()
-                    });
-                });
+                    showView('student');
+                    setupStudentView(); // Configurar la vista de estudiante
+                }
+            }
 
-                try {
-                    await batch.commit();
-                    showMessage('success', `${selectedSlots.length} solicitud(es) enviada(s) con éxito.`);
-                    selectedSlots = [];
-                    updateSubmitBox();
-                } catch (error) {
-                    console.error("Error al enviar solicitudes: ", error);
-                    showMessage('error', 'Error al guardar las solicitudes.');
-                }
-            }
-            
-            async function cancelReservation(docId) {
-                if (!docId) {
-                     console.error("Error: docId es nulo al cancelar.");
-                     return;
-                }
-                try {
-                    await deleteDoc(doc(db, RESERVATIONS_COLLECTION, docId));
-                    showMessage('success', 'Reserva cancelada.');
-                } catch (error) {
-                    console.error("Error al cancelar: ", error);
-                    showMessage('error', 'No se pudo cancelar la reserva.');
-                }
-            }
-            
-            // --- LÓGICA DEL PANEL DE ADMINISTRADOR (MODIFICADO) ---
+            function setupWeekNavigation(prevBtnId, nextBtnId, titleId, calendarRenderer) {
+                const prevWeekBtn = document.getElementById(prevBtnId);
+                const nextWeekBtn = document.getElementById(nextBtnId);
+                const weekTitle = document.getElementById(titleId);
 
-            function setupAdminView() {
-                setupWeekNavigation('admin-prev-week', 'admin-next-week', 'admin-week-title', renderAdminCalendar);
-                
-                const blockBtn = document.getElementById('admin-block-btn');
-                const unblockBtn = document.getElementById('admin-unblock-btn');
-                
-                if (blockBtn) blockBtn.onclick = () => handleAdminBlockAction('blocked');
-                if (unblockBtn) unblockBtn.onclick = () => handleAdminBlockAction('free');
+                if (!prevWeekBtn || !nextWeekBtn || !weekTitle) {
+                    console.error("Error: Elementos de navegación de semana no encontrados.");
+                    return;
+                }
 
-                listenForPendingRequests();
-            }
-            
-            function renderAdminCalendar(weekDays) {
-                const tableBody = document.getElementById('admin-calendar-body');
-                const tableHead = document.getElementById('admin-calendar-head');
-                
-                if(!tableBody || !tableHead) return;
-                
-                tableHead.innerHTML = '';
-                tableBody.innerHTML = '';
-                if (reservationsListener) reservationsListener();
+                const render = () => {
+                    const weekDays = getWeekDays(currentWeekOffset);
+                    const start = weekDays[0].toLocaleDateString('es-ES', { month: 'short', day: 'numeric' });
+                    const end = weekDays[4].toLocaleDateString('es-ES', { month: 'short', day: 'numeric' });
+                    weekTitle.innerText = `${start} - ${end}`;
 
-                const headRow = document.createElement('tr');
-                headRow.appendChild(createHeaderCell("Hora"));
-                weekDays.forEach(day => {
-                    headRow.appendChild(createHeaderCell(
-                        `${day.toLocaleDateString('es-ES', { weekday: 'short' })} ${day.getDate()}/${day.getMonth() + 1}`
-                    ));
-                });
-                tableHead.appendChild(headRow);
+                    calendarRenderer(weekDays);
+                };
 
-                const hours = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
-                const slotMap = new Map();
+                prevWeekBtn.onclick = () => {
+                    currentWeekOffset--;
+                    selectedSlots = []; // Limpiar selección al cambiar de semana
+                    render();
+                };
 
-                hours.forEach(hour => {
-                    const row = document.createElement('tr');
-                    row.appendChild(createTimeLabelCell(`${String(hour).padStart(2, '0')}:00 - ${String(hour + 1).padStart(2, '0')}:00`));
-                    weekDays.forEach(day => {
-                        const slotId = `${formatDateYYYYMMDD(day)}_${hour}`;
-                        const cell = document.createElement('td');
-                        const slotContainer = createSlotContainer();
-                        const slot = createSlotElement(slotId, 'admin');
-                        
-                        slotContainer.appendChild(slot);
-                        cell.appendChild(slotContainer);
-                        row.appendChild(cell);
-                        
-                        slotMap.set(slotId, slot);
-                    });
-                    tableBody.appendChild(row);
-                });
+                nextWeekBtn.onclick = () => {
+                    currentWeekOffset++;
+                    selectedSlots = []; // Limpiar selección al cambiar de semana
+                    render();
+                };
 
-                const startOfWeek = formatDateYYYYMMDD(weekDays[0]);
-                const endOfWeek = formatDateYYYYMMDD(weekDays[4]);
+                render(); // Carga inicial
+            }
 
-                const q = query(
-                    collection(db, RESERVATIONS_COLLECTION),
-                    where("date", ">=", startOfWeek),
-                    where("date", "<=", endOfWeek)
-                );
+            // --- LÓGICA DEL PANEL DE ESTUDIANTE (MODIFICADO) ---
 
-                reservationsListener = onSnapshot(q, (snapshot) => {
-                    resetCalendarSlots(slotMap, 'admin');
-                    
-                    const aggregatedSlots = new Map();
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        data.id = doc.id;
-                        const slotId = `${data.date}_${data.hour}`;
-                        
-                        if (!aggregatedSlots.has(slotId)) {
-                            aggregatedSlots.set(slotId, []);
-                        }
-                        aggregatedSlots.get(slotId).push(data);
-                    });
-        
-                    aggregatedSlots.forEach((reservations, slotId) => {
-                        const slotElement = slotMap.get(slotId);
-                        if (!slotElement || slotElement.dataset.status === 'past') return;
-                        
-                        // === Lógica de Agregación para Admin ===
-                        
-                        const approvedReservations = reservations.filter(r => r.status === 'approved');
-                        const approvedCount = approvedReservations.length;
-                        const pendingCount = reservations.filter(r => r.status === 'pending').length;
-                        const blocked = reservations.find(r => r.status === 'blocked');
-                        
-                        // Determinar el estado dominante para la visualización del Admin
-                        let displayData = null;
-                        
-                        if (blocked) {
-                            // Prioridad máxima: Bloqueado
-                            displayData = blocked;
-                        } else if (approvedCount > 0) {
-                            // Segunda prioridad: Aprobado (mostrar el primer aprobado encontrado con contador)
-                            displayData = approvedReservations[0]; 
-                            displayData.groupName = approvedCount === 1 
-                                ? displayData.groupName
-                                : `${approvedReservations[0].groupName} (+${approvedCount - 1})`;
-                            displayData.isAggregated = true;
-                            
-                            if (pendingCount > 0) {
-                                displayData.groupName += ` P: ${pendingCount}`;
-                            }
-                        } else if (pendingCount > 0) {
-                            // Tercera prioridad: Pendiente (mostrar el primer pendiente encontrado con contador)
-                            displayData = reservations.find(r => r.status === 'pending');
-                            displayData.groupName = `Pendientes: ${pendingCount}`;
-                            displayData.isAggregated = true; 
-                            displayData.groupColor = 'yellow';
-                        }
-        
-                        if (displayData) {
-                            updateSlotAppearance(slotElement, displayData, 'admin');
-                        }
-                    });
-                    
-                    selectedSlots = [];
-                    updateAdminActionBox();
-                });
-            }
-            
-            function handleAdminSlotClick(slot) {
-                const slotId = slot.id;
-                const status = slot.dataset.status;
+            function setupStudentView() {
+                setupWeekNavigation('student-prev-week', 'student-next-week', 'student-week-title', renderStudentCalendar);
+                const submitBtn = document.getElementById('submit-request-btn');
+                if (submitBtn) submitBtn.onclick = handleSubmitRequest;
+            }
 
-                // Permitir selección de slots libres o bloqueados por el admin
-                if (status === 'free' || status === 'blocked') {
-                    if (selectedSlots.includes(slotId)) {
-                        selectedSlots = selectedSlots.filter(s => s !== slotId);
-                        slot.classList.remove('slot-selected');
-                        slot.innerHTML = (status === 'free') ? '<span class="slot-text">Disponible</span>' : '<span class="slot-text">Bloqueado</span>';
-                    } else {
-                        selectedSlots.push(slotId);
-                        slot.classList.add('slot-selected');
-                        slot.innerHTML = '<span class="slot-text">Seleccionado</span>';
-                    }
-                } else if (status === 'approved') {
-                    // Permitir al Admin cancelar (derrogar) turnos aprobados
-                    if (confirm(`¿Seguro que quieres DERROGAR el turno aprobado de ${slot.dataset.groupName}?`)) {
-                        cancelReservation(slot.dataset.docId);
-                    }
-                }
-                
-                updateAdminActionBox();
-            }
-            
-            function updateAdminActionBox() {
-                const box = document.getElementById('admin-action-box');
-                const countEl = document.getElementById('admin-selection-count');
-                
-                if (!box || !countEl) return; 
-                
-                if (selectedSlots.length > 0) {
-                    box.classList.remove('hidden');
-                    countEl.innerText = `${selectedSlots.length} hora(s) seleccionada(s).`;
-                } else {
-                    box.classList.add('hidden');
-                }
-            }
-            
-            async function handleAdminBlockAction(action) {
-                if (selectedSlots.length === 0) return;
-                
-                const batch = writeBatch(db);
-                
-                for (const slotId of selectedSlots) {
-                    const [date, hourStr] = slotId.split('_');
-                    const hour = parseInt(hourStr);
-                    const docId = `ADMIN_BLOCK_${date}_${hour}`;
-                    const docRef = doc(db, RESERVATIONS_COLLECTION, docId);
+            function renderStudentCalendar(weekDays) {
+                const tableBody = document.getElementById('student-calendar-body');
+                const tableHead = document.getElementById('student-calendar-head');
 
-                    if (action === 'blocked') {
-                        batch.set(docRef, {
-                            date: date,
-                            hour: hour,
-                            status: 'blocked',
-                            groupName: 'Admin Block',
-                            userId: userId,
-                            createdAt: serverTimestamp()
-                        });
-                    } else {
-                        batch.delete(docRef);
-                    }
-                }
-                
-                try {
-                    await batch.commit();
-                    showMessage('success', `Operación completada en ${selectedSlots.length} slots.`);
-                    selectedSlots = [];
-                    updateAdminActionBox();
-                } catch (error) {
-                    console.error("Error al actualizar bloques de admin: ", error);
-                    showMessage('error', 'Error al guardar los cambios.');
-                }
-            }
+                if (!tableBody || !tableHead) return;
 
-            // --- Lógica Común de Renderizado de Calendario (TABLA) ---
+                tableHead.innerHTML = ''; // Limpiar cabecera
+                tableBody.innerHTML = ''; // Limpiar cuerpo
 
-            function createHeaderCell(text) {
-                const th = document.createElement('th');
-                th.innerText = text;
-                return th;
-            }
-            
-            function createTimeLabelCell(text) {
-                const td = document.createElement('td');
-                td.className = 'time-label';
-                td.innerText = text;
-                return td;
-            }
-            
-            function createSlotContainer() {
-                const div = document.createElement('div');
-                div.className = 'slot-container';
-                return div;
-            }
+                if (reservationsListener) reservationsListener();
 
-            function createSlotElement(slotId, role) {
-                const slot = document.createElement('button'); // Usar botón para mejor accesibilidad
-                slot.id = slotId;
-                slot.className = 'slot';
-                slot.type = 'button'; // Prevenir envío de formulario
-                
-                if (role === 'student') {
-                    slot.onclick = () => handleStudentSlotClick(slot);
-                } else if (role === 'admin') {
-                    slot.onclick = () => handleAdminSlotClick(slot);
-                }
-                
-                return slot;
-            }
+                // Crear Encabezados (Lunes 17/11, Martes 18/11...)
+                const headRow = document.createElement('tr');
+                headRow.appendChild(createHeaderCell("Hora"));
+                weekDays.forEach(day => {
+                    headRow.appendChild(createHeaderCell(
+                        `${day.toLocaleDateString('es-ES', { weekday: 'short' })} ${day.getDate()}/${day.getMonth() + 1}`
+                    ));
+                });
+                tableHead.appendChild(headRow);
 
-            function resetCalendarSlots(slotMap, role) {
-                const now = new Date();
-                now.setHours(now.getHours(), 0, 0, 0);
+                const hours = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
+                const slotMap = new Map();
 
-                slotMap.forEach((slot, slotId) => {
-                    const [dateStr, hourStr] = slotId.split('_');
-                    const slotDate = new Date(`${dateStr}T${String(hourStr).padStart(2, '0')}:00:00`);
-                    
-                    slot.className = 'slot'; // Limpiar colores anteriores
-                    slot.innerHTML = ''; // Limpiar texto
-                    slot.disabled = false; // Habilitar slot
-                    
-                    if (slotDate < now) {
-                        // Slot en el pasado
-                        slot.dataset.status = 'past';
-                        slot.classList.add('slot-past');
-                        // --- CORRECCIÓN DE TEXTO ---
-                        slot.innerHTML = '<span class="slot-text">No Disponible</span>';
-                        slot.disabled = true;
-                    } else {
-                        // Slot libre
-                        slot.dataset.status = 'free';
-                        slot.classList.add('slot-free');
-                        if (role === 'admin') {
-                            slot.innerHTML = '<span class="slot-text">Disponible</span>';
-                        }
-                    }
-                    
-                    slot.dataset.docId = '';
-                    slot.dataset.owner = '';
-                    slot.dataset.groupName = '';
-                });
-            }
-            
-            function updateSlotAppearance(slot, data, role) {
-                slot.dataset.docId = data.id || ''; 
-                slot.dataset.status = data.status;
-                slot.dataset.groupName = data.groupName || '';
-                
-                let colorClasses = '';
-                let content = data.groupName;
-                slot.disabled = false; // Por defecto
-                
-                const isOwner = (data.userId === userId);
-                slot.dataset.owner = isOwner ? 'self' : 'other';
+                hours.forEach(hour => {
+                    const row = document.createElement('tr');
+                    // Crear Etiqueta de Hora (07:00 - 08:00)
+                    row.appendChild(createTimeLabelCell(`${String(hour).padStart(2, '0')}:00 - ${String(hour + 1).padStart(2, '0')}:00`));
 
-                switch (data.status) {
-                    case 'pending':
-                        colorClasses = 'slot-pending';
-                        if (role === 'admin') {
-                            const color = COLOR_MAP[data.groupColor] || { bg: 'bg-gray-400', border: 'border-gray-500', text: 'text-black' };
-                            slot.classList.add(color.bg, color.border, color.text, 'slot-admin-view-pending');
-                            content = `Pendiente (${data.groupName})`;
-                        } else {
-                             // --- CORRECCIÓN DE TEXTO: Simplificado ---
-                             content = isOwner ? 'Mi Solicitud' : 'Pendiente';
-                        }
-                        break;
-                        
-                    case 'approved':
-                        if (role === 'admin') {
-                            const color = COLOR_MAP[data.groupColor] || { bg: 'bg-gray-700', border: 'border-gray-900', text: 'text-white' };
-                            slot.classList.add(color.bg, color.border, color.text, 'slot-admin-view-approved');
-                            content = data.groupName;
-                        } else {
-                            // --- LÓGICA DE COLORES VERDE/ROJO (Estricta) ---
-                            if (isOwner) {
-                                colorClasses = 'slot-approved-self'; // Verde
-                                content = "Agendado"; // <-- REQUERIDO
-                            } else {
-                                colorClasses = 'slot-approved-other'; // Rojo
-                                content = "Reservado"; // <-- REQUIDO (Sin nombre de grupo)
-                            }
-                        }
-                        break;
-                        
-                    case 'blocked':
-                        colorClasses = 'slot-blocked'; // Gris
-                        content = 'No Disponible';
-                        // --- ¡CORRECCIÓN DE BUG! ---
-                        // El admin SÍ debe poder hacer clic en slots bloqueados.
-                        if (role === 'admin') {
-                            slot.disabled = false;
-                            slot.classList.add('admin-clickable'); // Añadir estilo hover
-                            content = 'Bloqueado';
-                        } else {
-                            slot.disabled = true;
-                        }
-                        break;
-                }
-                
-                if (colorClasses) slot.classList.add(colorClasses);
-                slot.innerHTML = `<span class="slot-text">${content}</span>`;
-            }
+                    // Crear 5 celdas (L-V) para esta hora
+                    weekDays.forEach(day => {
+                        const slotId = `${formatDateYYYYMMDD(day)}_${hour}`;
+                        const cell = document.createElement('td');
+                        const slotContainer = createSlotContainer();
+                        const slot = createSlotElement(slotId, 'student');
 
-            
-            // --- Lógica del Panel de Aprobación (Admin) ---
+                        slotContainer.appendChild(slot);
+                        cell.appendChild(slotContainer);
+                        row.appendChild(cell);
 
-            function listenForPendingRequests() {
-                // *** CORRECCIÓN CRÍTICA ***
-                // Quitar 'orderBy' para evitar el error de índice de Firestore.
-                // La ordenación se hará localmente.
-                const q = query(
-                    collection(db, RESERVATIONS_COLLECTION),
-                    where("status", "==", "pending")
-                );
+                        slotMap.set(slotId, slot);
+                    });
+                    tableBody.appendChild(row);
+                });
 
-                onSnapshot(q, (snapshot) => {
-                    const listContainer = document.getElementById('admin-requests-list');
-                    if (!listContainer) return; 
-                    
-                    listContainer.innerHTML = '';
-                    
-                    if (snapshot.empty) {
-                        listContainer.innerHTML = '<div class="text-center text-gray-400 p-4">No hay solicitudes pendientes.</div>';
-                        return;
-                    }
-                    
-                    // Ordenar localmente
-                    const requests = [];
-                    snapshot.forEach(doc => {
-                        requests.push({ id: doc.id, data: doc.data() });
-                    });
-                    
-                    // Ordenar por fecha de creación (ascendente)
-                    requests.sort((a, b) => {
-                        const aTime = a.data.createdAt?.toMillis() || 0;
-                        const bTime = b.data.createdAt?.toMillis() || 0;
-                        return aTime - bTime; 
-                    });
+                const startOfWeek = formatDateYYYYMMDD(weekDays[0]);
+                const endOfWeek = formatDateYYYYMMDD(weekDays[4]);
 
-                    requests.forEach(req => {
-                        listContainer.appendChild(createRequestRow(req.id, req.data));
-                    });
-                }, (error) => {
-                    // Este es el error que viste en la consola
-                    console.error("Error al cargar solicitudes pendientes: ", error);
-                    showMessage('error', 'Error al cargar la lista de solicitudes. Verifique los permisos de Firestore.');
-                });
-            }
-            
-            function createRequestRow(docId, data) {
-                const div = document.createElement('div');
-                const color = data.groupColor || 'gray';
-                const colorClass = COLOR_MAP[color]?.bg || 'bg-gray-200'; // Usar color sólido
-                const textColor = COLOR_MAP[color]?.text || 'text-gray-900';
-                
-                div.className = `p-3 rounded-lg shadow-sm mb-3 flex justify-between items-center ${colorClass} ${textColor}`;
-                
-                // Formatear la fecha para que sea legible
-                const requestDate = new Date(`${data.date}T00:00:00`).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
-                
-                div.innerHTML = `
+                // Query para obtener todas las reservas de la semana (independiente del estado)
+                const q = query(
+                    collection(db, RESERVATIONS_COLLECTION),
+                    where("date", ">=", startOfWeek),
+                    where("date", "<=", endOfWeek)
+                );
+
+                reservationsListener = onSnapshot(q, (snapshot) => {
+                    resetCalendarSlots(slotMap, 'student');
+
+                    // 1. Agrupar todas las reservas por slot (Date_Hour)
+                    const aggregatedSlots = new Map();
+
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        data.id = doc.id;
+                        const slotId = `${data.date}_${data.hour}`;
+
+                        if (!aggregatedSlots.has(slotId)) {
+                            aggregatedSlots.set(slotId, []);
+                        }
+                        aggregatedSlots.get(slotId).push(data);
+                    });
+
+                    // 2. Iterar sobre los slots y aplicar la lógica de visualización de Estudiante
+                    aggregatedSlots.forEach((reservations, slotId) => {
+                        const slotElement = slotMap.get(slotId);
+                        if (!slotElement || slotElement.dataset.status === 'past') return;
+
+                        // Encontrar la reserva dominante
+                        let dominantReservation = null;
+
+                        // Orden de prioridad: Bloqueado > Mío Aprobado > Otros Aprobados > Mío Pendiente > Otros Pendientes
+                        const blocked = reservations.find(r => r.status === 'blocked');
+                        const myApproved = reservations.find(r => r.status === 'approved' && r.userId === userId);
+                        const otherApproved = reservations.find(r => r.status === 'approved' && r.userId !== userId);
+                        const myPending = reservations.find(r => r.status === 'pending' && r.userId === userId);
+                        const otherPending = reservations.find(r => r.status === 'pending' && r.userId !== userId);
+
+                        if (blocked) {
+                            dominantReservation = blocked;
+                        } else if (myApproved) {
+                            dominantReservation = myApproved;
+                        } else if (otherApproved) {
+                            dominantReservation = otherApproved;
+                        } else if (myPending) {
+                            dominantReservation = myPending;
+                        } else if (otherPending) {
+                            dominantReservation = otherPending;
+                        }
+
+                        // Si hay una reserva dominante, actualizar el slot (y limpiar si es 'selected')
+                        if (dominantReservation) {
+                            updateSlotAppearance(slotElement, dominantReservation, 'student');
+                        }
+                    });
+
+                    // Asegurar que los slots seleccionados se mantengan (si no hay conflicto)
+                    selectedSlots.forEach(slotId => {
+                        const slot = slotMap.get(slotId);
+                        if (slot && slot.dataset.status === 'free') {
+                            slot.classList.add('slot-selected');
+                            slot.dataset.status = 'selected';
+                            slot.innerHTML = '<span class="slot-text">Seleccionado</span>';
+                        }
+                    });
+
+                    updateSubmitBox();
+
+                }, (error) => {
+                    console.error("Error al cargar reservaciones: ", error);
+                    showMessage('error', 'Error al conectar con la base de datos de turnos.');
+                });
+            }
+
+            function handleStudentSlotClick(slot) {
+                const slotId = slot.id;
+                const status = slot.dataset.status;
+
+                if (status === 'free') {
+                    // --- CORRECCIÓN: Agregar texto 'Seleccionado' al bloque azul ---
+                    slot.innerHTML = '<span class="slot-text">Seleccionado</span>';
+                    slot.classList.add('slot-selected');
+                    slot.dataset.status = 'selected';
+                    selectedSlots.push(slotId);
+                } else if (status === 'selected') {
+                    // --- CORRECCIÓN: Remover texto al deseleccionar ---
+                    slot.innerHTML = '';
+                    slot.classList.remove('slot-selected');
+                    slot.dataset.status = 'free';
+                    selectedSlots = selectedSlots.filter(s => s !== slotId);
+                } else if (slot.dataset.owner === 'self' && (status === 'pending' || status === 'approved')) {
+                    // Permitir al usuario cancelar su propia solicitud PENDIENTE o APROBADA
+                    const statusText = status === 'pending' ? 'solicitud PENDIENTE' : 'reserva APROBADA';
+                    if (confirm(`¿Estás seguro de que quieres ANULAR esta ${statusText}?`)) {
+                        cancelReservation(slot.dataset.docId);
+                    }
+                }
+
+                updateSubmitBox();
+            }
+
+            function updateSubmitBox() {
+                const box = document.getElementById('student-request-box');
+                const btn = document.getElementById('submit-request-btn');
+                const text = document.getElementById('student-request-count');
+
+                if (!box || !btn || !text) return;
+
+                if (selectedSlots.length > 0) {
+                    text.innerText = `${selectedSlots.length} hora(s) seleccionada(s).`;
+                    btn.disabled = false;
+                    box.classList.remove('hidden', 'fade-in');
+                    void box.offsetWidth;
+                    box.classList.add('fade-in');
+                } else {
+                    box.classList.add('hidden');
+                    btn.disabled = true;
+                }
+            }
+
+            async function handleSubmitRequest() {
+                if (selectedSlots.length === 0) return;
+
+                const batch = writeBatch(db);
+                let hasConflicts = false;
+                let conflictSlot = null;
+
+                for (const slotId of selectedSlots) {
+                    const slotElement = document.getElementById(slotId);
+                    if (slotElement && slotElement.dataset.status !== 'free' && slotElement.dataset.status !== 'selected') {
+                        hasConflicts = true;
+                        conflictSlot = slotId;
+                        break;
+                    }
+                }
+
+                if (hasConflicts) {
+                    showMessage('error', `El turno ${conflictSlot} ya no está disponible. Por favor, refresca tu selección.`);
+                    selectedSlots = [];
+                    document.querySelectorAll('.slot-selected').forEach(s => {
+                        s.classList.remove('slot-selected');
+                        s.dataset.status = 'free';
+                    });
+                    updateSubmitBox();
+                    return;
+                }
+
+                selectedSlots.forEach(slotId => {
+                    const [date, hourStr] = slotId.split('_');
+                    const hour = parseInt(hourStr);
+                    const newDocRef = doc(collection(db, RESERVATIONS_COLLECTION));
+
+                    batch.set(newDocRef, {
+                        date: date,
+                        hour: hour,
+                        status: 'pending',
+                        userId: userId,
+                        groupName: currentGroupInfo.name,
+                        groupColor: currentGroupInfo.color,
+                        createdAt: serverTimestamp()
+                    });
+                });
+
+                try {
+                    await batch.commit();
+                    showMessage('success', `${selectedSlots.length} solicitud(es) enviada(s) con éxito.`);
+                    selectedSlots = [];
+                    updateSubmitBox();
+                } catch (error) {
+                    console.error("Error al enviar solicitudes: ", error);
+                    showMessage('error', 'Error al guardar las solicitudes.');
+                }
+            }
+
+            async function cancelReservation(docId) {
+                if (!docId) {
+                    console.error("Error: docId es nulo al cancelar.");
+                    return;
+                }
+                try {
+                    await deleteDoc(doc(db, RESERVATIONS_COLLECTION, docId));
+                    showMessage('success', 'Reserva cancelada.');
+                } catch (error) {
+                    console.error("Error al cancelar: ", error);
+                    showMessage('error', 'No se pudo cancelar la reserva.');
+                }
+            }
+
+            // --- LÓGICA DEL PANEL DE ADMINISTRADOR (MODIFICADO) ---
+
+            function setupAdminView() {
+                setupWeekNavigation('admin-prev-week', 'admin-next-week', 'admin-week-title', renderAdminCalendar);
+
+                const blockBtn = document.getElementById('admin-block-btn');
+                const unblockBtn = document.getElementById('admin-unblock-btn');
+
+                if (blockBtn) blockBtn.onclick = () => handleAdminBlockAction('blocked');
+                if (unblockBtn) unblockBtn.onclick = () => handleAdminBlockAction('free');
+
+                listenForPendingRequests();
+            }
+
+            function renderAdminCalendar(weekDays) {
+                const tableBody = document.getElementById('admin-calendar-body');
+                const tableHead = document.getElementById('admin-calendar-head');
+
+                if (!tableBody || !tableHead) return;
+
+                tableHead.innerHTML = '';
+                tableBody.innerHTML = '';
+                if (reservationsListener) reservationsListener();
+
+                const headRow = document.createElement('tr');
+                headRow.appendChild(createHeaderCell("Hora"));
+                weekDays.forEach(day => {
+                    headRow.appendChild(createHeaderCell(
+                        `${day.toLocaleDateString('es-ES', { weekday: 'short' })} ${day.getDate()}/${day.getMonth() + 1}`
+                    ));
+                });
+                tableHead.appendChild(headRow);
+
+                const hours = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
+                const slotMap = new Map();
+
+                hours.forEach(hour => {
+                    const row = document.createElement('tr');
+                    row.appendChild(createTimeLabelCell(`${String(hour).padStart(2, '0')}:00 - ${String(hour + 1).padStart(2, '0')}:00`));
+                    weekDays.forEach(day => {
+                        const slotId = `${formatDateYYYYMMDD(day)}_${hour}`;
+                        const cell = document.createElement('td');
+                        const slotContainer = createSlotContainer();
+                        const slot = createSlotElement(slotId, 'admin');
+
+                        slotContainer.appendChild(slot);
+                        cell.appendChild(slotContainer);
+                        row.appendChild(cell);
+
+                        slotMap.set(slotId, slot);
+                    });
+                    tableBody.appendChild(row);
+                });
+
+                const startOfWeek = formatDateYYYYMMDD(weekDays[0]);
+                const endOfWeek = formatDateYYYYMMDD(weekDays[4]);
+
+                const q = query(
+                    collection(db, RESERVATIONS_COLLECTION),
+                    where("date", ">=", startOfWeek),
+                    where("date", "<=", endOfWeek)
+                );
+
+                reservationsListener = onSnapshot(q, (snapshot) => {
+                    resetCalendarSlots(slotMap, 'admin');
+
+                    const aggregatedSlots = new Map();
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        data.id = doc.id;
+                        const slotId = `${data.date}_${data.hour}`;
+
+                        if (!aggregatedSlots.has(slotId)) {
+                            aggregatedSlots.set(slotId, []);
+                        }
+                        aggregatedSlots.get(slotId).push(data);
+                    });
+
+                    aggregatedSlots.forEach((reservations, slotId) => {
+                        const slotElement = slotMap.get(slotId);
+                        if (!slotElement || slotElement.dataset.status === 'past') return;
+
+                        // === Lógica de Agregación para Admin ===
+
+                        const approvedReservations = reservations.filter(r => r.status === 'approved');
+                        const approvedCount = approvedReservations.length;
+                        const pendingCount = reservations.filter(r => r.status === 'pending').length;
+                        const blocked = reservations.find(r => r.status === 'blocked');
+
+                        // Determinar el estado dominante para la visualización del Admin
+                        let displayData = null;
+
+                        if (blocked) {
+                            // Prioridad máxima: Bloqueado
+                            displayData = blocked;
+                        } else if (approvedCount > 0) {
+                            // Segunda prioridad: Aprobado (mostrar el primer aprobado encontrado con contador)
+                            displayData = approvedReservations[0];
+                            displayData.groupName = approvedCount === 1
+                                ? displayData.groupName
+                                : `${approvedReservations[0].groupName} (+${approvedCount - 1})`;
+                            displayData.isAggregated = true;
+
+                            if (pendingCount > 0) {
+                                displayData.groupName += ` P: ${pendingCount}`;
+                            }
+                        } else if (pendingCount > 0) {
+                            // Tercera prioridad: Pendiente (mostrar el primer pendiente encontrado con contador)
+                            displayData = reservations.find(r => r.status === 'pending');
+                            displayData.groupName = `Pendientes: ${pendingCount}`;
+                            displayData.isAggregated = true;
+                            displayData.groupColor = 'yellow';
+                        }
+
+                        if (displayData) {
+                            updateSlotAppearance(slotElement, displayData, 'admin');
+                        }
+                    });
+
+                    selectedSlots = [];
+                    updateAdminActionBox();
+                });
+            }
+
+            function handleAdminSlotClick(slot) {
+                const slotId = slot.id;
+                const status = slot.dataset.status;
+
+                // Permitir selección de slots libres o bloqueados por el admin
+                if (status === 'free' || status === 'blocked') {
+                    if (selectedSlots.includes(slotId)) {
+                        selectedSlots = selectedSlots.filter(s => s !== slotId);
+                        slot.classList.remove('slot-selected');
+                        slot.innerHTML = (status === 'free') ? '<span class="slot-text">Disponible</span>' : '<span class="slot-text">Bloqueado</span>';
+                    } else {
+                        selectedSlots.push(slotId);
+                        slot.classList.add('slot-selected');
+                        slot.innerHTML = '<span class="slot-text">Seleccionado</span>';
+                    }
+                } else if (status === 'approved') {
+                    // === NUEVO: Mostrar opciones para slots aprobados ===
+                    const groupName = slot.dataset.groupName;
+                    // Limpiar posibles agregados como "(+1)" o "P: 1"
+                    const cleanGroupName = groupName.replace(/ \(\+\d+\)/g, '').replace(/ P: \d+/g, '');
+
+                    // Preguntar al admin qué acción quiere realizar
+                    const action = confirm(
+                        `Grupo: ${cleanGroupName}\n\n¿Qué acción deseas realizar?\n\n- CANCELAR: Ver integrantes del grupo\n- ACEPTAR: Derrogar el turno`
+                    );
+
+                    if (action) {
+                        // Derrogar turno (acción original)
+                        if (confirm(`¿CONFIRMAS que quieres DERROGAR el turno aprobado de ${cleanGroupName}?`)) {
+                            cancelReservation(slot.dataset.docId);
+                        }
+                    } else {
+                        // Ver integrantes del grupo (nueva función)
+                        showStudentModal(cleanGroupName);
+                    }
+                }
+
+                updateAdminActionBox();
+            }
+
+            function updateAdminActionBox() {
+                const box = document.getElementById('admin-action-box');
+                const countEl = document.getElementById('admin-selection-count');
+
+                if (!box || !countEl) return;
+
+                if (selectedSlots.length > 0) {
+                    box.classList.remove('hidden');
+                    countEl.innerText = `${selectedSlots.length} hora(s) seleccionada(s).`;
+                } else {
+                    box.classList.add('hidden');
+                }
+            }
+
+            async function handleAdminBlockAction(action) {
+                if (selectedSlots.length === 0) return;
+
+                const batch = writeBatch(db);
+
+                for (const slotId of selectedSlots) {
+                    const [date, hourStr] = slotId.split('_');
+                    const hour = parseInt(hourStr);
+                    const docId = `ADMIN_BLOCK_${date}_${hour}`;
+                    const docRef = doc(db, RESERVATIONS_COLLECTION, docId);
+
+                    if (action === 'blocked') {
+                        batch.set(docRef, {
+                            date: date,
+                            hour: hour,
+                            status: 'blocked',
+                            groupName: 'Admin Block',
+                            userId: userId,
+                            createdAt: serverTimestamp()
+                        });
+                    } else {
+                        batch.delete(docRef);
+                    }
+                }
+
+                try {
+                    await batch.commit();
+                    showMessage('success', `Operación completada en ${selectedSlots.length} slots.`);
+                    selectedSlots = [];
+                    updateAdminActionBox();
+                } catch (error) {
+                    console.error("Error al actualizar bloques de admin: ", error);
+                    showMessage('error', 'Error al guardar los cambios.');
+                }
+            }
+
+            // --- Lógica Común de Renderizado de Calendario (TABLA) ---
+
+            function createHeaderCell(text) {
+                const th = document.createElement('th');
+                th.innerText = text;
+                return th;
+            }
+
+            function createTimeLabelCell(text) {
+                const td = document.createElement('td');
+                td.className = 'time-label';
+                td.innerText = text;
+                return td;
+            }
+
+            function createSlotContainer() {
+                const div = document.createElement('div');
+                div.className = 'slot-container';
+                return div;
+            }
+
+            function createSlotElement(slotId, role) {
+                const slot = document.createElement('button'); // Usar botón para mejor accesibilidad
+                slot.id = slotId;
+                slot.className = 'slot';
+                slot.type = 'button'; // Prevenir envío de formulario
+
+                if (role === 'student') {
+                    slot.onclick = () => handleStudentSlotClick(slot);
+                } else if (role === 'admin') {
+                    slot.onclick = () => handleAdminSlotClick(slot);
+                }
+
+                return slot;
+            }
+
+            function resetCalendarSlots(slotMap, role) {
+                const now = new Date();
+                now.setHours(now.getHours(), 0, 0, 0);
+
+                slotMap.forEach((slot, slotId) => {
+                    const [dateStr, hourStr] = slotId.split('_');
+                    const slotDate = new Date(`${dateStr}T${String(hourStr).padStart(2, '0')}:00:00`);
+
+                    slot.className = 'slot'; // Limpiar colores anteriores
+                    slot.innerHTML = ''; // Limpiar texto
+                    slot.disabled = false; // Habilitar slot
+
+                    if (slotDate < now) {
+                        // Slot en el pasado
+                        slot.dataset.status = 'past';
+                        slot.classList.add('slot-past');
+                        // --- CORRECCIÓN DE TEXTO ---
+                        slot.innerHTML = '<span class="slot-text">No Disponible</span>';
+                        slot.disabled = true;
+                    } else {
+                        // Slot libre
+                        slot.dataset.status = 'free';
+                        slot.classList.add('slot-free');
+                        if (role === 'admin') {
+                            slot.innerHTML = '<span class="slot-text">Disponible</span>';
+                        }
+                    }
+
+                    slot.dataset.docId = '';
+                    slot.dataset.owner = '';
+                    slot.dataset.groupName = '';
+                });
+            }
+
+            function updateSlotAppearance(slot, data, role) {
+                slot.dataset.docId = data.id || '';
+                slot.dataset.status = data.status;
+                slot.dataset.groupName = data.groupName || '';
+
+                let colorClasses = '';
+                let content = data.groupName;
+                slot.disabled = false; // Por defecto
+
+                const isOwner = (data.userId === userId);
+                slot.dataset.owner = isOwner ? 'self' : 'other';
+
+                switch (data.status) {
+                    case 'pending':
+                        colorClasses = 'slot-pending';
+                        if (role === 'admin') {
+                            const color = COLOR_MAP[data.groupColor] || { bg: 'bg-gray-400', border: 'border-gray-500', text: 'text-black' };
+                            slot.classList.add(color.bg, color.border, color.text, 'slot-admin-view-pending');
+                            content = `Pendiente (${data.groupName})`;
+                        } else {
+                            // --- CORRECCIÓN DE TEXTO: Simplificado ---
+                            content = isOwner ? 'Mi Solicitud' : 'Pendiente';
+                        }
+                        break;
+
+                    case 'approved':
+                        if (role === 'admin') {
+                            const color = COLOR_MAP[data.groupColor] || { bg: 'bg-gray-700', border: 'border-gray-900', text: 'text-white' };
+                            slot.classList.add(color.bg, color.border, color.text, 'slot-admin-view-approved');
+                            content = data.groupName;
+                        } else {
+                            // --- LÓGICA DE COLORES VERDE/ROJO (Estricta) ---
+                            if (isOwner) {
+                                colorClasses = 'slot-approved-self'; // Verde
+                                content = "Agendado"; // <-- REQUERIDO
+                            } else {
+                                colorClasses = 'slot-approved-other'; // Rojo
+                                content = "Reservado"; // <-- REQUIDO (Sin nombre de grupo)
+                            }
+                        }
+                        break;
+
+                    case 'blocked':
+                        colorClasses = 'slot-blocked'; // Gris
+                        content = 'No Disponible';
+                        // --- ¡CORRECCIÓN DE BUG! ---
+                        // El admin SÍ debe poder hacer clic en slots bloqueados.
+                        if (role === 'admin') {
+                            slot.disabled = false;
+                            slot.classList.add('admin-clickable'); // Añadir estilo hover
+                            content = 'Bloqueado';
+                        } else {
+                            slot.disabled = true;
+                        }
+                        break;
+                }
+
+                if (colorClasses) slot.classList.add(colorClasses);
+                slot.innerHTML = `<span class="slot-text">${content}</span>`;
+            }
+
+
+            // --- Lógica del Panel de Aprobación (Admin) ---
+
+            function listenForPendingRequests() {
+                // *** CORRECCIÓN CRÍTICA ***
+                // Quitar 'orderBy' para evitar el error de índice de Firestore.
+                // La ordenación se hará localmente.
+                const q = query(
+                    collection(db, RESERVATIONS_COLLECTION),
+                    where("status", "==", "pending")
+                );
+
+                onSnapshot(q, (snapshot) => {
+                    const listContainer = document.getElementById('admin-requests-list');
+                    if (!listContainer) return;
+
+                    listContainer.innerHTML = '';
+
+                    if (snapshot.empty) {
+                        listContainer.innerHTML = '<div class="text-center text-gray-400 p-4">No hay solicitudes pendientes.</div>';
+                        return;
+                    }
+
+                    // Ordenar localmente
+                    const requests = [];
+                    snapshot.forEach(doc => {
+                        requests.push({ id: doc.id, data: doc.data() });
+                    });
+
+                    // Ordenar por fecha de creación (ascendente)
+                    requests.sort((a, b) => {
+                        const aTime = a.data.createdAt?.toMillis() || 0;
+                        const bTime = b.data.createdAt?.toMillis() || 0;
+                        return aTime - bTime;
+                    });
+
+                    requests.forEach(req => {
+                        listContainer.appendChild(createRequestRow(req.id, req.data));
+                    });
+                }, (error) => {
+                    // Este es el error que viste en la consola
+                    console.error("Error al cargar solicitudes pendientes: ", error);
+                    showMessage('error', 'Error al cargar la lista de solicitudes. Verifique los permisos de Firestore.');
+                });
+            }
+
+            function createRequestRow(docId, data) {
+                const div = document.createElement('div');
+                const color = data.groupColor || 'gray';
+                const colorClass = COLOR_MAP[color]?.bg || 'bg-gray-200'; // Usar color sólido
+                const textColor = COLOR_MAP[color]?.text || 'text-gray-900';
+
+                div.className = `p-3 rounded-lg shadow-sm mb-3 flex justify-between items-center ${colorClass} ${textColor}`;
+
+                // Formatear la fecha para que sea legible
+                const requestDate = new Date(`${data.date}T00:00:00`).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
+
+                div.innerHTML = `
                     <div class="flex-1 overflow-hidden">
                         <div class="font-bold text-sm truncate">${data.groupName}</div>
                         <div class="text-xs opacity-80">
@@ -1107,325 +1289,448 @@
                         </button>
                     </div>
                 `;
-                return div;
-            }
-            
-            // === FUNCIÓN CRÍTICA CON LÓGICA DE LÍMITE DE 4 (MODIFICADA) ===
-            window.updateReservationStatus = async (docId, newStatus) => {
-                const docRef = doc(db, RESERVATIONS_COLLECTION, docId);
-                
-                if (newStatus === 'rejected') {
-                    // Rechazar es simplemente borrar el documento
-                    try {
-                        await deleteDoc(docRef);
-                        showMessage('success', 'Solicitud rechazada (borrada).');
-                    } catch (e) {
-                        console.error("Error al rechazar: ", e);
-                        showMessage('error', 'Error al rechazar la solicitud.');
-                    }
-                } else if (newStatus === 'approved') {
-                    // Aprobar requiere verificar conflictos primero
-                    try {
-                        const docSnap = await getDoc(docRef);
-                        if (!docSnap.exists() || docSnap.data().status !== 'pending') {
-                            showMessage('error', 'Esta solicitud ya no existe o no está pendiente.');
-                            return;
-                        }
-                        const data = docSnap.data();
-                        
-                        // 1. Contar cuántos slots están APROBADOS o BLOQUEADOS para este turno
-                        const conflictQuery = query(
-                            collection(db, RESERVATIONS_COLLECTION),
-                            where("date", "==", data.date),
-                            where("hour", "==", data.hour),
-                            where("status", "in", ["approved", "blocked"])
-                        );
-                        
-                        const existingReservations = await getDocs(conflictQuery);
-                        const approvedCount = existingReservations.docs.filter(d => d.data().status === 'approved').length;
-                        const blockedCount = existingReservations.docs.filter(d => d.data().status === 'blocked').length;
-                        
-                        if (blockedCount > 0) {
-                            // Si hay un bloqueo (manual o automático) no se puede aprobar
-                            showMessage('error', `Este slot está bloqueado por el administrador o se alcanzó el límite. No se puede aprobar.`);
-                            await deleteDoc(docRef); // Borrar la solicitud pendiente
-                        } else if (approvedCount >= 4) { 
-                            // Si ya hay 4 grupos aprobados, se ha alcanzado el límite.
-                            showMessage('error', `Ya hay ${approvedCount} turnos aprobados para este slot. Se alcanzó el límite de 4.`);
-                            // Borrar la solicitud pendiente conflictiva
-                            await deleteDoc(docRef); 
-                        } else {
-                            // 2. No hay conflicto ni bloqueo: Aprobar el turno
-                            await updateDoc(docRef, { status: 'approved' });
-                            showMessage('success', 'Turno aprobado.');
+                return div;
+            }
 
-                            // 3. Lógica de Bloqueo Automático (Si se llega al límite de 4)
-                            if (approvedCount + 1 >= 4) { // Si se aprueba y se llega a 4
-                                const blockDocId = `AUTO_BLOCK_${data.date}_${data.hour}`;
-                                const blockDocRef = doc(db, RESERVATIONS_COLLECTION, blockDocId);
-                                
-                                // Crear un documento de bloqueo que será visible para todos
-                                await setDoc(blockDocRef, {
-                                    date: data.date,
-                                    hour: data.hour,
-                                    status: 'blocked',
-                                    groupName: 'Límite Alcanzado', 
-                                    userId: 'SYSTEM',
-                                    createdAt: serverTimestamp()
-                                });
-                                
-                                // Borrar *todas* las solicitudes pendientes restantes en el mismo slot
-                                const otherPendingQuery = query(
-                                    collection(db, RESERVATIONS_COLLECTION),
-                                    where("date", "==", data.date),
-                                    where("hour", "==", data.hour),
-                                    where("status", "==", "pending")
-                                );
-                                
-                                const pendingToClear = await getDocs(otherPendingQuery);
-                                const batchClear = writeBatch(db);
-                                pendingToClear.forEach(doc => {
-                                    batchClear.delete(doc.ref);
-                                });
-                                await batchClear.commit();
+            // === FUNCIÓN CRÍTICA CON LÓGICA DE LÍMITE DE 4 (MODIFICADA) ===
+            window.updateReservationStatus = async (docId, newStatus) => {
 
-                                showMessage('success', 'Turno aprobado. ¡Límite de 4 alcanzado y slot bloqueado!');
-                            }
-                        }
-                        
-                    } catch (e) {
-                        console.error("Error al aprobar: ", e);
-                        showMessage('error', 'Error al aprobar la solicitud.');
-                    }
-                }
-            };
+                const docRef = doc(db, RESERVATIONS_COLLECTION, docId);
 
-            // --- INICIO DE LA APLICACIÓN ---
-            
-            // Clonar y rellenar los encabezados de la aplicación
-            function fillHeaders() {
-                const template = document.getElementById('app-header-template');
-                if (!template) {
-                     console.error("Error crítico: No se encontró el template del header.");
-                     return;
-                }
-                
-                // Llenar header de estudiante
-                const studentPlaceholder = document.getElementById('student-header-placeholder');
-                if (studentPlaceholder) {
-                    const studentHeader = template.content.cloneNode(true);
-                    studentHeader.getElementById('header-subtitle').innerText = 'Panel de Estudiante';
-                    studentHeader.getElementById('header-name-display').id = 'student-header-name';
-                    studentPlaceholder.appendChild(studentHeader);
-                }
+                if (newStatus === 'rejected') {
+                    // Rechazar es simplemente borrar el documento
+                    try {
+                        await deleteDoc(docRef);
+                        showMessage('success', 'Solicitud rechazada (borrada).');
+                    } catch (e) {
+                        console.error("Error al rechazar: ", e);
+                        showMessage('error', 'Error al rechazar la solicitud.');
+                    }
+                } else if (newStatus === 'approved') {
+                    // Aprobar requiere verificar conflictos primero
+                    try {
+                        const docSnap = await getDoc(docRef);
+                        if (!docSnap.exists() || docSnap.data().status !== 'pending') {
+                            showMessage('error', 'Esta solicitud ya no existe o no está pendiente.');
+                            return;
+                        }
+                        const data = docSnap.data();
 
-                // Llenar header de admin
-                const adminPlaceholder = document.getElementById('admin-header-placeholder');
-                if (adminPlaceholder) {
-                    const adminHeader = template.content.cloneNode(true);
-                    adminHeader.getElementById('header-subtitle').innerText = 'Panel de Administración';
-                    adminHeader.getElementById('header-name-display').id = 'admin-header-name';
-                    adminPlaceholder.appendChild(adminHeader);
-                }
-            }
-            
-            // --- Punto de entrada principal ---
-            fillHeaders();
-            showView('loading'); // Mostrar carga mientras Firebase se autentica
+                        // 1. Contar cuántos slots están APROBADOS o BLOQUEADOS para este turno
+                        const conflictQuery = query(
+                            collection(db, RESERVATIONS_COLLECTION),
+                            where("date", "==", data.date),
+                            where("hour", "==", data.hour),
+                            where("status", "in", ["approved", "blocked"])
+                        );
 
-        }); // <-- Fin del DOMContentLoaded
+                        const existingReservations = await getDocs(conflictQuery);
+                        const approvedCount = existingReservations.docs.filter(d => d.data().status === 'approved').length;
+                        const blockedCount = existingReservations.docs.filter(d => d.data().status === 'blocked').length;
 
-    </script>
+                        if (blockedCount > 0) {
+                            // Si hay un bloqueo (manual o automático) no se puede aprobar
+                            showMessage('error', `Este slot está bloqueado por el administrador o se alcanzó el límite. No se puede aprobar.`);
+                            await deleteDoc(docRef); // Borrar la solicitud pendiente
+                        } else if (approvedCount >= 4) {
+                            // Si ya hay 4 grupos aprobados, se ha alcanzado el límite.
+                            showMessage('error', `Ya hay ${approvedCount} turnos aprobados para este slot. Se alcanzó el límite de 4.`);
+                            // Borrar la solicitud pendiente conflictiva
+                            await deleteDoc(docRef);
+                        } else {
+                            // 2. No hay conflicto ni bloqueo: Aprobar el turno
+                            await updateDoc(docRef, { status: 'approved' });
+                            showMessage('success', 'Turno aprobado.');
+
+                            // 3. Lógica de Bloqueo Automático (Si se llega al límite de 4)
+                            if (approvedCount + 1 >= 4) { // Si se aprueba y se llega a 4
+                                const blockDocId = `AUTO_BLOCK_${data.date}_${data.hour}`;
+                                const blockDocRef = doc(db, RESERVATIONS_COLLECTION, blockDocId);
+
+                                // Crear un documento de bloqueo que será visible para todos
+                                await setDoc(blockDocRef, {
+                                    date: data.date,
+                                    hour: data.hour,
+                                    status: 'blocked',
+                                    groupName: 'Límite Alcanzado',
+                                    userId: 'SYSTEM',
+                                    createdAt: serverTimestamp()
+                                });
+
+                                // Borrar *todas* las solicitudes pendientes restantes en el mismo slot
+                                const otherPendingQuery = query(
+                                    collection(db, RESERVATIONS_COLLECTION),
+                                    where("date", "==", data.date),
+                                    where("hour", "==", data.hour),
+                                    where("status", "==", "pending")
+                                );
+
+                                const pendingToClear = await getDocs(otherPendingQuery);
+                                const batchClear = writeBatch(db);
+                                pendingToClear.forEach(doc => {
+                                    batchClear.delete(doc.ref);
+                                });
+                                await batchClear.commit();
+
+                                showMessage('success', 'Turno aprobado. ¡Límite de 4 alcanzado y slot bloqueado!');
+                            }
+                        }
+
+                    } catch (e) {
+                        console.error("Error al aprobar: ", e);
+                        showMessage('error', 'Error al aprobar la solicitud.');
+                    }
+                }
+            };
+
+            // === NUEVO: Funciones para el Modal de Estudiantes ===
+            function showStudentModal(groupName) {
+                const modal = document.getElementById('student-modal');
+                const title = document.getElementById('modal-group-title');
+                const studentsList = document.getElementById('modal-students-list');
+
+                if (!modal || !title || !studentsList) return;
+
+                // Actualizar título
+                title.textContent = `Integrantes - ${groupName}`;
+
+                // Limpiar lista anterior
+                studentsList.innerHTML = '';
+
+                // Obtener estudiantes del grupo
+                const estudiantes = ESTUDIANTES_POR_GRUPO[groupName] || [];
+
+                if (estudiantes.length === 0) {
+                    studentsList.innerHTML = '<p class="text-gray-500 text-center py-4">No hay datos de estudiantes registrados para este grupo.</p>';
+                } else {
+                    // Agregar cada estudiante a la lista
+                    estudiantes.forEach(estudiante => {
+                        const studentDiv = document.createElement('div');
+                        studentDiv.className = 'student-item';
+                        studentDiv.innerHTML = `
+                            <div class="student-info">
+                                <div class="student-name">${estudiante.nombre}</div>
+                                <div class="student-cedula">Cédula: ${estudiante.cedula}</div>
+                            </div>
+                        `;
+                        studentsList.appendChild(studentDiv);
+                    });
+                }
+
+                // Mostrar modal
+                modal.classList.remove('hidden');
+            }
+
+            window.closeStudentModal = function () {
+                const modal = document.getElementById('student-modal');
+                if (modal) {
+                    modal.classList.add('hidden');
+                }
+            };
+
+            // Cerrar modal al hacer clic fuera del contenido
+            document.addEventListener('click', function (event) {
+                const modal = document.getElementById('student-modal');
+                if (event.target === modal) {
+                    closeStudentModal();
+                }
+            });
+
+            // --- INICIO DE LA APLICACIÓN ---
+
+            // Clonar y rellenar los encabezados de la aplicación
+            function fillHeaders() {
+                const template = document.getElementById('app-header-template');
+                if (!template) {
+                    console.error("Error crítico: No se encontró el template del header.");
+                    return;
+                }
+
+                // Llenar header de estudiante
+                const studentPlaceholder = document.getElementById('student-header-placeholder');
+                if (studentPlaceholder) {
+                    const studentHeader = template.content.cloneNode(true);
+                    studentHeader.getElementById('header-subtitle').innerText = 'Panel de Estudiante';
+                    studentHeader.getElementById('header-name-display').id = 'student-header-name';
+                    studentPlaceholder.appendChild(studentHeader);
+                }
+
+                // Llenar header de admin
+                const adminPlaceholder = document.getElementById('admin-header-placeholder');
+                if (adminPlaceholder) {
+                    const adminHeader = template.content.cloneNode(true);
+                    adminHeader.getElementById('header-subtitle').innerText = 'Panel de Administración';
+                    adminHeader.getElementById('header-name-display').id = 'admin-header-name';
+                    adminPlaceholder.appendChild(adminHeader);
+                }
+            }
+
+            // --- Punto de entrada principal ---
+            fillHeaders();
+            showView('loading'); // Mostrar carga mientras Firebase se autentica
+
+        }); // <-- Fin del DOMContentLoaded
+
+    </script>
 </head>
+
 <body class="bg-gray-100 min-h-screen">
 
-        <div id="login-view" class="min-h-screen flex flex-col items-center justify-center p-4">
-        
-                <header class="w-full max-w-md mb-6 text-center">
-            <div class="bg-slate-800 p-4 rounded-t-xl flex items-center justify-center text-white space-x-3">
-                                <span class="text-4xl">🌐</span>
-                <div>
-                    <h1 class="text-xl font-bold">Universidad Central del Ecuador</h1>
-                    <p class="text-sm text-slate-300">Gestión de Turnos - Laboratorio de Redes</p>
-                </div>
-            </div>
-        </header>
+            <div id="login-view" class="min-h-screen flex flex-col items-center justify-center p-4">
+               
+                        <header class="w-full max-w-md mb-6 text-center">
+                        <div
+                class="bg-slate-800 p-4 rounded-t-xl flex items-center justify-center text-white space-x-3">
+                                                <span class="text-4xl">🌐</span>
+                                <div>
+                                        <h1 class="text-xl font-bold">Universidad Central del Ecuador</h1>
+                                        <p class="text-sm text-slate-300">Gestión de Turnos - Laboratorio de Redes</p>
+                                    </div>
+                            </div>
+                    </header>
 
-        <div class="max-w-md w-full bg-white rounded-b-xl rounded-t-lg shadow-xl overflow-hidden fade-in">
-            <form onsubmit="window.handleLogin(event)" class="p-8 space-y-6">
-                <h2 class="text-2xl font-bold text-center text-slate-700">Acceso al Sistema</h2>
-                
-                                <div id="message-box" class="hidden"></div>
-                
-                <div class="space-y-4">
-                    <div>
-                        <label for="login-email" class="block text-sm font-medium text-gray-700 mb-1">Correo Institucional</label>
-                        <input type="email" id="login-email" placeholder="ej: lider1@uni.edu" class="w-full border border-gray-300 p-3 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                    </div>
-                    <div>
-                        <label for="login-password" class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
-                        <input type="password" id="login-password" placeholder="••••••••" class="w-full border border-gray-300 p-3 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                    </div>
-                </div>
+                <div class="max-w-md w-full bg-white rounded-b-xl rounded-t-lg shadow-xl overflow-hidden fade-in">
+                        <form onsubmit="window.handleLogin(event)" class="p-8 space-y-6">
+                                <h2 class="text-2xl font-bold text-center text-slate-700">Acceso al Sistema</h2>
+                               
+                                                <div id="message-box" class="hidden"></div>
+                               
+                                <div class="space-y-4">
+                                        <div>
+                                                <label for="login-email"
+                            class="block text-sm font-medium text-gray-700 mb-1">Correo Institucional</label>
+                                                <input type="email" id="login-email" placeholder="ej: lider1@uni.edu"
+                            class="w-full border border-gray-300 p-3 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            required>
+                                            </div>
+                                        <div>
+                                                <label for="login-password"
+                            class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+                                                <input type="password" id="login-password" placeholder="••••••••"
+                            class="w-full border border-gray-300 p-3 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            required>
+                                            </div>
+                                    </div>
 
-                <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold text-base hover:bg-blue-700 shadow-md transition duration-300">Ingresar</button>
-            </form>
-        </div>
-    </div>
+                                <button type="submit"
+                    class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold text-base hover:bg-blue-700 shadow-md transition duration-300">Ingresar</button>
+                            </form>
+                    </div>
+            </div>
 
-        <div id="loading-view" class="hidden min-h-screen flex items-center justify-center">
-        <div class="text-center">
-            <i class="fas fa-spinner fa-spin text-4xl text-slate-600"></i>
-            <p class="mt-3 text-lg font-medium text-slate-700">Cargando...</p>
-        </div>
-    </div>
-    
-        <template id="app-header-template">
-        <header class="bg-slate-800 text-white shadow-md sticky top-0 z-10">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center h-16">
-                                        <div class="flex items-center space-x-3">
-                                                <span class="text-2xl">🌐</span>
-                        <div>
-                            <h1 class="text-lg font-bold">Gestión de Turnos - Laboratorio de Redes</h1>
-                            <p class="text-xs text-slate-300" id="header-subtitle"></p>
-                        </div>
-                    </div>
-                                        <div class="flex items-center space-x-3">
-                        <span class="text-sm font-medium hidden sm:block" id="header-name-display"></span>
-                        <button onclick="window.handleLogout()" class="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium transition">
-                            <i class="fas fa-sign-out-alt mr-1 sm:mr-2"></i>
-                            <span class="hidden sm:inline">Salir</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </header>
-    </template>
-    
-        <div id="student-dashboard" class="hidden">
-                <header id="student-header-placeholder"></header>
+            <div id="loading-view" class="hidden min-h-screen flex items-center justify-center">
+                <div class="text-center">
+                        <i class="fas fa-spinner fa-spin text-4xl text-slate-600"></i>
+                        <p class="mt-3 text-lg font-medium text-slate-700">Cargando...</p>
+                    </div>
+            </div>
+       
+            <template id="app-header-template">
+                <header class="bg-slate-800 text-white shadow-md sticky top-0 z-10">
+                        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                                <div class="flex justify-between items-center h-16">
+                                                            <div class="flex items-center space-x-3">
+                                                                        <span class="text-2xl">🌐</span>
+                                                <div>
+                                                        <h1 class="text-lg font-bold">Gestión de Turnos - Laboratorio de
+                                Redes</h1>
+                                                        <p class="text-xs text-slate-300" id="header-subtitle"></p>
+                                                    </div>
+                                            </div>
+                                                            <div class="flex items-center space-x-3">
+                                                <span class="text-sm font-medium hidden sm:block"
+                            id="header-name-display"></span>
+                                                <button onclick="window.handleLogout()"
+                            class="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium transition">
+                                                        <i class="fas fa-sign-out-alt mr-1 sm:mr-2"></i>
+                                                        <span class="hidden sm:inline">Salir</span>
+                                                    </button>
+                                            </div>
+                                    </div>
+                            </div>
+                    </header>
+            </template>
+       
+            <div id="student-dashboard" class="hidden">
+                        <header id="student-header-placeholder"></header>
 
-        <main class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
-                                <div class="lg:col-span-2">
-                                        <div class="flex justify-between items-center mb-4 p-4 bg-white rounded-lg shadow-xl">
-                        <button id="student-prev-week" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg shadow transition">
-                            <i class="fas fa-chevron-left"></i> Semana Ant.
-                        </button>
-                        <h2 id="student-week-title" class="text-xl sm:text-2xl font-extrabold text-slate-700 text-center"></h2>
-                        <button id="student-next-week" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg shadow transition">
-                            Semana Sig. <i class="fas fa-chevron-right"></i>
-                        </button>
-                    </div>
+                <main class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+                                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                               
+                                                <div class="lg:col-span-2">
+                                                            <div
+                        class="flex justify-between items-center mb-4 p-4 bg-white rounded-lg shadow-xl">
+                                                <button id="student-prev-week"
+                            class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg shadow transition">
+                                                        <i class="fas fa-chevron-left"></i> Semana Ant.
+                                                    </button>
+                                                <h2 id="student-week-title"
+                            class="text-xl sm:text-2xl font-extrabold text-slate-700 text-center"></h2>
+                                                <button id="student-next-week"
+                            class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg shadow transition">
+                                                        Semana Sig. <i class="fas fa-chevron-right"></i>
+                                                    </button>
+                                            </div>
 
-                                        <div class="bg-white rounded-lg shadow-xl overflow-hidden">
-                        <table class="calendar-table">
-                            <thead id="student-calendar-head">
-                                                            </thead>
-                            <tbody id="student-calendar-body">
-                                                            </tbody>
-                        </table>
-                    </div>
+                                                            <div class="bg-white rounded-lg shadow-xl overflow-hidden">
+                                                <table class="calendar-table">
+                                                        <thead id="student-calendar-head">
+                                                                                            </thead>
+                                                        <tbody id="student-calendar-body">
+                                                                                            </tbody>
+                                                    </table>
+                                            </div>
 
-                                        <div id="student-request-box" class="hidden mt-6 p-4 bg-yellow-100 border-l-4 border-yellow-400 rounded-lg shadow-md flex justify-between items-center">
-                        <p id="student-request-count" class="text-lg font-semibold text-yellow-800">X hora(s) seleccionada(s).</p>
-                        <button id="submit-request-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg shadow transition" disabled>
-                            <i class="fas fa-paper-plane mr-2"></i> Enviar Solicitud
-                        </button>
-                    </div>
-                </div>
-                
-                                <div class="lg:col-span-1">
-                    <div class="bg-white p-6 rounded-lg shadow-xl sticky top-20">
-                        <h3 class="text-xl font-extrabold text-slate-800 border-b pb-3 mb-4">Leyenda de Estados</h3>
-                        <div class="space-y-4">
-                                                        <div class="legend-item">
-                                <div class="legend-slot slot-free border-gray-300">Disponible</div>
-                                <span class="text-sm text-gray-700 font-medium">- Disponible</span>
-                            </div>
-                            <div class="legend-item">
-                                <div class="legend-slot slot-selected">Mi Selección</div>
-                                <span class="text-sm text-gray-700 font-medium">- Horas que estás por solicitar</span>
-                            </div>
-                                                        <div class="legend-item">
-                                <div class="legend-slot slot-approved-self">Agendado</div>
-                                <span class="text-sm text-gray-700 font-medium">- Mi turno confirmado</span>
-                            </div>
-                            <div class="legend-item">
-                                <div class="legend-slot slot-pending">Pendiente</div>
-                                <span class="text-sm text-gray-700 font-medium">- Solicitudes de otros grupos</span>
-                            </div>
-                            <div class="legend-item">
-                                <div class="legend-slot slot-approved-other">Reservado</div>
-                                <span class="text-sm text-gray-700 font-medium">- Turno de otro grupo</span>
-                            </div>
-                            <div class="legend-item">
-                                <div class="legend-slot slot-blocked">No Disponible</div>
-                                <span class="text-sm text-gray-700 font-medium">- Horario bloqueado o pasado</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-            </div>
-        </main>
-    </div>
+                                                            <div id="student-request-box"
+                        class="hidden mt-6 p-4 bg-yellow-100 border-l-4 border-yellow-400 rounded-lg shadow-md flex justify-between items-center">
+                                                <p id="student-request-count"
+                            class="text-lg font-semibold text-yellow-800">X hora(s) seleccionada(s).</p>
+                                                <button id="submit-request-btn"
+                            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg shadow transition"
+                            disabled>
+                                                        <i class="fas fa-paper-plane mr-2"></i> Enviar Solicitud
+                                                    </button>
+                                            </div>
+                                    </div>
+                               
+                                                <div class="lg:col-span-1">
+                                        <div class="bg-white p-6 rounded-lg shadow-xl sticky top-20">
+                                                <h3 class="text-xl font-extrabold text-slate-800 border-b pb-3 mb-4">
+                            Leyenda de Estados</h3>
+                                                <div class="space-y-4">
+                                                                                    <div class="legend-item">
+                                                                <div class="legend-slot slot-free border-gray-300">
+                                    Disponible</div>
+                                                                <span class="text-sm text-gray-700 font-medium">-
+                                    Disponible</span>
+                                                            </div>
+                                                        <div class="legend-item">
+                                                                <div class="legend-slot slot-selected">Mi Selección
+                                </div>
+                                                                <span class="text-sm text-gray-700 font-medium">- Horas
+                                    que estás por solicitar</span>
+                                                            </div>
+                                                                                    <div class="legend-item">
+                                                                <div class="legend-slot slot-approved-self">Agendado
+                                </div>
+                                                                <span class="text-sm text-gray-700 font-medium">- Mi
+                                    turno confirmado</span>
+                                                            </div>
+                                                        <div class="legend-item">
+                                                                <div class="legend-slot slot-pending">Pendiente</div>
+                                                                <span class="text-sm text-gray-700 font-medium">-
+                                    Solicitudes de otros grupos</span>
+                                                            </div>
+                                                        <div class="legend-item">
+                                                                <div class="legend-slot slot-approved-other">Reservado
+                                </div>
+                                                                <span class="text-sm text-gray-700 font-medium">- Turno
+                                    de otro grupo</span>
+                                                            </div>
+                                                        <div class="legend-item">
+                                                                <div class="legend-slot slot-blocked">No Disponible
+                                </div>
+                                                                <span class="text-sm text-gray-700 font-medium">-
+                                    Horario bloqueado o pasado</span>
+                                                            </div>
+                                                    </div>
+                                            </div>
+                                    </div>
+                               
+                            </div>
+                    </main>
+            </div>
 
-        <div id="admin-dashboard" class="hidden">
-                <header id="admin-header-placeholder"></header>
-        
-        <main class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
-                                <div class="lg:col-span-2">
-                                        <div class="flex justify-between items-center mb-4 p-4 bg-white rounded-lg shadow-xl">
-                        <button id="admin-prev-week" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg shadow transition">
-                            <i class="fas fa-chevron-left"></i> Semana Ant.
-                        </button>
-                        <h2 id="admin-week-title" class="text-xl sm:text-2xl font-extrabold text-slate-700 text-center"></h2>
-                        <button id="admin-next-week" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg shadow transition">
-                            Semana Sig. <i class="fas fa-chevron-right"></i>
-                        </button>
-                    </div>
+            <div id="admin-dashboard" class="hidden">
+                        <header id="admin-header-placeholder"></header>
+               
+                <main class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+                                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                               
+                                                <div class="lg:col-span-2">
+                                                            <div
+                        class="flex justify-between items-center mb-4 p-4 bg-white rounded-lg shadow-xl">
+                                                <button id="admin-prev-week"
+                            class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg shadow transition">
+                                                        <i class="fas fa-chevron-left"></i> Semana Ant.
+                                                    </button>
+                                                <h2 id="admin-week-title"
+                            class="text-xl sm:text-2xl font-extrabold text-slate-700 text-center"></h2>
+                                                <button id="admin-next-week"
+                            class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg shadow transition">
+                                                        Semana Sig. <i class="fas fa-chevron-right"></i>
+                                                    </button>
+                                            </div>
 
-                                        <div class="bg-white rounded-lg shadow-xl overflow-hidden">
-                        <table class="calendar-table">
-                            <thead id="admin-calendar-head">
-                                                            </thead>
-                            <tbody id="admin-calendar-body">
-                                                            </tbody>
-                        </table>
-                    </div>
-                    
-                                        <div id="admin-action-box" class="hidden mt-6 p-4 bg-gray-700 text-white rounded-lg shadow-md flex justify-between items-center">
-                        <p id="admin-selection-count" class="text-lg font-semibold">X hora(s) seleccionada(s).</p>
-                        <div class="space-x-2">
-                            <button id="admin-block-btn" class="bg-red-600 hover:bg-red-700 font-bold py-2 px-4 rounded-lg shadow transition">
-                                <i class="fas fa-lock mr-2"></i> Bloquear
-                            </button>
-                            <button id="admin-unblock-btn" class="bg-green-600 hover:bg-green-700 font-bold py-2 px-4 rounded-lg shadow transition">
-                                <i class="fas fa-lock-open mr-2"></i> Desbloquear
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                                <div class="lg:col-span-1">
-                    <div class="bg-white p-6 rounded-lg shadow-xl sticky top-20">
-                        <h3 class="text-xl font-extrabold text-slate-800 border-b pb-3 mb-4 shadow-sm px-2">
-                            <i class="fas fa-tasks mr-2 text-blue-600"></i>
-                            Solicitudes Pendientes
-                        </h3>
-                        <div id="admin-requests-list" class="space-y-3 max-h-[70vh] overflow-y-auto">
-                                                    </div>
-                    </div>
-                </div>
+                                                            <div class="bg-white rounded-lg shadow-xl overflow-hidden">
+                                                <table class="calendar-table">
+                                                        <thead id="admin-calendar-head">
+                                                                                            </thead>
+                                                        <tbody id="admin-calendar-body">
+                                                                                            </tbody>
+                                                    </table>
+                                            </div>
+                                       
+                                                            <div id="admin-action-box"
+                        class="hidden mt-6 p-4 bg-gray-700 text-white rounded-lg shadow-md flex justify-between items-center">
+                                                <p id="admin-selection-count" class="text-lg font-semibold">X hora(s)
+                            seleccionada(s).</p>
+                                                <div class="space-x-2">
+                                                        <button id="admin-block-btn"
+                                class="bg-red-600 hover:bg-red-700 font-bold py-2 px-4 rounded-lg shadow transition">
+                                                                <i class="fas fa-lock mr-2"></i> Bloquear
+                                                            </button>
+                                                        <button id="admin-unblock-btn"
+                                class="bg-green-600 hover:bg-green-700 font-bold py-2 px-4 rounded-lg shadow transition">
+                                                                <i class="fas fa-lock-open mr-2"></i> Desbloquear
+                                                            </button>
+                                                    </div>
+                                            </div>
+                                    </div>
+                               
+                                                <div class="lg:col-span-1">
+                                        <div class="bg-white p-6 rounded-lg shadow-xl sticky top-20">
+                                                <h3
+                            class="text-xl font-extrabold text-slate-800 border-b pb-3 mb-4 shadow-sm px-2">
+                                                        <i class="fas fa-tasks mr-2 text-blue-600"></i>
+                                                        Solicitudes Pendientes
+                                                    </h3>
+                                                <div id="admin-requests-list"
+                            class="space-y-3 max-h-[70vh] overflow-y-auto">
+                                                                                </div>
+                                            </div>
+                                    </div>
 
-            </div>
-        </main>
-    </div>
+                            </div>
+                    </main>
+            </div>
+    <!-- === NUEVO: Modal para ver datos de estudiantes === -->
+    <div id="student-modal"
+        class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[80vh] overflow-hidden fade-in">
+            <div class="bg-slate-800 text-white p-4 flex justify-between items-center">
+                <h3 class="text-lg font-bold" id="modal-group-title">Datos del Grupo</h3>
+                <button onclick="window.closeStudentModal()" class="text-white hover:text-gray-300 text-xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-4">
+                <div class="mb-4">
+                    <h4 class="font-semibold text-gray-700 mb-2">Integrantes del Grupo:</h4>
+                    <div id="modal-students-list" class="space-y-2">
+                        <!-- Los estudiantes se cargarán aquí dinámicamente -->
+                    </div>
+                </div>
+                <div class="flex justify-end">
+                    <button onclick="window.closeStudentModal()"
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
+                        Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
 </body>
+
 </html>
