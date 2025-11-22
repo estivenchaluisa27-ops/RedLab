@@ -1,200 +1,119 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Gestión de Turnos - UCE</title>
-    
-    <!-- Favicon de Redes (Globo terráqueo estilizado) -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌐</text></svg>">
-    
+    <title>Sistema de Turnos - Laboratorio de Redes UCE</title>
+
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 512'%3E%3Cpath fill='%23004274' d='M0 336c0 79.5 64.5 144 144 144h368c70.7 0 128-57.3 128-128 0-61.9-44-113.6-102.4-125.4C514.3 81.3 425 0 320 0 217.6 0 130.7 77.8 120 177.3 51.6 188.4 0 249.6 0 320zm144 96c-53 0-96-43-96-96s43-96 96-96h32c13.3 0 24-10.7 24-24V80c0-26.5 21.5-48 48-48h128c26.5 0 48 21.5 48 48v16c0 13.3 10.7 24 24 24h32c53 0 96 43 96 96s-43 96-96 96H144z'/%3E%3C/svg%3E" type="image/svg+xml" />
+
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Montserrat:wght@600;800&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
-    
+
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        /* --- ESTILOS GENERALES --- */
+        body { 
+            font-family: 'Roboto', sans-serif; 
+            background-color: #f0f2f5;
+            background-image: radial-gradient(#bdc3c7 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        h1, h2, h3, .brand-font { font-family: 'Montserrat', sans-serif; }
+        .fade-in { animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- HEADER COLOR UCE (Asegurado) --- */
+        .uce-header {
+            background-color: #004274 !important; /* Color azul oscuro exacto */
+            border-bottom: 4px solid #e1ad01; /* Dorado */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Login Background */
+        #login-view {
+            background-image: linear-gradient(rgba(0, 66, 116, 0.9), rgba(0, 51, 102, 0.95)), url('https://ecuadoruniversitario.com/wp-content/uploads/2015/03/uce.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+
+        /* --- SISTEMA DE ASISTENCIA (BOTONES DE OPCIÓN) --- */
+        .att-btn {
+            display: flex; align-items: center; justify-content: center;
+            padding: 6px 12px; border-radius: 8px;
+            border: 1px solid #cbd5e1; background-color: white;
+            cursor: pointer; transition: all 0.2s ease;
+            color: #64748b; font-size: 0.75rem; font-weight: 600;
+            width: 100px;
+        }
+        .att-circle {
+            width: 14px; height: 14px; border-radius: 50%; border: 2px solid #cbd5e1;
+            margin-right: 8px; background-color: white; transition: all 0.2s;
+        }
         
-        /* --- Estilos de la Tabla Calendario (Estilo Registro Civil) --- */
-        .calendar-table {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed; /* Tablas no dinámicas */
-        }
-        .calendar-table th, .calendar-table td {
-            border: 1px solid #d1d5db; /* border-gray-300 */
-            padding: 0; /* Padding se maneja en el div interno */
-            text-align: center;
-            vertical-align: top;
-            height: 60px; /* Altura de fila fija */
-        }
-        .calendar-table th {
-            background-color: #f3f4f6; /* bg-gray-100 */
-            font-weight: 600; /* font-semibold */
-            padding: 0.75rem 0.5rem; /* p-3 px-2 */
-            font-size: 0.875rem; /* text-sm */
-        }
-        .calendar-table .time-label {
-            background-color: #f3f4f6;
-            font-weight: 500;
-            padding: 0.5rem;
-            font-size: 0.875rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-        }
+        /* Estado: PRESENTE (Verde) */
+        .att-btn.present.active { background-color: #dcfce7; border-color: #22c55e; color: #15803d; }
+        .att-btn.present.active .att-circle { background-color: #22c55e; border-color: #22c55e; box-shadow: 0 0 0 2px white inset; }
         
-        /* Contenedor del Slot (dentro del <td>) */
-        .slot-container {
-            width: 100%;
-            height: 100%;
+        /* Estado: AUSENTE (Rojo) */
+        .att-btn.absent.active { background-color: #fee2e2; border-color: #ef4444; color: #b91c1c; }
+        .att-btn.absent.active .att-circle { background-color: #ef4444; border-color: #ef4444; box-shadow: 0 0 0 2px white inset; }
+
+        .att-btn:hover:not(.active) { background-color: #f8fafc; }
+
+
+        /* --- TABLA CALENDARIO --- */
+        .calendar-wrapper {
+            background: white; border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            overflow: hidden; border: 1px solid #e2e8f0;
+        }
+        .calendar-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        .calendar-table th, .calendar-table td { border: 1px solid #eef0f2; padding: 0; vertical-align: top; height: 80px; }
+        .calendar-table th { background-color: #f8fafc; color: #334155; padding: 0.8rem; text-transform: capitalize; border-bottom: 2px solid #e2e8f0; }
+        .calendar-table .time-label { background-color: #f1f5f9; color: #475569; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; height: 100%; text-align: center; }
+        
+        /* Slots */
+        .slot-container { width: 100%; height: 100%; padding: 3px; position: relative; }
+        .slot { width: 100%; height: 100%; border-radius: 6px; border: 1px solid transparent; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-size: 0.75rem; font-weight: 600; line-height: 1.2; overflow: hidden; }
+        .slot:hover { transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .occupancy-badge { font-size: 0.65rem; margin-top: 3px; padding: 2px 8px; border-radius: 12px; background-color: rgba(255,255,255,0.95); color: #1e293b; font-weight: 800; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .info-btn { position: absolute; top: 4px; right: 4px; background: white; border-radius: 50%; width: 22px; height: 22px; font-size: 11px; display: flex; align-items: center; justify-content: center; color: #3b82f6; z-index: 10; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.2); transition: transform 0.2s; }
+        .info-btn:hover { transform: scale(1.15); color: #1d4ed8; }
+
+        /* Estados */
+        .slot-free { background-color: #ffffff; border-color: #e2e8f0; color: #64748b; }
+        .slot-free:hover { background-color: #f8fafc; border-color: #cbd5e1; color: #3b82f6; }
+        .slot-blocked, .slot-past { background-color: #f1f5f9 !important; color: #cbd5e1 !important; border-color: #e2e8f0 !important; cursor: not-allowed; background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, #e2e8f0 5px, #e2e8f0 10px); }
+        .slot-partial { background-color: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+        .slot-full { background-color: #fef2f2; border-color: #fecaca; color: #991b1b; cursor: not-allowed; }
+        .slot-selected { background-color: #3b82f6 !important; color: white !important; border-color: #1d4ed8 !important; box-shadow: inset 0 0 0 2px white, 0 4px 6px rgba(59, 130, 246, 0.3); }
+        .slot-pending { background-color: #fffbeb; border-color: #fde68a; color: #b45309; }
+        .slot-approved-self { background-color: #22c55e; border-color: #16a34a; color: white; box-shadow: 0 2px 4px rgba(34, 197, 94, 0.2); }
+        .slot-admin-has-data { border-width: 2px; }
+        .modal-backdrop { background-color: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); }
+
+        /* --- VISIBILIDAD DE CONTRASEÑA --- */
+        .password-container { position: relative; }
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #64748b;
             padding: 4px;
         }
-
-        /* Slot (Botón clickeable) */
-        .slot {
-            width: 100%;
-            height: 100%;
-            border-radius: 0.375rem; /* rounded-md */
-            border: 2px solid transparent;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            font-size: 0.875rem; /* text-sm */
-            font-weight: 500; /* font-medium */
-            line-height: 1.2;
-            overflow: hidden; /* Para truncar texto */
-        }
-        .slot .slot-text {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 100%;
-        }
-
-        /* --- Estilos de Slots (Colores Sólidos) --- */
-        /* Blanco - Disponible */
-        .slot-free {
-            background-color: #ffffff; /* bg-white */
-            border-color: #d1d5db; /* border-gray-300 */
-            color: #374151; /* text-gray-700 */
-        }
-        .slot-free:hover {
-            background-color: #eff6ff; /* hover:bg-blue-50 */
-            border-color: #93c5fd; /* hover:border-blue-300 */
-        }
-        .slot-selected {
-            background-color: #3b82f6 !important; /* bg-blue-500 */
-            color: #ffffff !important; /* text-white */
-            border-color: #2563eb !important; /* border-blue-600 */
-        }
-        
-        /* Gris - No disponible (Pasado o Bloqueado) */
-        .slot-past, .slot-blocked {
-            background-color: #e5e7eb; /* bg-gray-200 */
-            color: #6b7280; /* text-gray-500 */
-            cursor: not-allowed;
-            border-color: #d1d5db;
-        }
-        
-        /* Amarillo - Pendiente */
-        .slot-pending {
-            background-color: #fef9c3; /* bg-yellow-100 */
-            border-color: #facc15; /* border-yellow-400 */
-            color: #713f12; /* text-yellow-900 */
-        }
-        
-        /* Verde - Reservado - Mío */
-        .slot-approved-self {
-            background-color: #22c55e; /* bg-green-500 */
-            border-color: #16a34a; /* border-green-600 */
-            color: white;
-        }
-        
-        /* Rojo - Reservado - Ajeno */
-        .slot-approved-other {
-            background-color: #ef4444; /* bg-red-500 */
-            border-color: #dc2626; /* border-red-600 */
-            color: white;
-        }
-        
-        /* Admin viendo colores de grupo */
-        .slot-admin-view-pending { border-style: dashed; border-width: 2px; }
-        .slot-admin-view-approved { font-weight: 600; } /* font-bold */
-        
-        /* CORRECCIÓN: Permitir click en slot bloqueado para admin */
-        .slot-blocked.admin-clickable {
-            cursor: pointer;
-        }
-        .slot-blocked.admin-clickable:hover {
-            background-color: #d1d5db; /* hover:bg-gray-300 */
-        }
-
-
-        /* --- Estilo para la leyenda (estática) --- */
-        .legend-item {
-            display: flex;
-            align-items: center;
-        }
-        .legend-slot {
-            padding: 0.5rem;
-            border-radius: 0.375rem; /* rounded-md */
-            border: 2px solid;
-            min-height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            font-size: 0.875rem;
-            font-weight: 500;
-            line-height: 1.2;
-            width: 33.3333%; /* w-1/3 */
-            margin-right: 0.75rem; /* mr-3 */
-            cursor: default !important; /* No seleccionable */
-        }
-        /* Quitar hover del slot libre solo en la leyenda */
-        .legend-item .slot-free:hover {
-            background-color: #ffffff;
-            border-color: #d1d5db;
-        }
-
+        .toggle-password:hover { color: #004274; }
     </style>
 
     <script type="module">
-        // --- IMPORTACIONES DE FIREBASE (CDN) ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { 
-            getAuth, 
-            signInWithEmailAndPassword, 
-            onAuthStateChanged, 
-            signOut 
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { 
-            getFirestore, 
-            collection, 
-            addDoc, 
-            query, 
-            where, 
-            onSnapshot, 
-            updateDoc, 
-            doc, 
-            deleteDoc,
-            serverTimestamp,
-            writeBatch,
-            getDocs,
-            getDoc,
-            setDoc
-            // 'orderBy' se quita intencionalmente para evitar error de índice
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, where, onSnapshot, updateDoc, doc, deleteDoc, serverTimestamp, writeBatch, getDocs, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- CONFIGURACIÓN DE FIREBASE (TUS DATOS REALES) ---
         const firebaseConfig = {
             apiKey: "AIzaSyCR4Kk7kIBpSW3cF02b8zUHegvV4WQNuyI",
             authDomain: "lab-redes-turnos.firebaseapp.com",
@@ -203,1123 +122,631 @@
             messagingSenderId: "592544790067",
             appId: "1:592544790067:web:00bde37b50d3edf9f59546"
         };
-        
-        // --- DATOS DE USUARIOS Y ESTÉTICA (Simulación de DB) ---
-        
-        // Credenciales de Administradores
-        const ADMIN_CREDENTIALS = {
-            "admin1@lab.edu": { name: "Admin General" },
-            "admin2@lab.edu": { name: "Admin Auxiliar" }
-        };
 
-        // --- CORRECCIÓN: Nombres de grupo simplificados ---
-        const GRUPO_LIDERES = {
-            "lider1@uni.edu": { name: "Grupo A", color: "red" },
-            "lider2@uni.edu": { name: "Grupo B", color: "yellow" },
-            "lider3@uni.edu": { name: "Grupo C", color: "green" },
-            "lider4@uni.edu": { name: "Grupo D", color: "blue" },
-            "lider5@uni.edu": { name: "Grupo E", color: "indigo" },
-            "lider6@uni.edu": { name: "Grupo F", color: "purple" },
-            "lider7@uni.edu": { name: "Grupo G", color: "pink" }
-        };
-        
-        // Mapa de Colores Tailwind
-        const COLOR_MAP = {
-            // Usados por el Admin
-            red:    { bg: 'bg-red-500', border: 'border-red-700', text: 'text-white' },
-            yellow: { bg: 'bg-yellow-500', border: 'border-yellow-700', text: 'text-gray-900' },
-            green:  { bg: 'bg-green-500', border: 'border-green-700', text: 'text-white' },
-            blue:   { bg: 'bg-blue-500', border: 'border-blue-700', text: 'text-white' },
-            indigo: { bg: 'bg-indigo-500', border: 'border-indigo-700', text: 'text-white' },
-            purple: { bg: 'bg-purple-500', border: 'border-purple-700', text: 'text-white' },
-            pink:   { bg: 'bg-pink-500', border: 'border-pink-700', text: 'text-white' }
-        };
-
-        // --- RUTAS DE BASE DE DATOS (CONSTANTES) ---
         const RESERVATIONS_COLLECTION = "reservations";
-        
-        // ==================================================================
-        // --- INICIO DE LA APLICACIÓN (ESPERAR A QUE EL HTML ESTÉ LISTO) ---
-        // ==================================================================
-        
+        const USERS_COLLECTION = "users"; 
+
         window.addEventListener('DOMContentLoaded', () => {
-        
-            // --- INICIALIZACIÓN DE FIREBASE ---
             const app = initializeApp(firebaseConfig);
             const auth = getAuth(app);
             const db = getFirestore(app);
 
-            // --- ESTADO GLOBAL DE LA APLICACIÓN ---
-            let userId = null;
-            let userRole = null; // 'admin' o 'student'
-            let currentGroupInfo = {};
-            let currentWeekOffset = 0; // 0 = Semana Actual, -1 = Semana Pasada, 1 = Semana Siguiente
-            let selectedSlots = []; // Para selección múltiple (Estudiante y Admin)
-            let reservationsListener = null; // Para detener el listener al cambiar de semana
-            
-            // --- Referencias al DOM (AHORA SEGURAS) ---
-            const views = {
-                login: document.getElementById('login-view'),
-                student: document.getElementById('student-dashboard'),
-                admin: document.getElementById('admin-dashboard'),
-                loading: document.getElementById('loading-view')
-            };
-            const messageBox = document.getElementById('message-box');
+            let userId = null; let userRole = null; let currentGroupInfo = {}; let currentWeekOffset = 0; let selectedSlots = []; let reservationsListener = null;
+            const views = { login: document.getElementById('login-view'), student: document.getElementById('student-dashboard'), admin: document.getElementById('admin-dashboard'), loading: document.getElementById('loading-view') };
 
-            // --- FUNCIONES DE UTILIDAD (Mensajes, Vistas, Fechas) ---
+            function showView(name) { Object.values(views).forEach(v => v?.classList.add('hidden')); views[name]?.classList.remove('hidden', 'fade-in'); void views[name]?.offsetWidth; views[name]?.classList.add('fade-in'); }
+            function showMessage(type, text) { const m = document.getElementById('message-box'); m.innerHTML = `<i class="fas ${type==='error'?'fa-exclamation-circle':'fa-check-circle'} mr-2"></i> ${text}`; m.className = `p-4 rounded-lg text-sm font-bold mb-4 shadow-md flex items-center ${type==='error'?'bg-red-50 text-red-700 border border-red-200':'bg-green-50 text-green-700 border border-green-200'}`; m.classList.remove('hidden'); setTimeout(()=>m.classList.add('hidden'), 3000); }
+            function getWeekDays(offset = 0) { const now = new Date(); now.setDate(now.getDate() + (offset * 7)); const d = (now.getDay() === 0) ? -6 : 1 - now.getDay(); const mon = new Date(now.setDate(now.getDate() + d)); const w = []; for(let i=0;i<5;i++){ const x = new Date(mon); x.setDate(x.getDate()+i); w.push(x); } return w; }
+            function formatDateYYYYMMDD(d) { return d.toISOString().split('T')[0]; }
+            function isPastDate(dStr, h) { const now = new Date(); const [y, m, d] = dStr.split('-').map(Number); const slot = new Date(y, m-1, d, h+1); return slot < now; }
 
-            function showView(viewName) {
-                // Ocultar todas las vistas
-                Object.values(views).forEach(el => {
-                    if (el) { // <-- Verificación de seguridad
-                        el.classList.add('hidden');
-                    }
-                });
-                
-                // Mostrar la vista solicitada
-                if (views[viewName]) {
-                    views[viewName].classList.remove('hidden', 'fade-in');
-                    // Forzar reflow para reiniciar la animación
-                    void views[viewName].offsetWidth;
-                    views[viewName].classList.add('fade-in');
-                } else {
-                    console.error(`Error: Vista "${viewName}" no encontrada.`);
-                }
-            }
+            window.deleteReservation = async (id) => { try { await deleteDoc(doc(db, RESERVATIONS_COLLECTION, id)); document.getElementById('attendance-modal').classList.add('hidden'); } catch (e) { alert("Error eliminando"); } };
 
-            function showMessage(type, text) {
-                if (!messageBox) return; // <-- Verificación de seguridad
-                messageBox.innerHTML = text;
-                messageBox.className = 'p-4 rounded-md text-sm font-medium mb-4';
-                if (type === 'error') {
-                    messageBox.classList.add('bg-red-100', 'text-red-700');
-                } else if (type === 'success') {
-                    messageBox.classList.add('bg-green-100', 'text-green-700');
-                }
-                messageBox.classList.remove('hidden');
-            }
-
-            function hideMessage() {
-                if (messageBox) { // <-- Verificación de seguridad
-                    messageBox.classList.add('hidden');
-                }
-            }
-
-            function getWeekDays(offset = 0) {
-                const now = new Date();
-                now.setDate(now.getDate() + (offset * 7)); // Moverse N semanas
-                const today = now.getDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
-                const dayOffset = (today === 0) ? -6 : 1 - today; // Si es Domingo (-6), si no (1 - N)
-                
-                const monday = new Date(now.setDate(now.getDate() + dayOffset));
-                const week = [];
-                for (let i = 0; i < 5; i++) { // Solo Lunes (0) a Viernes (4)
-                    const day = new Date(monday);
-                    day.setDate(day.getDate() + i);
-                    week.push(day);
-                }
-                return week;
-            }
-
-            function formatDateYYYYMMDD(date) {
-                return date.toISOString().split('T')[0];
-            }
-
-            // --- LÓGICA DE AUTENTICACIÓN Y SESIÓN ---
-
-            onAuthStateChanged(auth, (user) => {
+            onAuthStateChanged(auth, async (user) => {
                 if (user) {
-                    // Usuario está logueado
                     userId = user.uid;
-                    userRole = ADMIN_CREDENTIALS[user.email] ? 'admin' : 'student';
-                    
-                    if (userRole === 'student') {
-                        // Asignar grupo basado en el email
-                        currentGroupInfo = GRUPO_LIDERES[user.email] || { name: "Grupo Desconocido", color: "gray" };
-                        // Asignar ID de usuario único de Firebase
-                        currentGroupInfo.userId = userId;
-                    } else {
-                        currentGroupInfo = { name: ADMIN_CREDENTIALS[user.email].name, userId: userId };
-                    }
+                    try {
+                        const userDoc = await getDoc(doc(db, USERS_COLLECTION, user.email));
+                        if (userDoc.exists()) {
+                            const userData = userDoc.data();
+                            userRole = userData.role;
+                            
+                            // --- LÓGICA DE CAMBIO DE CONTRASEÑA OBLIGATORIO ---
+                            if (userData.mustChangePassword === true) {
+                                document.getElementById('user-email-force').innerText = user.email;
+                                document.getElementById('force-change-password-modal').classList.remove('hidden');
+                                showView('loading'); // Ocultar dashboard detrás del loading/modal
+                                return; // Detener ejecución para no mostrar dashboard
+                            }
 
-                    initializeDatabaseListener(); // Iniciar la carga de datos
-                    
-                } else {
-                    // Usuario no está logueado
-                    userId = null;
-                    userRole = null;
-                    currentGroupInfo = {};
-                    selectedSlots = [];
-                    showView('login'); // Mostrar vista de login
-                }
+                            currentGroupInfo = { name: userData.groupName || userData.name, color: userData.color || 'gray', userId: userId, email: user.email };
+                            
+                            const userInfoHTML = `
+                                <div class="text-right leading-tight">
+                                    <div class="font-bold text-white text-sm">${currentGroupInfo.name}</div>
+                                    <div class="text-xm text-blue-200 opacity-80 font-mono">${user.email}</div>
+                                </div>
+                                <div class="ml-3 bg-white/10 p-2 rounded-full"><i class="fas fa-user text-white"></i></div>
+                            `;
+                            
+                            if(userRole==='admin') { 
+                                document.getElementById('admin-header-user-info').innerHTML = userInfoHTML;
+                                showView('admin'); setupAdminView(); 
+                            } else { 
+                                document.getElementById('student-header-user-info').innerHTML = userInfoHTML;
+                                showView('student'); setupStudentView(); 
+                            }
+                        } else { 
+                            alert("Usuario sin datos."); await signOut(auth); 
+                        }
+                    } catch(e) { console.error(e); await signOut(auth); }
+                } else { showView('login'); }
             });
-            
-            // Asignar al objeto window para que el HTML (onclick) lo vea
-            window.handleLogin = async (event) => {
-                event.preventDefault();
-                hideMessage();
-                const email = document.getElementById('login-email').value;
+
+            window.handleLogin = async (e) => { 
+                e.preventDefault(); 
+                const email = document.getElementById('login-email').value.trim();
                 const password = document.getElementById('login-password').value;
+                try { await signInWithEmailAndPassword(auth, email, password); } 
+                catch (error) { showMessage('error', 'Credenciales incorrectas.'); } 
+            };
+            window.handleLogout = async () => { await signOut(auth); };
 
-                // Determinar rol basado en las credenciales
-                const isAdmin = !!ADMIN_CREDENTIALS[email];
-                const isStudent = !!GRUPO_LIDERES[email];
-
-                if (!isAdmin && !isStudent) {
-                    showMessage('error', 'Credenciales no reconocidas. Verifique el correo electrónico.');
-                    return;
+            // --- GESTIÓN DE CONTRASEÑAS ---
+            
+            // Alternar Visibilidad
+            window.togglePassword = (inputId, iconElement) => {
+                const input = document.getElementById(inputId);
+                if (input.type === "password") {
+                    input.type = "text";
+                    iconElement.classList.remove("fa-eye");
+                    iconElement.classList.add("fa-eye-slash");
+                } else {
+                    input.type = "password";
+                    iconElement.classList.remove("fa-eye-slash");
+                    iconElement.classList.add("fa-eye");
                 }
+            };
 
+            // 1. Recuperar Contraseña (Login)
+            window.openResetModal = () => document.getElementById('reset-modal').classList.remove('hidden');
+            window.closeResetModal = () => document.getElementById('reset-modal').classList.add('hidden');
+            
+            window.sendResetLink = async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('reset-email').value.trim();
+                const btn = document.getElementById('btn-send-reset');
+                btn.disabled = true; btn.innerText = "Enviando...";
                 try {
-                    // 1. Limpiar cualquier sesión anónima o anterior
-                    if (auth.currentUser) {
-                        await signOut(auth);
-                    }
+                    await sendPasswordResetEmail(auth, email);
+                    alert("¡Enlace enviado! Revisa tu correo para establecer tu nueva contraseña.");
+                    window.closeResetModal();
+                } catch (error) {
+                    alert("Error: Verifica que el correo sea correcto.");
+                } finally {
+                    btn.disabled = false; btn.innerText = "Enviar Enlace";
+                }
+            };
+
+            // 2. Cambiar Contraseña VOLUNTARIO (Dashboard)
+            window.openChangePasswordModal = () => document.getElementById('change-password-modal').classList.remove('hidden');
+            window.closeChangePasswordModal = () => {
+                document.getElementById('change-password-modal').classList.add('hidden');
+                document.getElementById('new-password').value = '';
+                document.getElementById('confirm-password').value = '';
+            };
+
+            window.handleChangePassword = async (e) => {
+                e.preventDefault();
+                const p1 = document.getElementById('new-password').value;
+                const p2 = document.getElementById('confirm-password').value;
+                if(p1.length < 6) return alert("La contraseña debe tener al menos 6 caracteres.");
+                if(p1 !== p2) return alert("Las contraseñas no coinciden.");
+                const user = auth.currentUser;
+                try {
+                    await updatePassword(user, p1);
+                    alert("¡Contraseña actualizada con éxito!");
+                    window.closeChangePasswordModal();
+                } catch (error) {
+                    if (error.code === 'auth/requires-recent-login') {
+                        alert("Por seguridad, debes volver a iniciar sesión para cambiar tu contraseña."); await signOut(auth);
+                    } else { alert("Error al actualizar la contraseña."); }
+                }
+            };
+
+            // 3. Cambiar Contraseña OBLIGATORIO (Force)
+            window.handleForcedPasswordChange = async (e) => {
+                e.preventDefault();
+                const p1 = document.getElementById('force-new-password').value;
+                const p2 = document.getElementById('force-confirm-password').value;
+
+                if(p1.length < 6) return alert("La contraseña debe tener al menos 6 caracteres.");
+                if(p1 !== p2) return alert("Las contraseñas no coinciden.");
+
+                const user = auth.currentUser;
+                try {
+                    // 1. Actualizar clave en Auth
+                    await updatePassword(user, p1);
                     
-                    // 2. Iniciar sesión con Email y Contraseña
-                    await signInWithEmailAndPassword(auth, email, password);
+                    // 2. Actualizar bandera en Firestore para que no vuelva a pedirlo
+                    await updateDoc(doc(db, USERS_COLLECTION, user.email), {
+                        mustChangePassword: false
+                    });
+
+                    alert("Contraseña establecida correctamente. Bienvenido.");
+                    document.getElementById('force-change-password-modal').classList.add('hidden');
                     
-                    // 3. onAuthStateChanged se encargará del resto (asignar roles y mostrar vistas)
+                    // Recargar la página para procesar el login normal
+                    window.location.reload();
 
                 } catch (error) {
-                    console.error("Error de autenticación:", error.code);
-                    let msg = 'Error al iniciar sesión. Verifique sus credenciales.';
-                    if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
-                        msg = 'Correo o contraseña incorrectos.';
-                    } else if (error.code === 'auth/too-many-requests') {
-                        msg = 'Demasiados intentos fallidos. Intente más tarde.';
+                    if (error.code === 'auth/requires-recent-login') {
+                        alert("Sesión expirada. Por favor ingresa nuevamente.");
+                        await signOut(auth);
+                        window.location.reload();
+                    } else {
+                        console.error(error);
+                        alert("Error al actualizar. Intenta nuevamente.");
                     }
-                    showMessage('error', msg);
                 }
             };
 
-            window.handleLogout = async () => {
-                await signOut(auth);
-                // onAuthStateChanged se encargará de limpiar el estado y mostrar el login
-            };
+            function getFormattedDateHeader(date) {
+                const dayName = date.toLocaleDateString('es-ES', { weekday: 'long' });
+                const dayNum = date.getDate();
+                const monthName = date.toLocaleDateString('es-ES', { month: 'long' });
+                const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+                return `<div class="flex flex-col leading-tight"><span class="text-lg font-bold text-slate-700">${cap(dayName)} ${dayNum}</span><span class="text-xs text-slate-500 font-medium uppercase tracking-wide mt-1">${cap(monthName)}</span></div>`;
+            }
 
-            // --- LÓGICA PRINCIPAL (CARGA DE DATOS) ---
+            function renderCalendarHeader(weekDays, headId) {
+                const thead = document.getElementById(headId); thead.innerHTML = '';
+                const hr = document.createElement('tr');
+                const thHora = document.createElement('th'); thHora.innerHTML = '<i class="far fa-clock text-slate-400 mr-2"></i>HORARIO'; thHora.className = 'text-center bg-slate-100 w-24'; hr.appendChild(thHora);
+                weekDays.forEach(d => { const th = document.createElement('th'); th.innerHTML = getFormattedDateHeader(d); hr.appendChild(th); });
+                thead.appendChild(hr);
+            }
 
-            function initializeDatabaseListener() {
-                if (!auth.currentUser) {
-                     showView('login');
-                     return;
+            // --- ADMIN VIEW ---
+            function setupAdminView() {
+                const update = () => { const w = getWeekDays(currentWeekOffset); renderAdminCalendar(w); };
+                document.getElementById('admin-prev-week').onclick = () => { currentWeekOffset--; selectedSlots=[]; update(); updateAdminActionBox(); };
+                document.getElementById('admin-next-week').onclick = () => { currentWeekOffset++; selectedSlots=[]; update(); updateAdminActionBox(); };
+                document.getElementById('admin-block-btn').onclick = () => batchBlockAction('block');
+                document.getElementById('admin-unblock-btn').onclick = () => batchBlockAction('unblock');
+                update();
+                listenAdminPending();
+            }
+
+            function renderAdminCalendar(weekDays) {
+                renderCalendarHeader(weekDays, 'admin-calendar-head');
+                const tbody = document.getElementById('admin-calendar-body'); tbody.innerHTML='';
+                const slotMap = new Map();
+                for(let h=7; h<=19; h++){
+                    const tr=document.createElement('tr'); tr.innerHTML=`<td class="time-label">${h}:00 - ${h+1}:00</td>`;
+                    weekDays.forEach(d=>{
+                        const id = `${formatDateYYYYMMDD(d)}_${h}`;
+                        const td = document.createElement('td'); td.innerHTML = `<div class="slot-container"><button id="${id}" class="slot slot-free"></button></div>`;
+                        tr.appendChild(td); const btn = td.querySelector('button'); btn.onclick = (e) => handleAdminClick(e, btn); slotMap.set(id, btn);
+                    });
+                    tbody.appendChild(tr);
                 }
-                
-                if (userRole === 'admin') {
-                    const adminNameEl = document.getElementById('admin-header-name');
-                    if(adminNameEl) adminNameEl.innerText = currentGroupInfo.name;
-                    
-                    showView('admin');
-                    setupAdminView(); // Configurar la vista de admin
+
+                if(reservationsListener) reservationsListener();
+                reservationsListener = onSnapshot(query(collection(db, RESERVATIONS_COLLECTION), where("date",">=",formatDateYYYYMMDD(weekDays[0])), where("date","<=",formatDateYYYYMMDD(weekDays[4]))), (s)=>{
+                    slotMap.forEach((b, k) => {
+                        const [dStr, hStr] = k.split('_');
+                        const container = b.parentElement; const oldInfo = container.querySelector('.info-btn'); if(oldInfo) oldInfo.remove();
+                        b.dataset.json = '[]'; b.dataset.status = 'free'; b.disabled = false;
+                        if (isPastDate(dStr, parseInt(hStr))) { b.className = 'slot slot-past opacity-60'; b.innerHTML = '<span class="text-xs">No Disponible</span>'; } 
+                        else { b.className = 'slot slot-free'; b.innerHTML = '<span class="text-xs opacity-50">Disponible</span>'; }
+                        if(selectedSlots.includes(k)) { b.classList.add('slot-selected'); if(b.dataset.status === 'free') b.innerHTML = '<span><i class="fas fa-check mb-1"></i><br>Seleccionado</span>'; }
+                    });
+
+                    const map = new Map(); s.forEach(d => { const k=`${d.data().date}_${d.data().hour}`; if(!map.has(k))map.set(k,[]); map.get(k).push({id:d.id,...d.data()}); });
+                    map.forEach((arr, k) => {
+                        const b = slotMap.get(k); if(!b) return;
+                        b.dataset.json = JSON.stringify(arr); const container = b.parentElement;
+                        const blocked = arr.find(x => x.status === 'blocked'); const approved = arr.filter(x => x.status === 'approved').length; const pending = arr.filter(x => x.status === 'pending').length;
+
+                        if (approved > 0 || pending > 0 || (blocked && arr.length > 1)) {
+                            const infoBtn = document.createElement('div'); infoBtn.className = 'info-btn'; infoBtn.innerHTML = '<i class="fas fa-eye"></i>';
+                            infoBtn.onclick = (e) => { e.stopPropagation(); openAttendanceModal(k.split('_')[0], k.split('_')[1], arr); }; container.appendChild(infoBtn);
+                        }
+
+                        if(blocked) { b.className = 'slot slot-blocked slot-admin-has-data'; b.innerHTML = '<span>Bloqueado</span>'; b.dataset.status = 'blocked'; } 
+                        else if(approved > 0) { b.className = `slot slot-admin-has-data ${approved>=4 ? 'slot-full' : 'slot-partial'}`; b.innerHTML = `<span>Ocupado</span><div class="occupancy-badge">${approved}/4</div>` + (pending?`<span class="text-xs text-yellow-700 font-bold mt-1">Wait: ${pending}</span>`:''); b.dataset.status = 'has-data'; } 
+                        else if(pending > 0) { b.className = 'slot slot-pending'; b.innerHTML = `<span>Solicitudes: ${pending}</span>`; }
+
+                        if(selectedSlots.includes(k)) { b.classList.add('slot-selected'); if(b.dataset.status !== 'free') b.innerHTML += '<div style="position:absolute; top:2px; left:2px; color:white; font-size:10px;"><i class="fas fa-check-circle"></i></div>'; else b.innerHTML = '<span><i class="fas fa-check mb-1"></i><br>Seleccionado</span>'; }
+                    });
+                });
+            }
+
+            function handleAdminClick(e, btn) {
+                if(selectedSlots.includes(btn.id)){ selectedSlots = selectedSlots.filter(x => x !== btn.id); btn.classList.remove('slot-selected'); }
+                else { selectedSlots.push(btn.id); btn.classList.add('slot-selected'); }
+                const event = new Event('change'); if(reservationsListener) { } 
+                if(selectedSlots.includes(btn.id)) {
+                    if(btn.dataset.status === 'free') btn.innerHTML = '<span><i class="fas fa-check mb-1"></i><br>Seleccionado</span>';
+                    else if(!btn.innerHTML.includes('fa-check-circle')) btn.innerHTML += '<div style="position:absolute; top:2px; left:2px; color:white; font-size:10px;"><i class="fas fa-check-circle"></i></div>';
                 } else {
-                    const studentNameEl = document.getElementById('student-header-name');
-                    if(studentNameEl) studentNameEl.innerText = currentGroupInfo.name;
-                    
-                    showView('student');
-                    setupStudentView(); // Configurar la vista de estudiante
+                    if(btn.dataset.status === 'free') btn.innerHTML = '<span class="text-xs opacity-50">Disponible</span>';
+                    else { const check = btn.querySelector('.fa-check-circle')?.parentElement; if(check) check.remove(); }
                 }
+                updateAdminActionBox();
             }
-            
-            function setupWeekNavigation(prevBtnId, nextBtnId, titleId, calendarRenderer) {
-                const prevWeekBtn = document.getElementById(prevBtnId);
-                const nextWeekBtn = document.getElementById(nextBtnId);
-                const weekTitle = document.getElementById(titleId);
 
-                if (!prevWeekBtn || !nextWeekBtn || !weekTitle) {
-                    console.error("Error: Elementos de navegación de semana no encontrados.");
-                    return;
-                }
+            function updateAdminActionBox() {
+                const box = document.getElementById('admin-action-box'); const count = document.getElementById('admin-selection-count');
+                if(selectedSlots.length > 0) { box.classList.remove('hidden'); count.innerText = `${selectedSlots.length} seleccionados`; } else { box.classList.add('hidden'); }
+            }
 
-                const render = () => {
-                    const weekDays = getWeekDays(currentWeekOffset);
-                    const start = weekDays[0].toLocaleDateString('es-ES', { month: 'short', day: 'numeric' });
-                    const end = weekDays[4].toLocaleDateString('es-ES', { month: 'short', day: 'numeric' });
-                    weekTitle.innerText = `${start} - ${end}`;
-                    
-                    calendarRenderer(weekDays);
-                };
+            window.batchBlockAction = async (action) => {
+                const batch = writeBatch(db);
+                selectedSlots.forEach(id => {
+                    const [d, h] = id.split('_'); const blockId = `BLOCK_${d}_${h}`; const ref = doc(db, RESERVATIONS_COLLECTION, blockId);
+                    if (action === 'block') batch.set(ref, { date: d, hour: parseInt(h), status: 'blocked', userId: 'ADMIN', createdAt: serverTimestamp() }); else batch.delete(ref);
+                });
+                await batch.commit(); selectedSlots = []; document.querySelectorAll('.slot-selected').forEach(x => x.classList.remove('slot-selected')); updateAdminActionBox();
+            };
 
-                prevWeekBtn.onclick = () => {
-                    currentWeekOffset--;
-                    selectedSlots = []; // Limpiar selección al cambiar de semana
-                    render();
-                };
+            async function getGroupMembers(groupName) {
+                const q = query(collection(db, USERS_COLLECTION), where("groupName", "==", groupName)); const snap = await getDocs(q);
+                if(!snap.empty) return snap.docs[0].data().members || []; return [];
+            }
+
+            // --- LÓGICA MODAL (SISTEMA 2 COLUMNAS) ---
+            window.openAttendanceModal = async (date, hour, reservations) => {
+                const modal = document.getElementById('attendance-modal'); document.getElementById('att-title').innerText = `Gestión: ${date} - ${hour}:00`;
+                const list = document.getElementById('att-list'); list.innerHTML = '<div class="p-8 text-center text-slate-500"><i class="fas fa-spinner fa-spin text-3xl mb-2"></i><br>Cargando datos...</div>';
+                modal.classList.remove('hidden');
                 
-                nextWeekBtn.onclick = () => {
-                    currentWeekOffset++;
-                    selectedSlots = []; // Limpiar selección al cambiar de semana
-                    render();
-                };
+                const approved = reservations.filter(r => r.status === 'approved'); const blocked = reservations.find(r => r.status === 'blocked');
 
-                render(); // Carga inicial
-            }
-            
-            // --- LÓGICA DEL PANEL DE ESTUDIANTE ---
+                if(blocked) { list.innerHTML = `<div class="p-6 text-center bg-slate-50 rounded-lg border border-slate-200"><div class="text-red-500 text-4xl mb-3"><i class="fas fa-lock"></i></div><p class="font-bold text-slate-700">Horario Bloqueado</p><button onclick="window.deleteReservation('${blocked.id}')" class="mt-4 bg-white border border-red-300 text-red-600 px-4 py-2 rounded hover:bg-red-50 font-medium">Desbloquear Ahora</button></div>`; return; }
+                if(approved.length === 0) { list.innerHTML = '<p class="text-slate-400 text-center py-10">No hay grupos aprobados en este horario.</p>'; return; }
 
+                list.innerHTML = ''; 
+                for (const res of approved) {
+                    const groupDiv = document.createElement('div'); groupDiv.className = 'border border-slate-200 rounded-lg mb-4 bg-white overflow-hidden shadow-sm';
+                    const students = await getGroupMembers(res.groupName);
+                    
+                    let html = `<div class="bg-slate-50 p-3 flex justify-between items-center border-b border-slate-200"><span class="font-bold text-slate-700 text-sm"><i class="fas fa-users mr-2 text-blue-500"></i>${res.groupName}</span><button onclick="window.deleteReservation('${res.id}')" class="text-red-500 text-xs hover:text-red-700 font-medium border border-red-200 bg-white px-2 py-1 rounded">Derrogar</button></div><div class="p-0">`;
+                    const att = res.attendanceDetail || {};
+                    
+                    if(students.length === 0) html += '<p class="text-xs text-gray-400 italic p-4 text-center">Sin integrantes registrados.</p>';
+                    else {
+                        students.forEach((st) => {
+                            const isPresent = att[st.cedula] === true;
+                            const isAbsent = att[st.cedula] === false;
+                            
+                            // --- INTERFAZ DE 2 BOTONES ---
+                            html += `
+                                <div class="flex justify-between items-center p-3 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition">
+                                    <div>
+                                        <div class="text-sm font-medium text-slate-700">${st.nombre}</div>
+                                        <div class="text-xs text-slate-400 font-mono">${st.cedula}</div>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <div onclick="window.setAttendance('${res.groupName}','${res.date}','${st.cedula}', false, this)" 
+                                             class="att-btn absent ${isAbsent ? 'active' : ''}">
+                                            <div class="att-circle"></div> Ausente
+                                        </div>
+                                        <div onclick="window.setAttendance('${res.groupName}','${res.date}','${st.cedula}', true, this)" 
+                                             class="att-btn present ${isPresent ? 'active' : ''}">
+                                            <div class="att-circle"></div> Presente
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    }
+                    html += '</div>'; groupDiv.innerHTML = html; list.appendChild(groupDiv);
+                }
+            };
+
+            window.setAttendance = async (gn, d, ced, isPresent, btnElement) => {
+                // Visual update immediate (UX)
+                const parent = btnElement.parentElement;
+                parent.querySelectorAll('.att-btn').forEach(b => b.classList.remove('active'));
+                btnElement.classList.add('active');
+
+                // Database Update
+                const s = await getDocs(query(collection(db, RESERVATIONS_COLLECTION), where("date","==",d), where("groupName","==",gn), where("status","==","approved")));
+                const b = writeBatch(db); 
+                s.forEach(doc => b.update(doc.ref, { [`attendanceDetail.${ced}`]: isPresent })); 
+                await b.commit();
+            };
+
+            // --- STUDENT VIEW ---
             function setupStudentView() {
-                setupWeekNavigation('student-prev-week', 'student-next-week', 'student-week-title', renderStudentCalendar);
-                const submitBtn = document.getElementById('submit-request-btn');
-                if(submitBtn) submitBtn.onclick = handleSubmitRequest;
+                const update = () => { const w = getWeekDays(currentWeekOffset); renderStudentCalendar(w); };
+                document.getElementById('student-prev-week').onclick = () => { currentWeekOffset--; selectedSlots=[]; update(); };
+                document.getElementById('student-next-week').onclick = () => { currentWeekOffset++; selectedSlots=[]; update(); };
+                document.getElementById('submit-request-btn').onclick = async () => {
+                    const b = writeBatch(db);
+                    selectedSlots.forEach(id => { const [d,h] = id.split('_'); b.set(doc(collection(db, RESERVATIONS_COLLECTION)), {date:d, hour:parseInt(h), status:'pending', userId, groupName:currentGroupInfo.name, groupColor:currentGroupInfo.color, createdAt: serverTimestamp()}); });
+                    await b.commit(); selectedSlots=[]; showMessage('success','Solicitud enviada correctamente.');
+                };
+                update();
             }
 
             function renderStudentCalendar(weekDays) {
-                const tableBody = document.getElementById('student-calendar-body');
-                const tableHead = document.getElementById('student-calendar-head');
-                
-                if(!tableBody || !tableHead) return;
-                
-                tableHead.innerHTML = ''; // Limpiar cabecera
-                tableBody.innerHTML = ''; // Limpiar cuerpo
-
-                if (reservationsListener) reservationsListener(); 
-
-                // Crear Encabezados (Lunes 17/11, Martes 18/11...)
-                const headRow = document.createElement('tr');
-                headRow.appendChild(createHeaderCell("Hora"));
-                weekDays.forEach(day => {
-                    headRow.appendChild(createHeaderCell(
-                        `${day.toLocaleDateString('es-ES', { weekday: 'short' })} ${day.getDate()}/${day.getMonth() + 1}`
-                    ));
-                });
-                tableHead.appendChild(headRow);
-
-                const hours = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
-                const slotMap = new Map();
-
-                hours.forEach(hour => {
-                    const row = document.createElement('tr');
-                    // Crear Etiqueta de Hora (07:00 - 08:00)
-                    row.appendChild(createTimeLabelCell(`${String(hour).padStart(2, '0')}:00 - ${String(hour + 1).padStart(2, '0')}:00`));
-                    
-                    // Crear 5 celdas (L-V) para esta hora
-                    weekDays.forEach(day => {
-                        const slotId = `${formatDateYYYYMMDD(day)}_${hour}`;
-                        const cell = document.createElement('td');
-                        const slotContainer = createSlotContainer();
-                        const slot = createSlotElement(slotId, 'student');
-                        
-                        slotContainer.appendChild(slot);
-                        cell.appendChild(slotContainer);
-                        row.appendChild(cell);
-                        
-                        slotMap.set(slotId, slot);
+                renderCalendarHeader(weekDays, 'student-calendar-head');
+                const tbody = document.getElementById('student-calendar-body'); tbody.innerHTML='';
+                const map = new Map();
+                for(let h=7; h<=19; h++){
+                    const tr=document.createElement('tr'); tr.innerHTML=`<td class="time-label">${h}:00 - ${h+1}:00</td>`;
+                    weekDays.forEach(d=>{
+                        const id = `${formatDateYYYYMMDD(d)}_${h}`; const td=document.createElement('td'); td.innerHTML=`<div class="slot-container"><button id="${id}" class="slot slot-free"><span class="opacity-50">Disponible</span></button></div>`;
+                        tr.appendChild(td); const btn=td.querySelector('button'); btn.onclick=()=>handleStudentClick(btn); map.set(id, btn);
                     });
-                    tableBody.appendChild(row);
-                });
-
-                const startOfWeek = formatDateYYYYMMDD(weekDays[0]);
-                const endOfWeek = formatDateYYYYMMDD(weekDays[4]);
-
-                const q = query(
-                    collection(db, RESERVATIONS_COLLECTION),
-                    where("date", ">=", startOfWeek),
-                    where("date", "<=", endOfWeek)
-                );
-
-                reservationsListener = onSnapshot(q, (snapshot) => {
-                    resetCalendarSlots(slotMap, 'student');
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        data.id = doc.id; 
-                        const slotId = `${data.date}_${data.hour}`;
-                        const slot = slotMap.get(slotId);
-                        if (slot) {
-                            updateSlotAppearance(slot, data, 'student');
-                        }
-                    });
-                }, (error) => {
-                    console.error("Error al cargar reservaciones: ", error);
-                    showMessage('error', 'Error al conectar con la base de datos de turnos.');
-                });
-            }
-            
-            function handleStudentSlotClick(slot) {
-                const slotId = slot.id;
-                const status = slot.dataset.status;
-
-                if (status === 'free') {
-                    // --- CORRECCIÓN: Agregar texto 'Seleccionado' al bloque azul ---
-                    slot.innerHTML = '<span class="slot-text">Seleccionado</span>';
-                    slot.classList.add('slot-selected');
-                    slot.dataset.status = 'selected';
-                    selectedSlots.push(slotId);
-                } else if (status === 'selected') {
-                    // --- CORRECCIÓN: Remover texto al deseleccionar ---
-                    slot.innerHTML = ''; 
-                    slot.classList.remove('slot-selected');
-                    slot.dataset.status = 'free';
-                    selectedSlots = selectedSlots.filter(s => s !== slotId);
-                } else if (slot.dataset.owner === 'self' && (status === 'pending' || status === 'approved')) {
-                    // Permitir al usuario cancelar su propia solicitud PENDIENTE o APROBADA
-                    const statusText = status === 'pending' ? 'solicitud PENDIENTE' : 'reserva APROBADA';
-                    if (confirm(`¿Estás seguro de que quieres ANULAR esta ${statusText}?`)) {
-                        cancelReservation(slot.dataset.docId);
-                    }
-                }
-                
-                updateSubmitBox();
-            }
-            
-            function updateSubmitBox() {
-                const box = document.getElementById('student-request-box');
-                const btn = document.getElementById('submit-request-btn');
-                const text = document.getElementById('student-request-count');
-                
-                if (!box || !btn || !text) return; 
-
-                if (selectedSlots.length > 0) {
-                    text.innerText = `${selectedSlots.length} hora(s) seleccionada(s).`;
-                    btn.disabled = false;
-                    box.classList.remove('hidden', 'fade-in');
-                    void box.offsetWidth;
-                    box.classList.add('fade-in');
-                } else {
-                    box.classList.add('hidden');
-                    btn.disabled = true;
-                }
-            }
-            
-            async function handleSubmitRequest() {
-                if (selectedSlots.length === 0) return;
-
-                const batch = writeBatch(db);
-                let hasConflicts = false;
-                let conflictSlot = null;
-
-                for (const slotId of selectedSlots) {
-                    const slotElement = document.getElementById(slotId);
-                    if (slotElement && slotElement.dataset.status !== 'free' && slotElement.dataset.status !== 'selected') {
-                        hasConflicts = true;
-                        conflictSlot = slotId;
-                        break;
-                    }
+                    tbody.appendChild(tr);
                 }
 
-                if (hasConflicts) {
-                    showMessage('error', `El turno ${conflictSlot} ya no está disponible. Por favor, refresca tu selección.`);
-                    selectedSlots = [];
-                    document.querySelectorAll('.slot-selected').forEach(s => {
-                        s.classList.remove('slot-selected');
-                        s.dataset.status = 'free';
-                    });
-                    updateSubmitBox();
-                    return;
-                }
-                
-                selectedSlots.forEach(slotId => {
-                    const [date, hourStr] = slotId.split('_');
-                    const hour = parseInt(hourStr);
-                    const newDocRef = doc(collection(db, RESERVATIONS_COLLECTION));
-                    
-                    batch.set(newDocRef, {
-                        date: date,
-                        hour: hour,
-                        status: 'pending',
-                        userId: userId,
-                        groupName: currentGroupInfo.name,
-                        groupColor: currentGroupInfo.color,
-                        createdAt: serverTimestamp()
-                    });
-                });
-
-                try {
-                    await batch.commit();
-                    showMessage('success', `${selectedSlots.length} solicitud(es) enviada(s) con éxito.`);
-                    selectedSlots = [];
-                    updateSubmitBox();
-                } catch (error) {
-                    console.error("Error al enviar solicitudes: ", error);
-                    showMessage('error', 'Error al guardar las solicitudes.');
-                }
-            }
-            
-            async function cancelReservation(docId) {
-                if (!docId) {
-                     console.error("Error: docId es nulo al cancelar.");
-                     return;
-                }
-                try {
-                    await deleteDoc(doc(db, RESERVATIONS_COLLECTION, docId));
-                    showMessage('success', 'Reserva cancelada.');
-                } catch (error) {
-                    console.error("Error al cancelar: ", error);
-                    showMessage('error', 'No se pudo cancelar la reserva.');
-                }
-            }
-            
-            // --- LÓGICA DEL PANEL DE ADMINISTRADOR ---
-
-            function setupAdminView() {
-                setupWeekNavigation('admin-prev-week', 'admin-next-week', 'admin-week-title', renderAdminCalendar);
-                
-                const blockBtn = document.getElementById('admin-block-btn');
-                const unblockBtn = document.getElementById('admin-unblock-btn');
-                
-                if (blockBtn) blockBtn.onclick = () => handleAdminBlockAction('blocked');
-                if (unblockBtn) unblockBtn.onclick = () => handleAdminBlockAction('free');
-
-                listenForPendingRequests();
-            }
-            
-            function renderAdminCalendar(weekDays) {
-                const tableBody = document.getElementById('admin-calendar-body');
-                const tableHead = document.getElementById('admin-calendar-head');
-                
-                if(!tableBody || !tableHead) return;
-                
-                tableHead.innerHTML = '';
-                tableBody.innerHTML = '';
-                if (reservationsListener) reservationsListener();
-
-                const headRow = document.createElement('tr');
-                headRow.appendChild(createHeaderCell("Hora"));
-                weekDays.forEach(day => {
-                    headRow.appendChild(createHeaderCell(
-                        `${day.toLocaleDateString('es-ES', { weekday: 'short' })} ${day.getDate()}/${day.getMonth() + 1}`
-                    ));
-                });
-                tableHead.appendChild(headRow);
-
-                const hours = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
-                const slotMap = new Map();
-
-                hours.forEach(hour => {
-                    const row = document.createElement('tr');
-                    row.appendChild(createTimeLabelCell(`${String(hour).padStart(2, '0')}:00 - ${String(hour + 1).padStart(2, '0')}:00`));
-                    weekDays.forEach(day => {
-                        const slotId = `${formatDateYYYYMMDD(day)}_${hour}`;
-                        const cell = document.createElement('td');
-                        const slotContainer = createSlotContainer();
-                        const slot = createSlotElement(slotId, 'admin');
-                        
-                        slotContainer.appendChild(slot);
-                        cell.appendChild(slotContainer);
-                        row.appendChild(cell);
-                        
-                        slotMap.set(slotId, slot);
-                    });
-                    tableBody.appendChild(row);
-                });
-
-                const startOfWeek = formatDateYYYYMMDD(weekDays[0]);
-                const endOfWeek = formatDateYYYYMMDD(weekDays[4]);
-
-                const q = query(
-                    collection(db, RESERVATIONS_COLLECTION),
-                    where("date", ">=", startOfWeek),
-                    where("date", "<=", endOfWeek)
-                );
-
-                reservationsListener = onSnapshot(q, (snapshot) => {
-                    resetCalendarSlots(slotMap, 'admin');
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        data.id = doc.id;
-                        const slotId = `${data.date}_${data.hour}`;
-                        const slot = slotMap.get(slotId);
-                        if (slot) {
-                            updateSlotAppearance(slot, data, 'admin');
-                        }
-                    });
-                    
-                    selectedSlots = [];
-                    updateAdminActionBox();
-                });
-            }
-            
-            function handleAdminSlotClick(slot) {
-                const slotId = slot.id;
-                const status = slot.dataset.status;
-
-                // Permitir selección de slots libres o bloqueados por el admin
-                if (status === 'free' || status === 'blocked') {
-                    if (selectedSlots.includes(slotId)) {
-                        selectedSlots = selectedSlots.filter(s => s !== slotId);
-                        slot.classList.remove('slot-selected');
-                        slot.innerHTML = (status === 'free') ? '<span class="slot-text">Disponible</span>' : '<span class="slot-text">Bloqueado</span>';
-                    } else {
-                        selectedSlots.push(slotId);
-                        slot.classList.add('slot-selected');
-                        slot.innerHTML = '<span class="slot-text">Seleccionado</span>';
-                    }
-                } else if (status === 'approved') {
-                    // Permitir al Admin cancelar (derrogar) turnos aprobados
-                    if (confirm(`¿Seguro que quieres DERROGAR el turno aprobado de ${slot.dataset.groupName}?`)) {
-                        cancelReservation(slot.dataset.docId);
-                    }
-                }
-                
-                updateAdminActionBox();
-            }
-            
-            function updateAdminActionBox() {
-                const box = document.getElementById('admin-action-box');
-                const countEl = document.getElementById('admin-selection-count');
-                
-                if (!box || !countEl) return; 
-                
-                if (selectedSlots.length > 0) {
-                    box.classList.remove('hidden');
-                    countEl.innerText = `${selectedSlots.length} hora(s) seleccionada(s).`;
-                } else {
-                    box.classList.add('hidden');
-                }
-            }
-            
-            async function handleAdminBlockAction(action) {
-                if (selectedSlots.length === 0) return;
-                
-                const batch = writeBatch(db);
-                
-                for (const slotId of selectedSlots) {
-                    const [date, hourStr] = slotId.split('_');
-                    const hour = parseInt(hourStr);
-                    const docId = `ADMIN_BLOCK_${date}_${hour}`;
-                    const docRef = doc(db, RESERVATIONS_COLLECTION, docId);
-
-                    if (action === 'blocked') {
-                        batch.set(docRef, {
-                            date: date,
-                            hour: hour,
-                            status: 'blocked',
-                            groupName: 'Admin Block',
-                            userId: userId,
-                            createdAt: serverTimestamp()
-                        });
-                    } else {
-                        batch.delete(docRef);
-                    }
-                }
-                
-                try {
-                    await batch.commit();
-                    showMessage('success', `Operación completada en ${selectedSlots.length} slots.`);
-                    selectedSlots = [];
-                    updateAdminActionBox();
-                } catch (error) {
-                    console.error("Error al actualizar bloques de admin: ", error);
-                    showMessage('error', 'Error al guardar los cambios.');
-                }
-            }
-
-            // --- Lógica Común de Renderizado de Calendario (TABLA) ---
-
-            function createHeaderCell(text) {
-                const th = document.createElement('th');
-                th.innerText = text;
-                return th;
-            }
-            
-            function createTimeLabelCell(text) {
-                const td = document.createElement('td');
-                td.className = 'time-label';
-                td.innerText = text;
-                return td;
-            }
-            
-            function createSlotContainer() {
-                const div = document.createElement('div');
-                div.className = 'slot-container';
-                return div;
-            }
-
-            function createSlotElement(slotId, role) {
-                const slot = document.createElement('button'); // Usar botón para mejor accesibilidad
-                slot.id = slotId;
-                slot.className = 'slot';
-                slot.type = 'button'; // Prevenir envío de formulario
-                
-                if (role === 'student') {
-                    slot.onclick = () => handleStudentSlotClick(slot);
-                } else if (role === 'admin') {
-                    slot.onclick = () => handleAdminSlotClick(slot);
-                }
-                
-                return slot;
-            }
-
-            function resetCalendarSlots(slotMap, role) {
-                const now = new Date();
-                now.setHours(now.getHours(), 0, 0, 0);
-
-                slotMap.forEach((slot, slotId) => {
-                    const [dateStr, hourStr] = slotId.split('_');
-                    const slotDate = new Date(`${dateStr}T${String(hourStr).padStart(2, '0')}:00:00`);
-                    
-                    slot.className = 'slot'; // Limpiar colores anteriores
-                    slot.innerHTML = ''; // Limpiar texto
-                    slot.disabled = false; // Habilitar slot
-                    
-                    if (slotDate < now) {
-                        // Slot en el pasado
-                        slot.dataset.status = 'past';
-                        slot.classList.add('slot-past');
-                        // --- CORRECCIÓN DE TEXTO ---
-                        slot.innerHTML = '<span class="slot-text">No Disponible</span>';
-                        slot.disabled = true;
-                    } else {
-                        // Slot libre
-                        slot.dataset.status = 'free';
-                        slot.classList.add('slot-free');
-                        if (role === 'admin') {
-                            slot.innerHTML = '<span class="slot-text">Disponible</span>';
-                        }
-                    }
-                    
-                    slot.dataset.docId = '';
-                    slot.dataset.owner = '';
-                    slot.dataset.groupName = '';
-                });
-            }
-            
-            function updateSlotAppearance(slot, data, role) {
-                slot.dataset.docId = data.id || ''; 
-                slot.dataset.status = data.status;
-                slot.dataset.groupName = data.groupName || '';
-                
-                let colorClasses = '';
-                let content = data.groupName;
-                slot.disabled = false; // Por defecto
-                
-                const isOwner = (data.userId === userId);
-                slot.dataset.owner = isOwner ? 'self' : 'other';
-
-                switch (data.status) {
-                    case 'pending':
-                        colorClasses = 'slot-pending';
-                        if (role === 'admin') {
-                            const color = COLOR_MAP[data.groupColor] || { bg: 'bg-gray-400', border: 'border-gray-500', text: 'text-black' };
-                            slot.classList.add(color.bg, color.border, color.text, 'slot-admin-view-pending');
-                            content = `Pendiente (${data.groupName})`;
-                        } else {
-                             // --- CORRECCIÓN DE TEXTO: Simplificado ---
-                             content = isOwner ? 'Mi Solicitud' : 'Pendiente';
-                        }
-                        break;
-                        
-                    case 'approved':
-                        if (role === 'admin') {
-                            const color = COLOR_MAP[data.groupColor] || { bg: 'bg-gray-700', border: 'border-gray-900', text: 'text-white' };
-                            slot.classList.add(color.bg, color.border, color.text, 'slot-admin-view-approved');
-                            content = data.groupName;
-                        } else {
-                            // --- LÓGICA DE COLORES VERDE/ROJO (Estricta) ---
-                            if (isOwner) {
-                                colorClasses = 'slot-approved-self'; // Verde
-                                content = "Agendado"; // <-- REQUERIDO
-                            } else {
-                                colorClasses = 'slot-approved-other'; // Rojo
-                                content = "Reservado"; // <-- REQUIDO (Sin nombre de grupo)
-                            }
-                        }
-                        break;
-                        
-                    case 'blocked':
-                        colorClasses = 'slot-blocked'; // Gris
-                        content = 'No Disponible';
-                        // --- ¡CORRECCIÓN DE BUG! ---
-                        // El admin SÍ debe poder hacer clic en slots bloqueados.
-                        if (role === 'admin') {
-                            slot.disabled = false;
-                            slot.classList.add('admin-clickable'); // Añadir estilo hover
-                            content = 'Bloqueado';
-                        } else {
-                            slot.disabled = true;
-                        }
-                        break;
-                }
-                
-                if (colorClasses) slot.classList.add(colorClasses);
-                slot.innerHTML = `<span class="slot-text">${content}</span>`;
-            }
-
-            
-            // --- Lógica del Panel de Aprobación (Admin) ---
-
-            function listenForPendingRequests() {
-                // *** CORRECCIÓN CRÍTICA ***
-                // Quitar 'orderBy' para evitar el error de índice de Firestore.
-                // La ordenación se hará localmente.
-                const q = query(
-                    collection(db, RESERVATIONS_COLLECTION),
-                    where("status", "==", "pending")
-                );
-
-                onSnapshot(q, (snapshot) => {
-                    const listContainer = document.getElementById('admin-requests-list');
-                    if (!listContainer) return; 
-                    
-                    listContainer.innerHTML = '';
-                    
-                    if (snapshot.empty) {
-                        listContainer.innerHTML = '<div class="text-center text-gray-400 p-4">No hay solicitudes pendientes.</div>';
-                        return;
-                    }
-                    
-                    // Ordenar localmente
-                    const requests = [];
-                    snapshot.forEach(doc => {
-                        requests.push({ id: doc.id, data: doc.data() });
-                    });
-                    
-                    // Ordenar por fecha de creación (ascendente)
-                    requests.sort((a, b) => {
-                        const aTime = a.data.createdAt?.toMillis() || 0;
-                        const bTime = b.data.createdAt?.toMillis() || 0;
-                        return aTime - bTime; 
+                if(reservationsListener) reservationsListener();
+                reservationsListener = onSnapshot(query(collection(db,RESERVATIONS_COLLECTION), where("date",">=",formatDateYYYYMMDD(weekDays[0])), where("date","<=",formatDateYYYYMMDD(weekDays[4]))), (s)=>{
+                    map.forEach((b, k) => {
+                        const [dStr, hStr] = k.split('_');
+                        if (isPastDate(dStr, parseInt(hStr))) { b.className = 'slot slot-past opacity-50'; b.innerHTML = '<span class="text-xs">No Disponible</span>'; b.dataset.status = 'past'; b.disabled = true; }
+                        else { b.className = 'slot slot-free'; b.innerHTML = '<span class="opacity-50">Disponible</span>'; b.dataset.status = 'free'; b.disabled = false; }
                     });
 
-                    requests.forEach(req => {
-                        listContainer.appendChild(createRequestRow(req.id, req.data));
+                    const groups = new Map(); s.forEach(d=>{const k=`${d.data().date}_${d.data().hour}`; if(!groups.has(k))groups.set(k,[]); groups.get(k).push({id:d.id,...d.data()});});
+                    groups.forEach((arr,k)=>{
+                        const b = map.get(k); if(!b || b.dataset.status === 'past') return;
+                        const blocked = arr.find(x=>x.status==='blocked'); const mine = arr.find(x=>x.userId===userId); const app = arr.filter(x=>x.status==='approved').length;
+                        if(blocked) { b.className='slot slot-blocked'; b.innerHTML='<span>No disp.</span>'; b.dataset.status='blocked'; b.disabled = true; } 
+                        else if(mine) { b.className=`slot ${mine.status==='approved'?'slot-approved-self':'slot-pending'}`; b.innerHTML=`<span>${mine.status==='approved'?'Agendado':'Pendiente'}</span>`; b.dataset.status=`my-${mine.status}`; b.dataset.docId=mine.id; }
+                        else if(app>=4) { b.className='slot slot-full'; b.innerHTML='<span>Lleno</span>'; b.dataset.status='full'; b.disabled = true; }
+                        else if(app>0) { b.className='slot slot-partial'; b.innerHTML=`<span>Disp.</span><div class="occupancy-badge">${app}/4</div>`; b.dataset.status='partial'; }
                     });
-                }, (error) => {
-                    // Este es el error que viste en la consola
-                    console.error("Error al cargar solicitudes pendientes: ", error);
-                    showMessage('error', 'Error al cargar la lista de solicitudes. Verifique los permisos de Firestore.');
+                    selectedSlots.forEach(id=>{const b=map.get(id);if(b && !b.disabled){b.classList.add('slot-selected');b.innerHTML='<span><i class="fas fa-check mb-1"></i><br>Selecc.</span>';}});
+                    updateStudentUI();
                 });
             }
-            
-            function createRequestRow(docId, data) {
-                const div = document.createElement('div');
-                const color = data.groupColor || 'gray';
-                const colorClass = COLOR_MAP[color]?.bg || 'bg-gray-200'; // Usar color sólido
-                const textColor = COLOR_MAP[color]?.text || 'text-gray-900';
-                
-                div.className = `p-3 rounded-lg shadow-sm mb-3 flex justify-between items-center ${colorClass} ${textColor}`;
-                
-                // Formatear la fecha para que sea legible
-                const requestDate = new Date(`${data.date}T00:00:00`).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
-                
-                div.innerHTML = `
-                    <div class="flex-1 overflow-hidden">
-                        <div class="font-bold text-sm truncate">${data.groupName}</div>
-                        <div class="text-xs opacity-80">
-                            ${requestDate} | ${data.hour}:00
-                        </div>
-                    </div>
-                    <div class="flex gap-2 ml-2">
-                        <button onclick="window.updateReservationStatus('${docId}', 'approved')" 
-                                class="bg-green-500 text-white w-8 h-8 rounded-full leading-none hover:bg-green-600 shadow-md flex items-center justify-center"
-                                title="Aprobar">
-                            <i class="fas fa-check"></i>
-                        </button>
-                        <button onclick="window.updateReservationStatus('${docId}', 'rejected')" 
-                                class="bg-red-500 text-white w-8 h-8 rounded-full leading-none hover:bg-red-600 shadow-md flex items-center justify-center"
-                                title="Rechazar">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                `;
-                return div;
+
+            function handleStudentClick(btn) {
+                if(btn.disabled) return;
+                const id = btn.id; const st = btn.dataset.status;
+                if(st.includes('my')) { if(confirm("¿Desea cancelar su reserva?")) window.deleteReservation(btn.dataset.docId); return; }
+                if (selectedSlots.includes(id)) { selectedSlots = selectedSlots.filter(x => x !== id); btn.classList.remove('slot-selected'); }
+                else { selectedSlots.push(id); btn.classList.add('slot-selected'); }
+                updateStudentUI();
             }
+
+            function updateStudentUI(){ const b=document.getElementById('student-request-box'); if(selectedSlots.length){b.classList.remove('hidden'); document.getElementById('student-request-count').innerText=`${selectedSlots.length} horas seleccionadas.`; document.getElementById('submit-request-btn').disabled=false;}else{b.classList.add('hidden'); document.getElementById('submit-request-btn').disabled=true;} }
             
-            // Asignar al objeto window para que el HTML (onclick) lo vea
-            window.updateReservationStatus = async (docId, newStatus) => {
-                const docRef = doc(db, RESERVATIONS_COLLECTION, docId);
-                
-                if (newStatus === 'rejected') {
-                    // Rechazar es simplemente borrar el documento
-                    try {
-                        await deleteDoc(docRef);
-                    } catch (e) {
-                        console.error("Error al rechazar: ", e);
-                        showMessage('error', 'Error al rechazar la solicitud.');
-                    }
-                } else if (newStatus === 'approved') {
-                    // Aprobar requiere verificar conflictos primero
-                    try {
-                        const docSnap = await getDoc(docRef);
-                        if (!docSnap.exists()) {
-                            showMessage('error', 'Esta solicitud ya no existe.');
-                            return;
-                        }
-                        const data = docSnap.data();
-                        
-                        // Buscar otros turnos APROBADOS o BLOQUEADOS en el mismo slot
-                        const q = query(
-                            collection(db, RESERVATIONS_COLLECTION),
-                            where("date", "==", data.date),
-                            where("hour", "==", data.hour),
-                            where("status", "in", ["approved", "blocked"])
-                        );
-                        
-                        const conflictSnapshot = await getDocs(q);
-                        
-                        if (!conflictSnapshot.empty) {
-                            showMessage('error', `Ya existe un turno aprobado o bloqueado para el ${data.date} a las ${data.hour}:00.`);
-                            // Borrar la solicitud pendiente conflictiva
-                            await deleteDoc(docRef);
-                        } else {
-                            // No hay conflicto, aprobar el turno
-                            await updateDoc(docRef, { status: 'approved' });
-                            showMessage('success', 'Turno aprobado.');
-                        }
-                        
-                    } catch (e) {
-                        console.error("Error al aprobar: ", e);
-                        showMessage('error', 'Error al aprobar la solicitud.');
-                    }
-                }
+            function listenAdminPending(){ onSnapshot(query(collection(db,RESERVATIONS_COLLECTION), where("status","==","pending")), (s)=>{
+                const c = document.getElementById('admin-requests-list'); c.innerHTML='';
+                if(s.empty) { c.innerHTML='<div class="text-center p-4 text-slate-400 italic">No hay solicitudes pendientes</div>'; return; }
+                s.forEach(d=>{
+                    const r=d.data();
+                    const el=document.createElement('div'); el.className='bg-white p-3 rounded-lg shadow-sm border border-slate-200 mb-2 flex justify-between items-center fade-in';
+                    el.innerHTML=`<div><div class="font-bold text-sm text-slate-700">${r.groupName}</div><div class="text-xs text-slate-500"><i class="far fa-calendar mr-1"></i>${r.date} <i class="far fa-clock ml-1 mr-1"></i>${r.hour}:00</div></div><div class="flex gap-2"><button onclick="window.admAct('${d.id}',true,'${r.date}',${r.hour})" class="w-8 h-8 flex items-center justify-center rounded-full bg-green-50 text-green-600 hover:bg-green-100 transition"><i class="fas fa-check"></i></button><button onclick="window.rejectReq('${d.id}')" class="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-600 hover:bg-red-100 transition"><i class="fas fa-times"></i></button></div>`;
+                    c.appendChild(el);
+                });
+            }); }
+            window.admAct = async(id,app,d,h) => {
+                const s = await getDocs(query(collection(db,RESERVATIONS_COLLECTION),where("date","==",d),where("hour","==",h),where("status","in",["approved","blocked"])));
+                if(s.docs.find(x=>x.data().status==='blocked')) return alert("Error: Este horario está bloqueado.");
+                if(s.size>=4) return alert("Error: Horario lleno (4/4).");
+                updateDoc(doc(db,RESERVATIONS_COLLECTION,id),{status:'approved'});
             };
-
-            // --- INICIO DE LA APLICACIÓN ---
-            
-            // Clonar y rellenar los encabezados de la aplicación
-            function fillHeaders() {
-                const template = document.getElementById('app-header-template');
-                if (!template) {
-                     console.error("Error crítico: No se encontró el template del header.");
-                     return;
-                }
-                
-                // Llenar header de estudiante
-                const studentPlaceholder = document.getElementById('student-header-placeholder');
-                if (studentPlaceholder) {
-                    const studentHeader = template.content.cloneNode(true);
-                    studentHeader.getElementById('header-subtitle').innerText = 'Panel de Estudiante';
-                    studentHeader.getElementById('header-name-display').id = 'student-header-name';
-                    studentPlaceholder.appendChild(studentHeader);
-                }
-
-                // Llenar header de admin
-                const adminPlaceholder = document.getElementById('admin-header-placeholder');
-                if (adminPlaceholder) {
-                    const adminHeader = template.content.cloneNode(true);
-                    adminHeader.getElementById('header-subtitle').innerText = 'Panel de Administración';
-                    adminHeader.getElementById('header-name-display').id = 'admin-header-name';
-                    adminPlaceholder.appendChild(adminHeader);
-                }
-            }
-            
-            // --- Punto de entrada principal ---
-            fillHeaders();
-            showView('loading'); // Mostrar carga mientras Firebase se autentica
-
-        }); // <-- Fin del DOMContentLoaded
-
+            window.rejectReq = async(id) => { if(confirm("¿Rechazar solicitud?")) await window.deleteReservation(id); };
+        });
     </script>
 </head>
-<body class="bg-gray-100 min-h-screen">
 
-    <!-- ==== VISTA DE LOGIN ==== -->
+<body class="min-h-screen text-slate-800 flex flex-col">
+
     <div id="login-view" class="min-h-screen flex flex-col items-center justify-center p-4">
-        
-        <!-- Encabezado de Marca -->
-        <header class="w-full max-w-md mb-6 text-center">
-            <div class="bg-slate-800 p-4 rounded-t-xl flex items-center justify-center text-white space-x-3">
-                <!-- Icono de Redes -->
-                <span class="text-4xl">🌐</span>
-                <div>
-                    <h1 class="text-xl font-bold">Universidad Central del Ecuador</h1>
-                    <p class="text-sm text-slate-300">Gestión de Turnos - Laboratorio de Redes</p>
+        <div class="bg-white/95 backdrop-blur-sm p-8 rounded-2xl shadow-2xl w-full max-w-md border-t-4 border-[#004274]">
+            <div class="text-center mb-8">
+                <div class="bg-white rounded-full p-2 inline-block shadow-sm">
+                    <img src="https://redi.cedia.edu.ec/members/UCE.png" alt="UCE" class="h-20 mx-auto object-contain">
                 </div>
+                <h1 class="text-2xl font-bold text-[#004274] brand-font mt-4">Universidad Central del Ecuador</h1>
+                <p class="text-sm font-medium text-slate-500 mt-1">Laboratorio de Redes y Telecomunicaciones</p>
             </div>
-        </header>
-
-        <div class="max-w-md w-full bg-white rounded-b-xl rounded-t-lg shadow-xl overflow-hidden fade-in">
-            <form onsubmit="window.handleLogin(event)" class="p-8 space-y-6">
-                <h2 class="text-2xl font-bold text-center text-slate-700">Acceso al Sistema</h2>
-                
-                <!-- Mensajes de Error/Éxito -->
-                <div id="message-box" class="hidden"></div>
-                
-                <div class="space-y-4">
-                    <div>
-                        <label for="login-email" class="block text-sm font-medium text-gray-700 mb-1">Correo Institucional</label>
-                        <input type="email" id="login-email" placeholder="ej: lider1@uni.edu" class="w-full border border-gray-300 p-3 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                    </div>
-                    <div>
-                        <label for="login-password" class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
-                        <input type="password" id="login-password" placeholder="••••••••" class="w-full border border-gray-300 p-3 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                    </div>
+            <form onsubmit="window.handleLogin(event)" class="space-y-5">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Correo Institucional</label>
+                    <input type="email" id="login-email" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#004274] focus:border-transparent outline-none transition bg-white" required>
                 </div>
+                <div class="password-container">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Contraseña</label>
+                    <input type="password" id="login-password" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#004274] focus:border-transparent outline-none transition bg-white" required>
+                    <i class="fas fa-eye toggle-password" onclick="window.togglePassword('login-password', this)"></i>
+                </div>
+                <div class="text-right">
+                    <button type="button" onclick="window.openResetModal()" class="text-xs text-[#004274] font-bold hover:underline">¿Olvidaste tu contraseña?</button>
+                </div>
+                <button type="submit" class="w-full bg-[#004274] text-white py-3 rounded-lg font-bold hover:bg-[#003366] transition shadow-lg transform active:scale-95">INGRESAR</button>
+            </form>
+            <div id="message-box" class="hidden mt-4"></div>
+        </div>
+        <p class="text-xs text-white/90 mt-6 font-medium drop-shadow">Sistema de Gestión de Turnos v11.2</p>
+    </div>
 
-                <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold text-base hover:bg-blue-700 shadow-md transition duration-300">Ingresar</button>
+    <div id="reset-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 fade-in">
+            <h3 class="font-bold text-lg text-slate-800 mb-2">Recuperar Contraseña</h3>
+            <p class="text-sm text-slate-500 mb-4">Ingresa tu correo institucional. Te enviaremos un enlace para crear una nueva contraseña.</p>
+            <form onsubmit="window.sendResetLink(event)" class="space-y-4">
+                <input type="email" id="reset-email" placeholder="ejemplo@uce.edu.ec" class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-[#004274] outline-none" required>
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="window.closeResetModal()" class="text-slate-500 hover:bg-slate-100 px-4 py-2 rounded font-medium transition">Cancelar</button>
+                    <button type="submit" id="btn-send-reset" class="bg-[#004274] text-white px-4 py-2 rounded font-bold hover:bg-[#003366] transition">Enviar Enlace</button>
+                </div>
             </form>
         </div>
     </div>
 
-    <!-- ==== VISTA DE CARGA ==== -->
-    <div id="loading-view" class="hidden min-h-screen flex items-center justify-center">
-        <div class="text-center">
-            <i class="fas fa-spinner fa-spin text-4xl text-slate-600"></i>
-            <p class="mt-3 text-lg font-medium text-slate-700">Cargando...</p>
+    <div id="change-password-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 fade-in">
+            <h3 class="font-bold text-lg text-slate-800 mb-2">Cambiar Contraseña</h3>
+            <p class="text-sm text-slate-500 mb-4">Ingresa tu nueva contraseña segura.</p>
+            <form onsubmit="window.handleChangePassword(event)" class="space-y-4">
+                <div>
+                    <label class="text-xs font-bold text-slate-500">Nueva Contraseña</label>
+                    <input type="password" id="new-password" class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-[#004274] outline-none" minlength="6" required>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-500">Confirmar Contraseña</label>
+                    <input type="password" id="confirm-password" class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-[#004274] outline-none" minlength="6" required>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="window.closeChangePasswordModal()" class="text-slate-500 hover:bg-slate-100 px-4 py-2 rounded font-medium transition">Cancelar</button>
+                    <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded font-bold hover:bg-green-700 transition">Actualizar</button>
+                </div>
+            </form>
         </div>
     </div>
-    
-    <!-- Encabezado reutilizable para vistas de Admin y Estudiante -->
-    <template id="app-header-template">
-        <header class="bg-slate-800 text-white shadow-md sticky top-0 z-10">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center h-16">
-                    <!-- Logo y Título -->
-                    <div class="flex items-center space-x-3">
-                        <!-- CORRECCIÓN: Icono de globo terráqueo/redes -->
-                        <span class="text-2xl">🌐</span>
-                        <div>
-                            <h1 class="text-lg font-bold">Gestión de Turnos - Laboratorio de Redes</h1>
-                            <p class="text-xs text-slate-300" id="header-subtitle"></p>
-                        </div>
+
+    <div id="force-change-password-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-8 fade-in border-t-4 border-red-500 relative">
+            <div class="text-center mb-6">
+                <div class="bg-red-100 p-3 rounded-full inline-block mb-2 text-red-600 text-2xl"><i class="fas fa-lock"></i></div>
+                <h3 class="font-bold text-2xl text-slate-800">Actualización Requerida</h3>
+                <p class="text-sm text-slate-500 mt-2">Hola <span id="user-email-force" class="font-bold text-slate-700"></span>.<br>Estás utilizando una contraseña temporal. Por seguridad, debes establecer una contraseña propia para continuar.</p>
+            </div>
+            <form onsubmit="window.handleForcedPasswordChange(event)" class="space-y-5">
+                <div class="password-container">
+                    <label class="text-xs font-bold text-slate-500">Nueva Contraseña</label>
+                    <input type="password" id="force-new-password" class="w-full p-3 border border-slate-300 rounded focus:ring-2 focus:ring-red-500 outline-none" minlength="6" required>
+                    <i class="fas fa-eye toggle-password" onclick="window.togglePassword('force-new-password', this)"></i>
+                </div>
+                <div class="password-container">
+                    <label class="text-xs font-bold text-slate-500">Confirmar Contraseña</label>
+                    <input type="password" id="force-confirm-password" class="w-full p-3 border border-slate-300 rounded focus:ring-2 focus:ring-red-500 outline-none" minlength="6" required>
+                    <i class="fas fa-eye toggle-password" onclick="window.togglePassword('force-confirm-password', this)"></i>
+                </div>
+                <button type="submit" class="w-full bg-red-600 text-white py-3 rounded-lg font-bold hover:bg-red-700 transition shadow-lg">Establecer Contraseña y Entrar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="student-dashboard" class="hidden min-h-screen flex flex-col">
+        <header class="uce-header text-white p-4 shadow-lg sticky top-0 z-30">
+            <div class="max-w-7xl mx-auto flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <div class="bg-white rounded-full p-1 shadow-sm"><img src="https://redi.cedia.edu.ec/members/UCE.png" class="h-10 object-contain"></div>
+                    <div>
+                        <h1 class="font-bold text-lg leading-tight brand-font">LABORATORIO DE REDES</h1>
+                        <span class="text-sm text-blue-200 font-mono">Facultad de Ingeniería Y Ciencias Aplicadas</span>
                     </div>
-                    <!-- Info de Usuario y Salir -->
-                    <div class="flex items-center space-x-3">
-                        <span class="text-sm font-medium hidden sm:block" id="header-name-display"></span>
-                        <button onclick="window.handleLogout()" class="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium transition">
-                            <i class="fas fa-sign-out-alt mr-1 sm:mr-2"></i>
-                            <span class="hidden sm:inline">Salir</span>
-                        </button>
-                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div id="student-header-user-info" class="hidden md:flex items-center bg-white/10 px-4 py-2 rounded-lg backdrop-blur-sm border border-white/10 text-sm"></div>
+                    <button onclick="window.openChangePasswordModal()" class="text-xs text-blue-200 hover:text-white underline font-medium mr-2">Cambiar Clave</button>
+                    <button onclick="window.handleLogout()" class="text-xs bg-[#e1ad01] text-[#003366] font-bold hover:bg-yellow-400 px-4 py-2 rounded-full transition shadow-md"><i class="fas fa-sign-out-alt mr-2"></i>Salir</button>
                 </div>
             </div>
         </header>
-    </template>
-    
-    <!-- ==== VISTA ESTUDIANTE ==== -->
-    <div id="student-dashboard" class="hidden">
-        <!-- Encabezado de Estudiante -->
-        <header id="student-header-placeholder"></header>
-
-        <main class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-            <!-- Contenedor Principal (Calendario a la Izquierda, Leyenda a la Derecha) -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
-                <!-- Columna Izquierda (Calendario y Acciones) -->
-                <div class="lg:col-span-2">
-                    <!-- Navegación de Semana -->
-                    <div class="flex justify-between items-center mb-4 p-4 bg-white rounded-lg shadow-xl">
-                        <button id="student-prev-week" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg shadow transition">
-                            <i class="fas fa-chevron-left"></i> Semana Ant.
-                        </button>
-                        <h2 id="student-week-title" class="text-xl sm:text-2xl font-extrabold text-slate-700 text-center"></h2>
-                        <button id="student-next-week" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg shadow transition">
-                            Semana Sig. <i class="fas fa-chevron-right"></i>
-                        </button>
+        <main class="flex-1 max-w-7xl mx-auto w-full p-4 lg:p-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div class="lg:col-span-3">
+                <div class="calendar-wrapper">
+                    <div class="p-4 bg-white border-b border-slate-100 flex justify-between items-center">
+                        <button id="student-prev-week" class="text-slate-500 hover:bg-slate-50 px-3 py-2 rounded-lg transition"><i class="fas fa-chevron-left"></i></button>
+                        <h2 id="student-week-title" class="font-bold text-lg text-slate-700 tracking-tight"></h2>
+                        <button id="student-next-week" class="text-slate-500 hover:bg-slate-50 px-3 py-2 rounded-lg transition"><i class="fas fa-chevron-right"></i></button>
                     </div>
-
-                    <!-- Calendario (AHORA ES UNA TABLA) -->
-                    <div class="bg-white rounded-lg shadow-xl overflow-hidden">
-                        <table class="calendar-table">
-                            <thead id="student-calendar-head">
-                                <!-- Encabezados se generan dinámicamente -->
-                            </thead>
-                            <tbody id="student-calendar-body">
-                                <!-- Slots se generan dinámicamente -->
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Caja de Solicitud (Aparece al seleccionar) -->
-                    <div id="student-request-box" class="hidden mt-6 p-4 bg-yellow-100 border-l-4 border-yellow-400 rounded-lg shadow-md flex justify-between items-center">
-                        <p id="student-request-count" class="text-lg font-semibold text-yellow-800">X hora(s) seleccionada(s).</p>
-                        <button id="submit-request-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg shadow transition" disabled>
-                            <i class="fas fa-paper-plane mr-2"></i> Enviar Solicitud
-                        </button>
+                    <table class="calendar-table"><thead id="student-calendar-head"></thead><tbody id="student-calendar-body"></tbody></table>
+                </div>
+            </div>
+            <div class="lg:col-span-1 space-y-6">
+                <div id="student-request-box" class="bg-blue-600 text-white p-5 rounded-xl shadow-lg hidden fade-in relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 w-20 h-20 bg-white/10 rounded-full"></div>
+                    <p class="text-sm text-blue-100 mb-1">Resumen de solicitud</p>
+                    <p id="student-request-count" class="font-bold text-xl mb-4"></p>
+                    <button id="submit-request-btn" class="w-full bg-white text-blue-700 py-2 rounded-lg font-bold hover:bg-blue-50 transition shadow-md">Confirmar Solicitud</button>
+                </div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 text-sm">
+                    <h3 class="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-3 text-xs uppercase tracking-wider">Estado de Turnos</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center"><div class="w-3 h-3 rounded-full bg-white border border-slate-300 mr-3"></div> <span class="text-slate-600">Disponible</span></div>
+                        <div class="flex items-center"><div class="w-3 h-3 rounded-full bg-blue-50 border border-blue-200 mr-3"></div> <span class="text-slate-600">Parcialmente Ocupado</span></div>
+                        <div class="flex items-center"><div class="w-3 h-3 rounded-full bg-blue-600 mr-3 shadow-sm shadow-blue-200"></div> <span class="font-medium text-slate-800">Tu Selección</span></div>
+                        <div class="flex items-center"><div class="w-3 h-3 rounded-full bg-green-500 mr-3 shadow-sm shadow-green-200"></div> <span class="font-medium text-slate-800">Turno Agendado</span></div>
+                        <div class="flex items-center"><div class="w-3 h-3 rounded-full bg-slate-100 border border-slate-200 mr-3"></div> <span class="text-slate-400">No Disponible / Pasado</span></div>
                     </div>
                 </div>
-                
-                <!-- Columna Derecha (Leyenda) -->
-                <div class="lg:col-span-1">
-                    <div class="bg-white p-6 rounded-lg shadow-xl sticky top-20">
-                        <h3 class="text-xl font-extrabold text-slate-800 border-b pb-3 mb-4">Leyenda de Estados</h3>
-                        <div class="space-y-4">
-                            <!-- CORRECCIÓN: Leyenda estática (no seleccionable) -->
-                            <div class="legend-item">
-                                <div class="legend-slot slot-free border-gray-300">Disponible</div>
-                                <span class="text-sm text-gray-700 font-medium">- Disponible</span>
-                            </div>
-                            <div class="legend-item">
-                                <div class="legend-slot slot-selected">Mi Selección</div>
-                                <span class="text-sm text-gray-700 font-medium">- Horas que estás por solicitar</span>
-                            </div>
-                            <!-- NUEVO: Estado "Mi Reserva" (Verde) -->
-                            <div class="legend-item">
-                                <div class="legend-slot slot-approved-self">Agendado</div>
-                                <span class="text-sm text-gray-700 font-medium">- Mi turno confirmado</span>
-                            </div>
-                            <div class="legend-item">
-                                <div class="legend-slot slot-pending">Pendiente</div>
-                                <span class="text-sm text-gray-700 font-medium">- Solicitudes de otros grupos</span>
-                            </div>
-                            <div class="legend-item">
-                                <div class="legend-slot slot-approved-other">Reservado</div>
-                                <span class="text-sm text-gray-700 font-medium">- Turno de otro grupo</span>
-                            </div>
-                            <div class="legend-item">
-                                <div class="legend-slot slot-blocked">No Disponible</div>
-                                <span class="text-sm text-gray-700 font-medium">- Horario bloqueado o pasado</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
             </div>
         </main>
     </div>
 
-    <!-- ==== VISTA ADMINISTRADOR ==== -->
-    <div id="admin-dashboard" class="hidden">
-        <!-- Encabezado de Admin -->
-        <header id="admin-header-placeholder"></header>
-        
-        <main class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-            <!-- Contenedor Principal (Calendario a la Izquierda, Aprobaciones a la Derecha) -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
-                <!-- Columna Izquierda (Calendario y Acciones) -->
-                <div class="lg:col-span-2">
-                    <!-- Navegación de Semana -->
-                    <div class="flex justify-between items-center mb-4 p-4 bg-white rounded-lg shadow-xl">
-                        <button id="admin-prev-week" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg shadow transition">
-                            <i class="fas fa-chevron-left"></i> Semana Ant.
-                        </button>
-                        <h2 id="admin-week-title" class="text-xl sm:text-2xl font-extrabold text-slate-700 text-center"></h2>
-                        <button id="admin-next-week" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg shadow transition">
-                            Semana Sig. <i class="fas fa-chevron-right"></i>
-                        </button>
-                    </div>
-
-                    <!-- Calendario de Admin (AHORA ES UNA TABLA) -->
-                    <div class="bg-white rounded-lg shadow-xl overflow-hidden">
-                        <table class="calendar-table">
-                            <thead id="admin-calendar-head">
-                                <!-- Encabezados se generan dinámicamente -->
-                            </thead>
-                            <tbody id="admin-calendar-body">
-                                <!-- Slots se generan dinámicamente -->
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <!-- Caja de Acción de Admin (Bloquear/Desbloquear) -->
-                    <div id="admin-action-box" class="hidden mt-6 p-4 bg-gray-700 text-white rounded-lg shadow-md flex justify-between items-center">
-                        <p id="admin-selection-count" class="text-lg font-semibold">X hora(s) seleccionada(s).</p>
-                        <div class="space-x-2">
-                            <button id="admin-block-btn" class="bg-red-600 hover:bg-red-700 font-bold py-2 px-4 rounded-lg shadow transition">
-                                <i class="fas fa-lock mr-2"></i> Bloquear
-                            </button>
-                            <button id="admin-unblock-btn" class="bg-green-600 hover:bg-green-700 font-bold py-2 px-4 rounded-lg shadow transition">
-                                <i class="fas fa-lock-open mr-2"></i> Desbloquear
-                            </button>
-                        </div>
+    <div id="admin-dashboard" class="hidden min-h-screen flex flex-col">
+        <header class="uce-header text-white p-4 shadow-lg sticky top-0 z-30">
+            <div class="max-w-7xl mx-auto flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <div class="bg-white rounded-full p-1 shadow-sm"><img src="https://redi.cedia.edu.ec/members/UCE.png" class="h-10 object-contain"></div>
+                    <div>
+                        <h1 class="font-bold text-lg leading-tight brand-font">PANEL ADMINISTRADOR</h1>
+                        <span class="text-xs text-blue-200 font-mono">Gestión de Laboratorios</span>
                     </div>
                 </div>
-                
-                <!-- Columna Derecha (Lista de Aprobaciones) -->
-                <div class="lg:col-span-1">
-                    <div class="bg-white p-6 rounded-lg shadow-xl sticky top-20">
-                        <h3 class="text-xl font-extrabold text-slate-800 border-b pb-3 mb-4 shadow-sm px-2">
-                            <i class="fas fa-tasks mr-2 text-blue-600"></i>
-                            Solicitudes Pendientes
-                        </h3>
-                        <div id="admin-requests-list" class="space-y-3 max-h-[70vh] overflow-y-auto">
-                            <!-- Solicitudes se generan dinámicamente -->
-                        </div>
+                <div class="flex items-center gap-4">
+                    <div id="admin-header-user-info" class="hidden md:flex items-center bg-white/10 px-4 py-2 rounded-lg backdrop-blur-sm border border-white/10 text-sm"></div>
+                    <button onclick="window.openChangePasswordModal()" class="text-xs text-blue-200 hover:text-white underline font-medium mr-2">Cambiar Clave</button>
+                    <button onclick="window.handleLogout()" class="text-xs bg-[#e1ad01] text-[#003366] font-bold hover:bg-yellow-400 px-4 py-2 rounded-full transition shadow-md"><i class="fas fa-sign-out-alt mr-2"></i>Salir</button>
+                </div>
+            </div>
+        </header>
+        <main class="flex-1 max-w-7xl mx-auto w-full p-4 lg:p-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div class="lg:col-span-3">
+                <div class="calendar-wrapper mb-4">
+                    <div class="p-4 bg-white border-b border-slate-100 flex justify-between items-center">
+                        <button id="admin-prev-week" class="text-slate-500 hover:bg-slate-50 px-3 py-2 rounded-lg transition"><i class="fas fa-chevron-left"></i></button>
+                        <h2 id="admin-week-title" class="font-bold text-lg text-slate-700 tracking-tight"></h2>
+                        <button id="admin-next-week" class="text-slate-500 hover:bg-slate-50 px-3 py-2 rounded-lg transition"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                    <table class="calendar-table"><thead id="admin-calendar-head"></thead><tbody id="admin-calendar-body"></tbody></table>
+                </div>
+                <div id="admin-action-box" class="hidden bg-slate-800 text-white p-4 rounded-xl flex justify-between items-center shadow-xl fade-in border border-slate-700">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-blue-500/20 p-2 rounded-lg"><i class="fas fa-mouse-pointer text-blue-400"></i></div>
+                        <span id="admin-selection-count" class="font-bold text-lg"></span>
+                    </div>
+                    <div class="flex gap-3">
+                        <button id="admin-block-btn" class="bg-red-500 hover:bg-red-600 px-5 py-2 rounded-lg font-bold shadow-lg shadow-red-500/30 transition"><i class="fas fa-lock mr-2"></i>Bloquear</button>
+                        <button id="admin-unblock-btn" class="bg-emerald-500 hover:bg-emerald-600 px-5 py-2 rounded-lg font-bold shadow-lg shadow-emerald-500/30 transition"><i class="fas fa-lock-open mr-2"></i>Desbloquear</button>
                     </div>
                 </div>
-
+            </div>
+            <div class="lg:col-span-1 bg-white p-5 rounded-xl shadow-sm border border-slate-200 h-fit max-h-[calc(100vh-100px)] overflow-y-auto custom-scrollbar">
+                <h3 class="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-4 text-xs uppercase tracking-wider flex items-center gap-2">
+                    <span class="bg-blue-100 text-blue-600 p-1 rounded"><i class="fas fa-inbox"></i></span> Solicitudes Pendientes
+                </h3>
+                <div id="admin-requests-list" class="space-y-2"></div>
             </div>
         </main>
+    </div>
+
+    <div id="attendance-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-xl flex flex-col max-h-[90vh] fade-in overflow-hidden border border-slate-200">
+            <div class="uce-header text-white p-5 flex justify-between items-center shadow-md">
+                <div>
+                    <h3 class="font-bold text-lg">Control de Asistencia</h3>
+                    <p id="att-title" class="text-xs text-blue-200 font-mono mt-1"></p>
+                </div>
+                <button onclick="document.getElementById('attendance-modal').classList.add('hidden')" class="text-white/70 hover:text-white transition text-xl"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-4 bg-blue-50 border-b border-blue-100 text-xs text-blue-800 flex items-start">
+                <i class="fas fa-info-circle mt-0.5 mr-3 text-blue-600 text-lg"></i>
+                <p>Seleccione <strong>Presente</strong> o <strong>Ausente</strong> para cada estudiante. <br>El cambio se guarda automáticamente y se sincroniza para todo el día.</p>
+            </div>
+            <div id="att-list" class="p-5 overflow-y-auto flex-1 bg-white space-y-4"></div>
+            <div class="p-4 bg-slate-50 border-t border-slate-200 text-right">
+                <button onclick="document.getElementById('attendance-modal').classList.add('hidden')" class="bg-slate-800 text-white px-6 py-2 rounded-lg font-medium hover:bg-slate-900 transition shadow">Cerrar Panel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="loading-view" class="hidden min-h-screen flex flex-col items-center justify-center bg-slate-50">
+        <div class="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+        <p class="text-slate-500 font-medium">Cargando sistema...</p>
     </div>
 
 </body>
