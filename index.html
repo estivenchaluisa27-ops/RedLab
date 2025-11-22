@@ -1,353 +1,603 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Gestión de Turnos - UCE</title>
-    
-    <!-- Favicon de Redes (Globo terráqueo estilizado) -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌐</text></svg>">
-    
+    <title>Sistema de Turnos - Laboratorio de Redes UCE</title>
+
+    <link rel="icon" type="image/png" href="https://redi.cedia.edu.ec/members/UCE.png">
+
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Montserrat:wght@600;800&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
-    
+
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        /* --- ESTILOS GENERALES --- */
+        body { font-family: 'Roboto', sans-serif; background-color: #f0f2f5; background-image: radial-gradient(#bdc3c7 1px, transparent 1px); background-size: 20px 20px; }
+        h1, h2, h3, .brand-font { font-family: 'Montserrat', sans-serif; }
+        .fade-in { animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* --- Estilos de la Tabla Calendario (Estilo Registro Civil) --- */
+
+        .uce-header { background-color: #004274 !important; border-bottom: 4px solid #e1ad01; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2); }
+        #login-view { background-image: linear-gradient(rgba(0, 66, 116, 0.9), rgba(0, 51, 102, 0.95)), url('https://ecuadoruniversitario.com/wp-content/uploads/2015/03/uce.jpg'); background-size: cover; background-position: center; background-attachment: fixed; }
+
+        /* DISTINTIVOS */
+        .badge-jf { background-color: #004274; color: white; font-size: 0.65rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-left: 8px; display: inline-flex; align-items: center; border: 1px solid #003366; }
+        .wait-badge { font-size: 0.65rem; font-weight: 800; padding: 2px 8px; border-radius: 12px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+        .wait-normal { background-color: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+        .wait-warning { background-color: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+        .wait-long { background-color: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; animation: pulse-red 2s infinite; }
+        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+
+        /* ASISTENCIA */
+        .att-btn { display: flex; align-items: center; justify-content: center; padding: 6px 12px; border-radius: 8px; border: 1px solid #cbd5e1; background-color: white; cursor: pointer; transition: all 0.2s ease; color: #64748b; font-size: 0.75rem; font-weight: 600; width: 100px; }
+        .att-circle { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #cbd5e1; margin-right: 8px; background-color: white; transition: all 0.2s; }
+        .att-btn.present.active { background-color: #dcfce7; border-color: #22c55e; color: #15803d; }
+        .att-btn.present.active .att-circle { background-color: #22c55e; border-color: #22c55e; box-shadow: 0 0 0 2px white inset; }
+        .att-btn.absent.active { background-color: #fee2e2; border-color: #ef4444; color: #b91c1c; }
+        .att-btn.absent.active .att-circle { background-color: #ef4444; border-color: #ef4444; box-shadow: 0 0 0 2px white inset; }
+        .att-btn:hover:not(.active) { background-color: #f8fafc; }
+
+        /* TABLA */
+        .calendar-wrapper { background: white; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); overflow: hidden; border: 1px solid #e2e8f0; }
         .calendar-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        .calendar-table th, .calendar-table td { border: 1px solid #d1d5db; padding: 0; text-align: center; vertical-align: top; height: 60px; }
-        .calendar-table th { background-color: #f3f4f6; font-weight: 600; padding: 0.75rem 0.5rem; font-size: 0.875rem; }
-        .calendar-table .time-label { background-color: #f3f4f6; font-weight: 500; padding: 0.5rem; font-size: 0.875rem; display: flex; align-items: center; justify-content: center; height: 100%; }
-        
-        .slot-container { width: 100%; height: 100%; padding: 4px; }
-        .slot { width: 100%; height: 100%; border-radius: 0.375rem; border: 2px solid transparent; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-size: 0.875rem; font-weight: 500; line-height: 1.2; overflow: hidden; }
-        .slot .slot-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+        .calendar-table th, .calendar-table td { border: 1px solid #eef0f2; padding: 0; vertical-align: top; height: 80px; }
+        .calendar-table th { background-color: #f8fafc; color: #334155; padding: 0.8rem; text-transform: capitalize; border-bottom: 2px solid #e2e8f0; }
+        .calendar-table .time-label { background-color: #f1f5f9; color: #475569; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; height: 100%; text-align: center; }
+        .slot-container { width: 100%; height: 100%; padding: 3px; position: relative; }
+        .slot { width: 100%; height: 100%; border-radius: 6px; border: 1px solid transparent; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-size: 0.75rem; font-weight: 600; line-height: 1.2; overflow: hidden; }
+        .slot:hover { transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .occupancy-badge { font-size: 0.65rem; margin-top: 3px; padding: 2px 8px; border-radius: 12px; background-color: rgba(255,255,255,0.95); color: #1e293b; font-weight: 800; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .info-btn { position: absolute; top: 4px; right: 4px; background: white; border-radius: 50%; width: 22px; height: 22px; font-size: 11px; display: flex; align-items: center; justify-content: center; color: #3b82f6; z-index: 10; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.2); transition: transform 0.2s; }
+        .info-btn:hover { transform: scale(1.15); color: #1d4ed8; }
 
-        /* --- Estilos de Slots (NUEVA LÓGICA CAPACIDAD) --- */
-        .slot-free { background-color: #ffffff; border-color: #d1d5db; color: #374151; }
-        .slot-free:hover { background-color: #eff6ff; border-color: #93c5fd; }
-        .slot-selected { background-color: #3b82f6 !important; color: #ffffff !important; border-color: #2563eb !important; }
+        /* ESTADOS */
+        .slot-free { background-color: #ffffff; border-color: #e2e8f0; color: #64748b; }
+        .slot-free:hover { background-color: #f8fafc; border-color: #cbd5e1; color: #3b82f6; }
+        .slot-blocked, .slot-past { background-color: #f1f5f9 !important; color: #cbd5e1 !important; border-color: #e2e8f0 !important; cursor: not-allowed; background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, #e2e8f0 5px, #e2e8f0 10px); }
+        .slot-partial { background-color: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+        .slot-full { background-color: #fef2f2; border-color: #fecaca; color: #991b1b; cursor: not-allowed; }
+        .slot-selected { background-color: #3b82f6 !important; color: white !important; border-color: #1d4ed8 !important; box-shadow: inset 0 0 0 2px white, 0 4px 6px rgba(59, 130, 246, 0.3); }
+        .slot-pending { background-color: #fffbeb; border-color: #fde68a; color: #b45309; }
+        .slot-approved-self { background-color: #22c55e; border-color: #16a34a; color: white; box-shadow: 0 2px 4px rgba(34, 197, 94, 0.2); }
+        .slot-admin-has-data { border-width: 2px; }
         
-        .slot-partial { background-color: #e0f2fe; border-color: #7dd3fc; color: #0369a1; } /* 1/4 - 3/4 */
-        .slot-full { background-color: #cbd5e1; border-color: #94a3b8; color: #475569; cursor: not-allowed; } /* 4/4 - Lleno */
-        
-        .slot-my-booking { background-color: #22c55e; border-color: #16a34a; color: white; font-weight: bold; } /* Verde */
-        .slot-approved-other { background-color: #ef4444; border-color: #dc2626; color: white; } /* Rojo */
-        
-        .slot-past, .slot-blocked { background-color: #e5e7eb; color: #6b7280; cursor: not-allowed; border-color: #d1d5db; }
-        .slot-blocked.admin-clickable { cursor: pointer; }
-        .slot-blocked.admin-clickable:hover { background-color: #d1d5db; }
-
-        /* --- Estilos del Sidebar (Modal) --- */
-        #member-modal-wrapper { position: fixed; top: 0; right: 0; width: 450px; height: 100%; background-color: white; box-shadow: -4px 0 10px rgba(0, 0, 0, 0.2); transform: translateX(100%); transition: transform 0.3s ease-in-out; z-index: 50; }
-        #member-modal-wrapper.open { transform: translateX(0); }
-        .legend-slot { cursor: default !important; }
+        /* UTILS */
+        .modal-backdrop { background-color: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); z-index: 50; }
+        .password-container { position: relative; }
+        .toggle-password { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #64748b; }
+        .grid-matrix { display: grid; grid-template-columns: 40px repeat(5, 1fr); gap: 2px; font-size: 0.75rem; }
+        .matrix-header { font-weight: bold; text-align: center; color: #64748b; padding-bottom: 4px; }
+        .matrix-cell { background-color: #f1f5f9; border: 1px solid #e2e8f0; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 4px; transition: all 0.1s; }
+        .matrix-cell:hover { background-color: #e2e8f0; }
+        .matrix-cell.selected { background-color: #004274; color: white; border-color: #003366; }
+        .matrix-time { font-weight: bold; color: #475569; display: flex; align-items: center; justify-content: flex-end; padding-right: 6px; }
     </style>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, updateDoc, arrayUnion, runTransaction, query, where, getDocs, deleteDoc, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail, updatePassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, where, onSnapshot, updateDoc, doc, deleteDoc, serverTimestamp, writeBatch, getDocs, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- CONFIGURACIÓN ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyCR4Kk7kIBpSW3cF02b8zUHegvV4WQNuyI", authDomain: "lab-redes-turnos.firebaseapp.com", projectId: "lab-redes-turnos", storageBucket: "lab-redes-turnos.firebasestorage.app", messagingSenderId: "592544790067", appId: "1:592544790067:web:00bde37b50d3edf9f59546"
-        };
-        
-        const MAX_CAPACITY = 4;
-        const COLLECTION = "slots_v6"; // NUEVA COLECCIÓN PARA SOPORTAR CAPACIDAD
+        const firebaseConfig = { apiKey: "AIzaSyCR4Kk7kIBpSW3cF02b8zUHegvV4WQNuyI", authDomain: "lab-redes-turnos.firebaseapp.com", projectId: "lab-redes-turnos", storageBucket: "lab-redes-turnos.firebasestorage.app", messagingSenderId: "592544790067", appId: "1:592544790067:web:00bde37b50d3edf9f59546" };
+        const RESERVATIONS_COLLECTION = "reservations";
+        const USERS_COLLECTION = "users"; 
 
-        const ADMIN_CREDENTIALS = { "admin1@lab.edu": { name: "Admin General" }, "admin2@lab.edu": { name: "Admin Auxiliar" } };
-        // Credenciales UCE (Solo @uce.edu.ec son líderes)
-        const GRUPO_LIDERES = {
-            "adromeroq@uce.edu.ec": { name: "Grupo 1", color: "red", email: "adromeroq@uce.edu.ec" }, "mpsafla@uce.edu.ec": { name: "Grupo 2", color: "yellow", email: "mpsafla@uce.edu.ec" },
-            "matercero@uce.edu.ec": { name: "Grupo 3", color: "green", email: "matercero@uce.edu.ec" }, "admanangon@uce.edu.ec": { name: "Grupo 4", color: "blue", email: "admanangon@uce.edu.ec" },
-            "lspulamarin@uce.edu.ec": { name: "Grupo 5", color: "indigo", email: "lspulamarin@uce.edu.ec" }, "eschaluisa@uce.edu.ec": { name: "Grupo 6", color: "purple", email: "eschaluisa@uce.edu.ec" },
-            "batipanl@uce.edu.ec": { name: "Grupo 7", color: "orange", email: "batipanl@uce.edu.ec" }, "dmjimenezb@uce.edu.ec": { name: "Grupo 8", color: "pink", email: "dmjimenezb@uce.edu.ec" }
-        };
+        window.addEventListener('DOMContentLoaded', () => {
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            const db = getFirestore(app);
 
-        // DATOS REALES DE INTEGRANTES (Preservados)
-        const GRUPOS_INTEGRANTES = {
-            "Grupo 1": [ { nombre: "Alexis David Romero Quishpe", cedula: "1754302402" }, { nombre: "Evelyn Alejandra Salas Ibarra", cedula: "1724298854" }, { nombre: "Jessica Alicia Guaman Tigasi", cedula: "1753812666" }, { nombre: "Danny Acosta", cedula: "1724391543" }, { nombre: "Elian Steve Farinango Imbaquingo", cedula: "1755875877" } ],
-            "Grupo 2": [ { nombre: "Safla Almeida Mateo Patricio ", cedula: "1728992031" }, { nombre: "Segovia Dávalos Kevin Ariel ", cedula: "1729348415" }, { nombre: "Al-selwi Khulood ", cedula: "1760080331" }, { nombre: "Nasimba Collaguazo Israel Xavier ", cedula: "1755011747" }, { nombre: "Panchi Granda Wladimir Nikolai", cedula: "1724695315" } ],
-            "Grupo 3": [ { nombre: "Mariuxi Anabel Tercero Ayo", cedula: "1751816982" }, { nombre: "Stalin Isaac Coral Valdiviezo", cedula: "000000000" }, { nombre: "Andres Gualberto Cuji Muñoz", cedula: "1729276913" }, { nombre: "Angel Garcia", cedula: "000000000" }, { nombre: "Bryan Andrango", cedula: "1725855918" } ],
-            "Grupo 4": [ { nombre: "Anthony Manangon", cedula: "1726339953" }, { nombre: "Marlon Argoti", cedula: "1726632720" }, { nombre: "Boris Carrera ", cedula: "1753716891" }, { nombre: "Noboa Condor Luisa Fernanda", cedula: "1728495407" }, { nombre: "Sasig Erik", cedula: "000000000" }, { nombre: "Estudiante 6", cedula: "0000000000" } ],
-            "Grupo 5": [ { nombre: "Lenin Stalin Pulamarin Cumbal", cedula: "1050467479" }, { nombre: "Josue Viscaino", cedula: "1750238220" }, { nombre: "Danny Lopez", cedula: "1755864392" }, { nombre: "Dylan Sarmiento ", cedula: "1726392762" }, { nombre: "Jonathan Carvajal ", cedula: "1726421470" } ],
-            "Grupo 6": [ { nombre: "Chaluisa Gaunotuña Estiven Sebastián", cedula: "1726658808" }, { nombre: "Domínguez Domínguez Karla Sofía", cedula: "1753731643" }, { nombre: "Simbaña Muzo Erick Francisco", cedula: "1725195620" }, { nombre: "Silva Ruiz Stalin Jair", cedula: "1003595954" }, { nombre: "Sopa Tenorio Kerlly Johanna", cedula: "1727452839" }, { nombre: "Villalba Campaña Zamir Andres", cedula: "1726564568" } ],
-            "Grupo 7": [ { nombre: "Brandon Ariel Tipan Liquinchana", cedula: "1727431429" }, { nombre: "Bernardo Jhoel Loachamin Freire", cedula: "1727661249" }, { nombre: "Juan Esteban Chimarro Mejia", cedula: "1728082841" }, { nombre: "Bryan Daniel Pérez Hoyos ", cedula: "1724742711" }, { nombre: "David Arturo Hurtado Recalde", cedula: "1754254701" } ],
-            "Grupo 8": [ { nombre: "Danna Mikaela Jimenez Benitez", cedula: "2351060716" }, { nombre: "Carlos Patricio Chipantashi Pallo", cedula: "1755817184" }, { nombre: "Alexander Josué Flores Villamarín", cedula: "1728128453" }, { nombre: "Darwin Stalin Quishpe Tupiza", cedula: "1750297143" }, { nombre: "Andrea Gisell Suntaxi Chalco ", cedula: "1753987187" } ]
-        };
-        
-        // --- VARIABLES GLOBALES Y CONEXIÓN ---
-        let userId, userRole, currentGroupInfo, currentWeekOffset = 0, selectedSlots = [];
-        let reservationsListener = null;
+            let userId = null; let userRole = null; let currentGroupInfo = {}; let currentWeekOffset = 0; let selectedSlots = []; 
+            let unsubscribeReservations = null;
+            let unsubscribePending = null;
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        
-        const views = { login: document.getElementById('login-view'), student: document.getElementById('student-dashboard'), admin: document.getElementById('admin-dashboard'), loading: document.getElementById('loading-view') };
-        const messageBox = document.getElementById('message-box');
-        const memberModal = document.getElementById('member-modal-wrapper');
+            const views = { login: document.getElementById('login-view'), student: document.getElementById('student-dashboard'), admin: document.getElementById('admin-dashboard'), loading: document.getElementById('loading-view') };
 
-        // --- UTILIDADES ---
+            function showView(name) { Object.values(views).forEach(v => v?.classList.add('hidden')); views[name]?.classList.remove('hidden', 'fade-in'); void views[name]?.offsetWidth; views[name]?.classList.add('fade-in'); }
+            function showMessage(type, text) { const m = document.getElementById('message-box'); m.innerHTML = `<i class="fas ${type==='error'?'fa-exclamation-circle':'fa-check-circle'} mr-2"></i> ${text}`; m.className = `p-4 rounded-lg text-sm font-bold mb-4 shadow-md flex items-center ${type==='error'?'bg-red-50 text-red-700 border border-red-200':'bg-green-50 text-green-700 border border-green-200'}`; m.classList.remove('hidden'); setTimeout(()=>m.classList.add('hidden'), 3000); }
+            function getWeekDays(offset = 0) { const now = new Date(); now.setDate(now.getDate() + (offset * 7)); const d = (now.getDay() === 0) ? -6 : 1 - now.getDay(); const mon = new Date(now.setDate(now.getDate() + d)); const w = []; for(let i=0;i<5;i++){ const x = new Date(mon); x.setDate(x.getDate()+i); w.push(x); } return w; }
+            function formatDateYYYYMMDD(d) { return d.toISOString().split('T')[0]; }
+            function isPastDate(dStr, h) { const now = new Date(); const [y, m, d] = dStr.split('-').map(Number); const slot = new Date(y, m-1, d, h+1); return slot < now; }
 
-        function showView(name) { Object.values(views).forEach(v => v?.classList.add('hidden')); views[name]?.classList.remove('hidden'); }
-        function showMessage(type, text) { 
-            if(!messageBox) return; messageBox.innerText = text; messageBox.className = `mb-4 p-3 rounded text-sm ${type==='error'?'bg-red-100 text-red-700':'bg-green-100 text-green-700'}`; messageBox.classList.remove('hidden'); 
-        }
-        function hideMessage() { if (messageBox) messageBox.classList.add('hidden'); }
+            function clearListeners() { if(unsubscribeReservations) {unsubscribeReservations(); unsubscribeReservations=null;} if(unsubscribePending) {unsubscribePending(); unsubscribePending=null;} }
 
-        function getWeekDays(offset = 0) {
-            const now = new Date(); now.setDate(now.getDate() + (offset * 7));
-            const today = now.getDay(), diff = (today == 0 ? -6 : 1) - today;
-            const monday = new Date(now.setDate(now.getDate() + diff));
-            return Array.from({length: 5}, (_, i) => { const t = new Date(monday); t.setDate(monday.getDate()+i); return t; });
-        }
-        function formatDateYYYYMMDD(date) { return date.toISOString().split('T')[0]; }
-        const getSlotId = (d, h) => `${formatDateYYYYMMDD(d)}_${h}`;
+            // --- DEFINICIÓN DE FUNCIONES ANTES DE USARLAS ---
 
-        // --- AUTH ---
+            window.handleLogin = async (e) => { e.preventDefault(); try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value.trim(), document.getElementById('login-password').value); } catch { showMessage('error', 'Credenciales incorrectas.'); } };
+            
+            window.handleLogout = async () => { clearListeners(); await signOut(auth); window.location.reload(); };
+            
+            window.deleteReservation = async (id) => { try { await deleteDoc(doc(db, RESERVATIONS_COLLECTION, id)); document.getElementById('attendance-modal').classList.add('hidden'); } catch (e) { alert("Error eliminando"); } };
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                userId = user.uid;
-                userRole = ADMIN_CREDENTIALS[user.email] ? 'admin' : 'student';
-                if (userRole === 'student') {
-                    currentGroupInfo = GRUPO_LIDERES[user.email] || { name: "Grupo Desconocido", color: "gray" };
-                    currentGroupInfo.userId = userId;
-                    currentGroupInfo.email = user.email;
-                } else {
-                    currentGroupInfo = { name: ADMIN_CREDENTIALS[user.email].name, userId: userId };
+            window.togglePassword = (id, el) => { const inpt = document.getElementById(id); if(inpt.type==="password"){inpt.type="text";el.classList.replace("fa-eye","fa-eye-slash");}else{inpt.type="password";el.classList.replace("fa-eye-slash","fa-eye");} };
+            window.openResetModal = () => document.getElementById('reset-modal').classList.remove('hidden');
+            window.closeResetModal = () => document.getElementById('reset-modal').classList.add('hidden');
+            window.sendResetLink = async (e) => { e.preventDefault(); try { await sendPasswordResetEmail(auth, document.getElementById('reset-email').value); alert("Enlace enviado."); window.closeResetModal(); } catch { alert("Error al enviar."); } };
+            window.openChangePasswordModal = () => document.getElementById('change-password-modal').classList.remove('hidden');
+            window.closeChangePasswordModal = () => document.getElementById('change-password-modal').classList.add('hidden');
+            window.handleChangePassword = async (e) => { e.preventDefault(); const p1=document.getElementById('new-password').value; const p2=document.getElementById('confirm-password').value; if(p1!==p2 || p1.length<6) return alert("Error en contraseña."); try { await updatePassword(auth.currentUser, p1); alert("Actualizada."); window.closeChangePasswordModal(); } catch(e) { if(e.code==='auth/requires-recent-login') { alert("Re-ingrese."); await signOut(auth); } else alert("Error."); } };
+
+            function getFormattedDateHeader(date) {
+                const dayName = date.toLocaleDateString('es-ES', { weekday: 'long' }); const dayNum = date.getDate(); const monthName = date.toLocaleDateString('es-ES', { month: 'long' }); const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+                return `<div class="flex flex-col leading-tight"><span class="text-lg font-bold text-slate-700">${cap(dayName)} ${dayNum}</span><span class="text-xs text-slate-500 font-medium uppercase tracking-wide mt-1">${cap(monthName)}</span></div>`;
+            }
+            function renderCalendarHeader(weekDays, headId) {
+                const thead = document.getElementById(headId); if(!thead) return;
+                thead.innerHTML = ''; const hr = document.createElement('tr'); const thHora = document.createElement('th'); thHora.innerHTML = '<i class="far fa-clock text-slate-400 mr-2"></i>HORARIO'; thHora.className = 'text-center bg-slate-100 w-24'; hr.appendChild(thHora);
+                weekDays.forEach(d => { const th = document.createElement('th'); th.innerHTML = getFormattedDateHeader(d); hr.appendChild(th); }); thead.appendChild(hr);
+            }
+
+            // --- FUNCIONES DE VISTAS (DEFINIDAS ANTES DEL AUTH LISTENER) ---
+
+            function setupAdminView() {
+                clearListeners();
+                const update = () => { const w = getWeekDays(currentWeekOffset); renderAdminCalendar(w); };
+                document.getElementById('admin-prev-week').onclick = () => { currentWeekOffset--; selectedSlots=[]; update(); updateAdminActionBox(); };
+                document.getElementById('admin-next-week').onclick = () => { currentWeekOffset++; selectedSlots=[]; update(); updateAdminActionBox(); };
+                document.getElementById('admin-block-btn').onclick = () => batchBlockAction('block');
+                document.getElementById('admin-unblock-btn').onclick = () => batchBlockAction('unblock');
+                document.getElementById('admin-recurring-btn').onclick = () => document.getElementById('recurring-modal').classList.remove('hidden');
+                renderMatrix();
+                update(); listenAdminPending();
+            }
+
+            function setupStudentView() {
+                clearListeners();
+                const update = () => { const w = getWeekDays(currentWeekOffset); renderStudentCalendar(w); };
+                document.getElementById('student-prev-week').onclick = () => { currentWeekOffset--; selectedSlots=[]; update(); };
+                document.getElementById('student-next-week').onclick = () => { currentWeekOffset++; selectedSlots=[]; update(); };
+                document.getElementById('submit-request-btn').onclick = async () => {
+                    const b = writeBatch(db);
+                    selectedSlots.forEach(id => { const [d,h] = id.split('_'); b.set(doc(collection(db, RESERVATIONS_COLLECTION)), {date:d, hour:parseInt(h), status:'pending', userId, groupName:currentGroupInfo.name, groupColor:currentGroupInfo.color, createdAt: serverTimestamp()}); });
+                    await b.commit(); selectedSlots=[]; showMessage('success','Solicitud enviada.');
+                };
+                update();
+            }
+
+            // ... (Funciones de renderizado de calendario student/admin se mantienen, pero ordenadas) ...
+
+            function renderAdminCalendar(weekDays) {
+                renderCalendarHeader(weekDays, 'admin-calendar-head');
+                const tbody = document.getElementById('admin-calendar-body'); if(!tbody) return; tbody.innerHTML='';
+                const slotMap = new Map();
+                for(let h=7; h<=19; h++){
+                    const tr=document.createElement('tr'); tr.innerHTML=`<td class="time-label">${h}:00 - ${h+1}:00</td>`;
+                    weekDays.forEach(d=>{
+                        const id = `${formatDateYYYYMMDD(d)}_${h}`; const td=document.createElement('td'); td.innerHTML = `<div class="slot-container"><button id="${id}" class="slot slot-free"></button></div>`;
+                        tr.appendChild(td); const btn = td.querySelector('button'); btn.onclick = (e) => handleAdminClick(e, btn); slotMap.set(id, btn);
+                    }); tbody.appendChild(tr);
                 }
-                
-                if(document.getElementById('student-header-name')) document.getElementById('student-header-name').innerText = currentGroupInfo.name;
-                if(document.getElementById('admin-header-name')) document.getElementById('admin-header-name').innerText = currentGroupInfo.name;
 
-                if (userRole === 'admin') { showView('admin'); setupAdminView(); }
-                else { showView('student'); setupStudentView(); }
-            } else {
-                userId = null; userRole = null; currentGroupInfo = {}; selectedSlots = []; showView('login');
-            }
-        });
-
-        window.handleLogin = async (e) => {
-            e.preventDefault(); hideMessage();
-            
-            // --- FIX: Acceso Seguro al DOM ---
-            const emailInput = document.getElementById('login-email');
-            const passInput = document.getElementById('login-password');
-
-            if (!emailInput || !passInput) {
-                showMessage('error', 'Error interno: Formulario no cargado correctamente.');
-                return;
-            }
-
-            const email = emailInput.value.trim().toLowerCase();
-            const pass = passInput.value;
-
-            if (!ADMIN_CREDENTIALS[email] && !GRUPO_LIDERES[email]) { showMessage('error', 'Credenciales no reconocidas.'); return; }
-
-            try {
-                if(auth.currentUser) await signOut(auth);
-                await signInWithEmailAndPassword(auth, email, pass);
-            } catch (err) { showMessage('error', 'Error de credenciales.'); }
-        };
-        window.handleLogout = () => signOut(auth);
-
-
-        // --- LÓGICA CORE V6.0 (CAPACIDAD Y ASISTENCIA) ---
-
-        function updateSlotVisual(el, data, isStudent) {
-            const groups = data.groups || [];
-            const count = groups.length;
-            const isBlocked = data.status === 'blocked';
-            const myBooking = groups.find(g => g.email === currentGroupInfo.email);
-            const isFull = count >= MAX_CAPACITY;
-            
-            el.dataset.groups = JSON.stringify(groups);
-            el.dataset.status = isBlocked ? 'blocked' : (isFull ? 'full' : (count > 0 ? 'partial' : 'free'));
-            el.dataset.isMine = !!myBooking;
-
-            let content = '';
-            
-            if (isBlocked) {
-                el.className = 'slot slot-blocked' + (userRole === 'admin' ? ' admin-clickable' : '');
-                content = 'No Disponible';
-                el.disabled = userRole !== 'admin';
-            } else if (isFull) {
-                el.className = 'slot slot-approved-other'; // Rojo (Lleno)
-                content = `Lleno (4/4)`;
-                el.disabled = true;
-            } else if (myBooking) {
-                el.className = 'slot slot-my-booking';
-                content = 'Mi Turno';
-                el.dataset.status = 'booked'; // Cambiar a 'booked' para diferenciar mi reserva
-            } else if (count > 0) {
-                el.className = 'slot slot-partial';
-                content = `${count}/${MAX_CAPACITY} Cupos`;
-            } else {
-                el.className = 'slot slot-free';
-                content = 'Disponible';
-            }
-            
-            el.innerHTML = `<span class="slot-text font-bold">${content}</span>`;
-        }
-
-        // --- HANDLERS DE CLICK ---
-        function handleSlotClick(el, id, isStudent) {
-            const status = el.dataset.status;
-
-            if (userRole === 'admin') {
-                if (status === 'free' || status === 'blocked') {
-                     // Selección para Bloqueo/Desbloqueo
-                     toggleSelection(el, id);
-                     document.getElementById('admin-action-box').classList.remove('hidden');
-                } else if (status === 'booked' || status === 'partial' || status === 'full') {
-                     // Ver detalles (Aprobado, Parcial, Lleno)
-                     openDetailModal(id);
-                }
-            } else {
-                // ESTUDIANTE
-                if (status === 'free' || status === 'partial') {
-                     toggleSelection(el, id);
-                     updateStudentFab();
-                } else if (status === 'booked') {
-                     openDetailModal(id); // Ver mi reserva para cancelar
-                }
-            }
-        }
-
-        function toggleSelection(el, id) {
-            const status = el.dataset.status;
-            if(selectedSlots.includes(id)) {
-                selectedSlots = selectedSlots.filter(s=>s!==id);
-                el.classList.remove('slot-selected');
-                
-                // Restaurar texto y color (solo si es libre/bloqueado)
-                if (status === 'free' || status === 'blocked') {
-                    const content = status === 'free' ? 'Disponible' : 'Bloqueado';
-                    el.innerHTML = `<span class="slot-text">${content}</span>`;
-                }
-            } else {
-                selectedSlots.push(id);
-                el.classList.add('slot-selected');
-                el.querySelector('.slot-text').innerText = "Seleccionado";
-            }
-        }
-
-        function updateStudentFab() {
-             const fab = document.getElementById('student-fab');
-             if(fab) {
-                 if(selectedSlots.length) { fab.classList.remove('hidden'); fab.innerText = `Reservar (${selectedSlots.length})`; }
-                 else fab.classList.add('hidden');
-             }
-        }
-
-
-        // --- MODAL DE DETALLES Y ASISTENCIA ---
-        function openDetailModal(slotId) {
-            const el = document.getElementById(slotId);
-            const allReservations = JSON.parse(el.dataset.groups || '[]');
-            const isMyBooking = el.dataset.isMine === 'true';
-            
-            const modal = document.getElementById('member-modal-wrapper');
-            const listContainer = document.getElementById('modal-list');
-            const title = document.getElementById('modal-title');
-            
-            title.innerText = `Detalles: ${slotId} (${allReservations.length}/${MAX_CAPACITY} Grupos)`;
-            listContainer.innerHTML = '';
-            
-            const displayReservations = (userRole === 'student' && !isMyBooking) 
-                ? allReservations.filter(res => res.email === currentGroupInfo.email) // Estudiante solo ve su reserva (si la tiene)
-                : allReservations;
-            
-            if (displayReservations.length === 0) {
-                 listContainer.innerHTML = '<p class="text-gray-500 text-center py-4">Información de la reserva no disponible.</p>';
-            }
-
-            displayReservations.forEach(res => {
-                const groupName = res.name;
-                const members = GRUPOS_INTEGRANTES[groupName] || [];
-
-                const groupDiv = document.createElement('div');
-                groupDiv.className = "mb-6 p-4 border border-gray-200 rounded-lg shadow-sm";
-                
-                // Header y Botones
-                let headerHtml = `<div class="flex justify-between items-start mb-3 border-b pb-2"><h4 class="font-bold text-base text-slate-800">${groupName}</h4>`;
-                
-                if (userRole === 'admin' || (userRole === 'student' && res.email === currentGroupInfo.email)) {
-                    headerHtml += `<button onclick="window.removeGroup('${slotId}', '${res.email}')" class="text-xs bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"><i class="fas fa-trash"></i> Quitar Turno</button>`;
-                }
-                headerHtml += '</div>';
-                groupDiv.innerHTML = headerHtml;
-
-                // Lista de Integrantes y Asistencia
-                const ul = document.createElement('ul');
-                ul.className = "space-y-2 text-sm";
-                
-                members.forEach(m => {
-                    const isChecked = res.attendance && res.attendance[m.cedula];
-                    
-                    let checkControl = '';
-                    if (userRole === 'admin') {
-                        checkControl = `<input type="checkbox" ${isChecked ? 'checked' : ''} onchange="window.toggleAtt('${slotId}', '${res.email}', '${m.cedula}', this.checked)" class="h-4 w-4 text-green-600 rounded">`;
-                    } else if (res.email === currentGroupInfo.email) {
-                        checkControl = `<span class="text-xs ${isChecked ? 'text-green-600' : 'text-gray-400'}">${isChecked ? 'ASISTIÓ' : 'PENDIENTE'}</span>`;
-                    }
-
-                    ul.innerHTML += `<li class="flex justify-between"><span>${m.nombre}</span> <span>${checkControl}</span></li>`;
+                if(unsubscribeReservations) unsubscribeReservations();
+                unsubscribeReservations = onSnapshot(query(collection(db, RESERVATIONS_COLLECTION), where("date",">=",formatDateYYYYMMDD(weekDays[0])), where("date","<=",formatDateYYYYMMDD(weekDays[4]))), (s)=>{
+                    slotMap.forEach((b, k) => {
+                        const [dStr, hStr] = k.split('_'); b.disabled=false; const container=b.parentElement; const oldInfo=container.querySelector('.info-btn'); if(oldInfo) oldInfo.remove();
+                        if (isPastDate(dStr, parseInt(hStr))) { b.className = 'slot slot-past opacity-60'; b.innerHTML = '<span class="text-xs">Cerrado</span>'; b.dataset.status='past'; } 
+                        else { b.className = 'slot slot-free'; b.innerHTML = '<span class="text-xs opacity-50">Libre</span>'; b.dataset.status='free'; }
+                        if(selectedSlots.includes(k)) { b.classList.add('slot-selected'); if(b.dataset.status==='free') b.innerHTML='<span><i class="fas fa-check mb-1"></i><br>Seleccionado</span>'; }
+                    });
+                    const map = new Map(); s.forEach(d => { const k=`${d.data().date}_${d.data().hour}`; if(!map.has(k))map.set(k,[]); map.get(k).push({id:d.id,...d.data()}); });
+                    map.forEach((arr, k) => {
+                        const b = slotMap.get(k); if(!b) return; const container = b.parentElement;
+                        const blocked = arr.find(x => x.status === 'blocked'); const approved = arr.filter(x => x.status === 'approved').length; const pending = arr.filter(x => x.status === 'pending').length;
+                        if (approved > 0 || pending > 0 || (blocked && arr.length > 1)) {
+                            const infoBtn = document.createElement('div'); infoBtn.className = 'info-btn'; infoBtn.innerHTML = '<i class="fas fa-eye"></i>';
+                            infoBtn.onclick = (e) => { e.stopPropagation(); openAttendanceModal(k.split('_')[0], k.split('_')[1], arr); }; container.appendChild(infoBtn);
+                        }
+                        if(blocked) { b.className = 'slot slot-blocked slot-admin-has-data'; b.innerHTML = '<span>Bloqueado</span>'; b.dataset.status = 'blocked'; } 
+                        else if(approved > 0) { b.className = `slot slot-admin-has-data ${approved>=4 ? 'slot-full' : 'slot-partial'}`; b.innerHTML = `<span>Ocupado</span><div class="occupancy-badge">${approved}/4</div>` + (pending?`<span class="text-xs text-yellow-700 font-bold mt-1">Wait: ${pending}</span>`:''); b.dataset.status = 'has-data'; } 
+                        else if(pending > 0) { b.className = 'slot slot-pending'; b.innerHTML = `<span>Solicitudes: ${pending}</span>`; }
+                        if(selectedSlots.includes(k)) { b.classList.add('slot-selected'); if(b.dataset.status !== 'free') b.innerHTML += '<div style="position:absolute; top:2px; left:2px; color:white; font-size:10px;"><i class="fas fa-check-circle"></i></div>'; else b.innerHTML = '<span><i class="fas fa-check mb-1"></i><br>Seleccionado</span>'; }
+                    });
                 });
-                groupDiv.appendChild(ul);
-                listContainer.appendChild(groupDiv);
-            });
+            }
+
+            function renderStudentCalendar(weekDays) {
+                renderCalendarHeader(weekDays, 'student-calendar-head');
+                const tbody = document.getElementById('student-calendar-body'); if(!tbody) return; tbody.innerHTML='';
+                const map = new Map();
+                for(let h=7; h<=19; h++){
+                    const tr=document.createElement('tr'); tr.innerHTML=`<td class="time-label">${h}:00 - ${h+1}:00</td>`;
+                    weekDays.forEach(d=>{
+                        const id = `${formatDateYYYYMMDD(d)}_${h}`; const td=document.createElement('td'); td.innerHTML=`<div class="slot-container"><button id="${id}" class="slot slot-free"><span class="opacity-50">Disponible</span></button></div>`;
+                        tr.appendChild(td); const btn=td.querySelector('button'); btn.onclick=()=>handleStudentClick(btn); map.set(id, btn);
+                    }); tbody.appendChild(tr);
+                }
+
+                if(unsubscribeReservations) unsubscribeReservations();
+                unsubscribeReservations = onSnapshot(query(collection(db,RESERVATIONS_COLLECTION), where("date",">=",formatDateYYYYMMDD(weekDays[0])), where("date","<=",formatDateYYYYMMDD(weekDays[4]))), (s)=>{
+                    map.forEach((b, k) => {
+                        const [dStr, hStr] = k.split('_');
+                        if (isPastDate(dStr, parseInt(hStr))) { b.className = 'slot slot-past opacity-50'; b.innerHTML = '<span class="text-xs">No Disp.</span>'; b.dataset.status = 'past'; b.disabled = true; }
+                        else { b.className = 'slot slot-free'; b.innerHTML = '<span class="opacity-50">Disponible</span>'; b.dataset.status = 'free'; b.disabled = false; }
+                    });
+                    const groups = new Map(); s.forEach(d=>{const k=`${d.data().date}_${d.data().hour}`; if(!groups.has(k))groups.set(k,[]); groups.get(k).push({id:d.id,...d.data()});});
+                    groups.forEach((arr,k)=>{
+                        const b = map.get(k); if(!b || b.dataset.status === 'past') return;
+                        const blocked = arr.find(x=>x.status==='blocked'); const mine = arr.find(x=>x.userId===userId); const app = arr.filter(x=>x.status==='approved').length;
+                        if(blocked) { b.className='slot slot-blocked'; b.innerHTML='<span>No disp.</span>'; b.dataset.status='blocked'; b.disabled = true; } 
+                        else if(mine) { b.className=`slot ${mine.status==='approved'?'slot-approved-self':'slot-pending'}`; b.innerHTML=`<span>${mine.status==='approved'?'Agendado':'Pendiente'}</span>`; b.dataset.status=`my-${mine.status}`; b.dataset.docId=mine.id; }
+                        else if(app>=4) { b.className='slot slot-full'; b.innerHTML='<span>Lleno</span>'; b.dataset.status='full'; b.disabled = true; }
+                        else if(app>0) { b.className='slot slot-partial'; b.innerHTML=`<span>Disp.</span><div class="occupancy-badge">${app}/4</div>`; b.dataset.status='partial'; }
+                    });
+                    selectedSlots.forEach(id=>{const b=map.get(id);if(b && !b.disabled){b.classList.add('slot-selected');b.innerHTML='<span><i class="fas fa-check mb-1"></i><br>Selecc.</span>';}});
+                    updateStudentUI();
+                });
+            }
+
+            function handleAdminClick(e, btn) {
+                if(selectedSlots.includes(btn.id)){ selectedSlots = selectedSlots.filter(x => x !== btn.id); btn.classList.remove('slot-selected'); }
+                else { selectedSlots.push(btn.id); btn.classList.add('slot-selected'); }
+                const event = new Event('change'); 
+                if(selectedSlots.includes(btn.id)) {
+                    if(btn.dataset.status === 'free') btn.innerHTML = '<span><i class="fas fa-check mb-1"></i><br>Seleccionado</span>';
+                    else if(!btn.innerHTML.includes('fa-check-circle')) btn.innerHTML += '<div style="position:absolute; top:2px; left:2px; color:white; font-size:10px;"><i class="fas fa-check-circle"></i></div>';
+                } else {
+                    if(btn.dataset.status === 'free') btn.innerHTML = '<span class="text-xs opacity-50">Libre</span>';
+                    else { const check = btn.querySelector('.fa-check-circle')?.parentElement; if(check) check.remove(); }
+                }
+                updateAdminActionBox();
+            }
+
+            function handleStudentClick(btn) {
+                if(btn.disabled) return; const id = btn.id; const st = btn.dataset.status;
+                if(st.includes('my')) { if(confirm("¿Cancelar reserva?")) window.deleteReservation(btn.dataset.docId); return; }
+                if (selectedSlots.includes(id)) { selectedSlots = selectedSlots.filter(x => x !== id); btn.classList.remove('slot-selected'); }
+                else { selectedSlots.push(id); btn.classList.add('slot-selected'); }
+                updateStudentUI();
+            }
+
+            function updateAdminActionBox() { const box = document.getElementById('admin-action-box'); const count = document.getElementById('admin-selection-count'); if(selectedSlots.length > 0) { box.classList.remove('hidden'); count.innerText = `${selectedSlots.length} seleccionados`; } else { box.classList.add('hidden'); } }
+            function updateStudentUI(){ const b=document.getElementById('student-request-box'); if(selectedSlots.length){b.classList.remove('hidden'); document.getElementById('student-request-count').innerText=`${selectedSlots.length} horas seleccionadas.`; document.getElementById('submit-request-btn').disabled=false;}else{b.classList.add('hidden'); document.getElementById('submit-request-btn').disabled=true;} }
+
+            window.batchBlockAction = async (action) => {
+                const batch = writeBatch(db);
+                selectedSlots.forEach(id => {
+                    const [d, h] = id.split('_'); const blockId = `BLOCK_${d}_${h}`; const ref = doc(db, RESERVATIONS_COLLECTION, blockId);
+                    if (action === 'block') batch.set(ref, { date: d, hour: parseInt(h), status: 'blocked', userId: 'ADMIN', createdAt: serverTimestamp() }); else batch.delete(ref);
+                });
+                await batch.commit(); selectedSlots = []; document.querySelectorAll('.slot-selected').forEach(x => x.classList.remove('slot-selected')); updateAdminActionBox();
+            };
+
+            // --- LOGICA RECURRENTE (SOLUCIÓN FECHAS) ---
+            function renderMatrix() {
+                const container = document.getElementById('matrix-container');
+                if(!container) return;
+                container.innerHTML = `<div class="grid-matrix mb-4"><div></div><div class="matrix-header">Lun</div><div class="matrix-header">Mar</div><div class="matrix-header">Mié</div><div class="matrix-header">Jue</div><div class="matrix-header">Vie</div>${[7,8,9,10,11,12,13,14,15,16,17,18,19].map(h => `<div class="matrix-time">${h}:00</div>${[1,2,3,4,5].map(d => `<div class="matrix-cell" data-day="${d}" data-hour="${h}" onclick="this.classList.toggle('selected')"></div>`).join('')}`).join('')}</div>`;
+            }
+
+            window.executeRecurringBlock = async (e) => {
+                e.preventDefault();
+                const startStr = document.getElementById('rec-start').value; // YYYY-MM-DD local input
+                const endStr = document.getElementById('rec-end').value;
+                const action = document.getElementById('rec-action').value;
+                const selectedCells = document.querySelectorAll('.matrix-cell.selected');
+                if(selectedCells.length === 0) return alert("Seleccione bloques.");
+                
+                const blocks = []; selectedCells.forEach(c => blocks.push({ d: parseInt(c.dataset.day), h: parseInt(c.dataset.hour) }));
+                const batch = writeBatch(db); let count = 0;
+                
+                // Crear fechas locales
+                const startDate = new Date(startStr + 'T00:00:00'); 
+                const endDate = new Date(endStr + 'T00:00:00');
+
+                // Loop
+                for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+                    const dayOfWeek = d.getDay(); // 0 Sun, 1 Mon
+                    const blocksForDay = blocks.filter(b => b.d === dayOfWeek);
+                    
+                    if (blocksForDay.length > 0) {
+                        const y = d.getFullYear();
+                        const m = String(d.getMonth() + 1).padStart(2, '0');
+                        const da = String(d.getDate()).padStart(2, '0');
+                        const dateStr = `${y}-${m}-${da}`;
+                        
+                        blocksForDay.forEach(b => {
+                            const ref = doc(db, RESERVATIONS_COLLECTION, `BLOCK_${dateStr}_${b.h}`);
+                            if (action === 'block') batch.set(ref, { date: dateStr, hour: b.h, status: 'blocked', userId: 'ADMIN', type: 'recurring', createdAt: serverTimestamp() });
+                            else batch.delete(ref);
+                            count++;
+                        });
+                    }
+                }
+                if(count > 490) return alert("Rango muy grande. Ejecute por meses.");
+                await batch.commit(); alert(`Listo. ${count} bloques actualizados.`);
+                document.getElementById('recurring-modal').classList.add('hidden');
+                document.querySelectorAll('.matrix-cell.selected').forEach(c => c.classList.remove('selected'));
+            };
+
+            async function getGroupMembers(groupName) {
+                const q = query(collection(db, USERS_COLLECTION), where("groupName", "==", groupName)); const snap = await getDocs(q);
+                if(!snap.empty) return snap.docs[0].data().members || []; return [];
+            }
+
+            // --- ASISTENCIA ---
+            window.openAttendanceModal = async (date, hour, reservations) => {
+                const modal = document.getElementById('attendance-modal'); document.getElementById('att-title').innerText = `Gestión: ${date} - ${hour}:00`;
+                const list = document.getElementById('att-list'); list.innerHTML = '<div class="p-8 text-center text-slate-500"><i class="fas fa-spinner fa-spin text-3xl mb-2"></i><br>Cargando...</div>';
+                modal.classList.remove('hidden');
+                const approved = reservations.filter(r => r.status === 'approved'); const blocked = reservations.find(r => r.status === 'blocked');
+                if(blocked) { list.innerHTML = `<div class="p-6 text-center bg-slate-50 rounded-lg border border-slate-200"><div class="text-red-500 text-4xl mb-3"><i class="fas fa-lock"></i></div><p class="font-bold text-slate-700">Bloqueado</p><button onclick="window.deleteReservation('${blocked.id}')" class="mt-4 bg-white border border-red-300 text-red-600 px-4 py-2 rounded hover:bg-red-50 font-medium">Desbloquear Ahora</button></div>`; return; }
+                if(approved.length === 0) { list.innerHTML = '<p class="text-slate-400 text-center py-10">Sin grupos aprobados.</p>'; return; }
+
+                const grouped = {}; approved.forEach(r => { if(!grouped[r.groupName]) grouped[r.groupName] = r; });
+                list.innerHTML = ''; 
+                for (const groupName in grouped) {
+                    const res = grouped[groupName]; const groupDiv = document.createElement('div'); groupDiv.className = 'border border-slate-200 rounded-lg mb-4 bg-white overflow-hidden shadow-sm';
+                    let students = await getGroupMembers(res.groupName);
+                    students.sort((a, b) => (b.isLeader ? 1 : 0) - (a.isLeader ? 1 : 0));
+
+                    let html = `<div class="bg-slate-50 p-3 flex justify-between items-center border-b border-slate-200"><span class="font-bold text-slate-700 text-sm"><i class="fas fa-users mr-2 text-blue-500"></i>${res.groupName}</span><button onclick="window.deleteReservation('${res.id}')" class="text-red-500 text-xs font-medium border border-red-200 bg-white px-2 py-1 rounded">Derrogar</button></div><div class="p-0">`;
+                    const att = res.attendanceDetail || {};
+                    if(students.length === 0) html += '<p class="text-xs text-gray-400 italic p-4 text-center">Sin integrantes.</p>';
+                    else {
+                        students.forEach((st) => {
+                            const isPresent = att[st.cedula] === true; const isAbsent = att[st.cedula] === false;
+                            const badge = st.isLeader ? '<span class="badge-jf">JF</span>' : '';
+                            html += `<div class="flex justify-between items-center p-3 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition"><div><div class="text-sm font-medium text-slate-700 flex items-center">${st.nombre} ${badge}</div><div class="text-xs text-slate-400 font-mono">${st.cedula}</div></div><div class="flex gap-2"><div onclick="window.setAttendance('${res.groupName}','${res.date}','${st.cedula}', false, this)" class="att-btn absent ${isAbsent ? 'active' : ''}"><div class="att-circle"></div> Ausente</div><div onclick="window.setAttendance('${res.groupName}','${res.date}','${st.cedula}', true, this)" class="att-btn present ${isPresent ? 'active' : ''}"><div class="att-circle"></div> Presente</div></div></div>`;
+                        });
+                    }
+                    html += '</div>'; groupDiv.innerHTML = html; list.appendChild(groupDiv);
+                }
+            };
+
+            window.setAttendance = async (gn, d, ced, isPresent, btnElement) => {
+                const parent = btnElement.parentElement; parent.querySelectorAll('.att-btn').forEach(b => b.classList.remove('active')); btnElement.classList.add('active');
+                const s = await getDocs(query(collection(db, RESERVATIONS_COLLECTION), where("date","==",d), where("groupName","==",gn), where("status","==","approved")));
+                const b = writeBatch(db); s.forEach(doc => b.update(doc.ref, { [`attendanceDetail.${ced}`]: isPresent })); await b.commit();
+            };
+
+            function getTimeAgo(timestamp) {
+                if (!timestamp) return '';
+                const diff = Date.now() - timestamp.toMillis();
+                const min = Math.floor(diff / 60000);
+                if (min < 60) return `${min} min`;
+                const h = Math.floor(min / 60);
+                if (h < 24) return `${h} h`;
+                return `${Math.floor(h / 24)} d`;
+            }
+
+            function listenAdminPending(){ 
+                if(unsubscribePending) unsubscribePending();
+                unsubscribePending = onSnapshot(query(collection(db,RESERVATIONS_COLLECTION), where("status","==","pending")), (s)=>{
+                    const c = document.getElementById('admin-requests-list'); if(!c) return;
+                    c.innerHTML='';
+                    if(s.empty) { c.innerHTML='<div class="text-center p-4 text-slate-400 italic">No hay solicitudes pendientes</div>'; return; }
+                    const reqs = []; s.forEach(d => reqs.push({id: d.id, ...d.data()}));
+                    reqs.sort((a,b) => (a.createdAt?.toMillis() || 0) - (b.createdAt?.toMillis() || 0));
+
+                    reqs.forEach(r=>{
+                        const timeAgo = getTimeAgo(r.createdAt);
+                        const isLongWait = (Date.now() - (r.createdAt?.toMillis() || 0)) > 7200000; 
+                        const badgeClass = isLongWait ? 'wait-long' : (timeAgo.includes('min') ? 'wait-normal' : 'wait-warning');
+                        const icon = isLongWait ? '<i class="fas fa-exclamation-circle"></i>' : '<i class="far fa-clock"></i>';
+
+                        const el=document.createElement('div'); el.className='bg-white p-3 rounded-lg shadow-sm border border-slate-200 mb-2 flex justify-between items-center fade-in';
+                        el.innerHTML=`
+                            <div>
+                                <div class="font-bold text-sm text-slate-700">${r.groupName}</div>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <span class="text-xs text-slate-500 bg-slate-100 px-1 rounded"><i class="far fa-calendar mr-1"></i>${r.date} ${r.hour}:00</span>
+                                    <span class="wait-badge ${badgeClass}">${icon} ${timeAgo}</span>
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="window.admAct('${r.id}',true,'${r.date}',${r.hour})" class="w-8 h-8 flex items-center justify-center rounded-full bg-green-50 text-green-600 hover:bg-green-100 transition"><i class="fas fa-check"></i></button>
+                                <button onclick="window.rejectReq('${r.id}')" class="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-600 hover:bg-red-100 transition"><i class="fas fa-times"></i></button>
+                            </div>`;
+                        c.appendChild(el);
+                    });
+                }); 
+            }
             
-            memberModal.classList.add('open');
-            document.getElementById('member-modal-overlay').classList.remove('hidden');
-        }
+            window.admAct = async(id,app,d,h) => {
+                const s = await getDocs(query(collection(db,RESERVATIONS_COLLECTION),where("date","==",d),where("hour","==",h),where("status","in",["approved","blocked"])));
+                if(s.docs.find(x=>x.data().status==='blocked')) return alert("Error: Este horario está bloqueado.");
+                if(s.size>=4) return alert("Error: Horario lleno (4/4).");
+                updateDoc(doc(db,RESERVATIONS_COLLECTION,id),{status:'approved'});
+            };
+            window.rejectReq = async(id) => { if(confirm("¿Rechazar solicitud?")) await window.deleteReservation(id); };
 
-        window.closeModal = () => {
-            memberModal.classList.remove('open');
-            document.getElementById('member-modal-overlay').classList.add('hidden');
-        };
-
-        // --- FUNCIONES DE TRANSACCIÓN ---
-        window.confirmReservation = async () => { /* Implementar confirmación con runTransaction para slots seleccionados */ };
-        window.handleAdminBlock = async (action) => { /* Implementar bloqueo/desbloqueo */ };
-
-        window.removeGroup = async (slotId, email) => { /* Implementar eliminación de grupo del slot */ };
-        window.toggleAtt = async (slotId, email, cedula, val) => { /* Implementar guardar asistencia */ };
-
-        // --- HELPERS VIEW ---
-        function setupStudentView() {
-            setupWeekNavigation('student-prev-week', 'student-next-week', 'student-week-title', renderCalendar, true);
-        }
-        function setupAdminView() {
-            setupWeekNavigation('admin-prev-week', 'admin-next-week', 'admin-week-title', renderCalendar, false);
-        }
-
-        function createHeaderCell(text) { const th = document.createElement('th'); th.innerText = text; return th; }
-        function createTimeLabelCell(text) { const td = document.createElement('td'); td.className = 'time-label'; td.innerText = text; return td; }
-        function createSlotContainer() { const div = document.createElement('div'); div.className = 'slot-container'; return div; }
-        function createSlotElement(id, isStudent) { 
-            const slot = document.createElement('button'); slot.id = id; slot.className = 'slot'; slot.type = 'button';
-            slot.onclick = () => handleSlotClick(slot, id, isStudent);
-            return slot;
-        }
-
-        // --- PUNTO DE ENTRADA ---
-        function fillHeaders() {
-            const template = document.getElementById('app-header-template'); if (!template) return;
-            const studentPlaceholder = document.getElementById('student-header-placeholder');
-            if (studentPlaceholder) { const h = template.content.cloneNode(true); h.getElementById('header-subtitle').innerText = 'Panel de Estudiante'; h.getElementById('header-name-display').id = 'student-header-name'; studentPlaceholder.appendChild(h); }
-            const adminPlaceholder = document.getElementById('admin-header-placeholder');
-            if (adminPlaceholder) { const h = template.content.cloneNode(true); h.getElementById('header-subtitle').innerText = 'Panel de Administración'; h.getElementById('header-name-display').id = 'admin-header-name'; adminPlaceholder.appendChild(h); }
-        }
-        fillHeaders(); showView('loading');
+            // --- COLOCAR LISTENER AUTH AL FINAL PARA ASEGURAR DEFINICIONES ---
+            // (Ya está definido arriba, pero el orden de declaración de funciones importa para evitar ReferenceError)
+        });
     </script>
+</head>
+
+<body class="min-h-screen text-slate-800 flex flex-col">
+
+    <div id="login-view" class="min-h-screen flex flex-col items-center justify-center p-4">
+        <div class="bg-white/95 backdrop-blur-sm p-8 rounded-2xl shadow-2xl w-full max-w-md border-t-4 border-[#004274]">
+            <div class="text-center mb-8">
+                <img src="https://redi.cedia.edu.ec/members/UCE.png" alt="UCE" class="h-24 mx-auto mb-4 drop-shadow-sm object-contain">
+                <h1 class="text-2xl font-bold text-[#004274] brand-font mt-4">Universidad Central del Ecuador</h1>
+                <p class="text-sm font-medium text-slate-500 mt-1">Laboratorio de Redes y Telecomunicaciones</p>
+            </div>
+            <form onsubmit="window.handleLogin(event)" class="space-y-5">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Correo Institucional</label>
+                    <input type="email" id="login-email" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#004274] focus:border-transparent outline-none transition bg-white" required>
+                </div>
+                <div class="password-container">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Contraseña</label>
+                    <input type="password" id="login-password" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#004274] focus:border-transparent outline-none transition bg-white" required>
+                    <i class="fas fa-eye toggle-password" onclick="window.togglePassword('login-password', this)"></i>
+                </div>
+                <div class="text-right">
+                    <button type="button" onclick="window.openResetModal()" class="text-xs text-[#004274] font-bold hover:underline">¿Olvidaste tu contraseña?</button>
+                </div>
+                <button type="submit" class="w-full bg-[#004274] text-white py-3 rounded-lg font-bold hover:bg-[#003366] transition shadow-lg transform active:scale-95">INGRESAR</button>
+            </form>
+            <div id="message-box" class="hidden mt-4"></div>
+        </div>
+        <p class="text-xs text-white/90 mt-6 font-medium drop-shadow">Sistema de Gestión de Turnos v16.0</p>
+    </div>
+
+    <div id="reset-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 fade-in">
+            <h3 class="font-bold text-lg text-slate-800 mb-2">Recuperar Contraseña</h3>
+            <form onsubmit="window.sendResetLink(event)" class="space-y-4">
+                <input type="email" id="reset-email" placeholder="ejemplo@uce.edu.ec" class="w-full p-2 border border-slate-300 rounded" required>
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="window.closeResetModal()" class="text-slate-500 hover:bg-slate-100 px-4 py-2 rounded">Cancelar</button>
+                    <button type="submit" class="bg-[#004274] text-white px-4 py-2 rounded font-bold">Enviar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="change-password-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 fade-in">
+            <h3 class="font-bold text-lg text-slate-800 mb-2">Cambiar Contraseña</h3>
+            <form onsubmit="window.handleChangePassword(event)" class="space-y-4">
+                <input type="password" id="new-password" placeholder="Nueva contraseña" class="w-full p-2 border border-slate-300 rounded" minlength="6" required>
+                <input type="password" id="confirm-password" placeholder="Confirmar contraseña" class="w-full p-2 border border-slate-300 rounded" minlength="6" required>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="window.closeChangePasswordModal()" class="text-slate-500 hover:bg-slate-100 px-4 py-2 rounded">Cancelar</button>
+                    <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded font-bold">Actualizar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="admin-dashboard" class="hidden min-h-screen flex flex-col">
+        <header class="uce-header text-white p-4 shadow-lg sticky top-0 z-30">
+            <div class="max-w-7xl mx-auto flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <div class="bg-white rounded-full p-1 shadow-sm"><img src="https://redi.cedia.edu.ec/members/UCE.png" class="h-10 object-contain"></div>
+                    <div><h1 class="font-bold text-lg leading-tight brand-font">PANEL ADMINISTRADOR</h1><span class="text-xs text-blue-200 font-mono">Gestión de Laboratorios</span></div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div id="admin-header-user-info" class="hidden md:flex items-center bg-white/10 px-4 py-2 rounded-lg backdrop-blur-sm border border-white/10 text-sm"></div>
+                    <button onclick="window.openChangePasswordModal()" class="text-xs text-blue-200 hover:text-white underline font-medium mr-2">Cambiar Clave</button>
+                    <button onclick="window.handleLogout()" class="text-xs bg-[#e1ad01] text-[#003366] font-bold hover:bg-yellow-400 px-4 py-2 rounded-full transition shadow-md">Salir</button>
+                </div>
+            </div>
+        </header>
+        <main class="flex-1 max-w-7xl mx-auto w-full p-4 lg:p-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div class="lg:col-span-3">
+                <div class="calendar-wrapper mb-4">
+                    <div class="p-4 bg-white border-b border-slate-100 flex justify-between items-center">
+                        <button id="admin-prev-week" class="text-slate-500 hover:bg-slate-50 px-3 py-2 rounded-lg transition"><i class="fas fa-chevron-left"></i></button>
+                        <h2 id="admin-week-title" class="font-bold text-lg text-slate-700 tracking-tight"></h2>
+                        <button id="admin-next-week" class="text-slate-500 hover:bg-slate-50 px-3 py-2 rounded-lg transition"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                    <table class="calendar-table"><thead id="admin-calendar-head"></thead><tbody id="admin-calendar-body"></tbody></table>
+                </div>
+                <div id="admin-action-box" class="hidden bg-slate-800 text-white p-4 rounded-xl flex justify-between items-center shadow-xl fade-in border border-slate-700">
+                    <span id="admin-selection-count" class="font-bold text-lg"></span>
+                    <div class="flex gap-3">
+                        <button id="admin-block-btn" class="bg-red-500 hover:bg-red-600 px-5 py-2 rounded-lg font-bold">Bloquear</button>
+                        <button id="admin-unblock-btn" class="bg-emerald-500 hover:bg-emerald-600 px-5 py-2 rounded-lg font-bold">Desbloquear</button>
+                    </div>
+                </div>
+                <div class="mt-4 flex justify-end">
+                    <button id="admin-recurring-btn" class="bg-[#004274] text-white px-4 py-2 rounded shadow hover:bg-[#003366] flex items-center gap-2 font-bold text-sm"><i class="fas fa-calendar-alt"></i> Gestión de Clases (Semestral)</button>
+                </div>
+            </div>
+            <div class="lg:col-span-1 bg-white p-5 rounded-xl shadow-sm border border-slate-200 h-fit max-h-[calc(100vh-100px)] overflow-y-auto custom-scrollbar">
+                <h3 class="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-4 text-xs uppercase tracking-wider">Solicitudes Pendientes</h3>
+                <div id="admin-requests-list" class="space-y-2"></div>
+            </div>
+        </main>
+    </div>
+
+    <div id="recurring-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-6 fade-in">
+            <h3 class="font-bold text-lg text-[#004274] mb-4 border-b pb-2">Gestión de Clases (Matriz Semanal)</h3>
+            <form onsubmit="window.executeRecurringBlock(event)">
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div><label class="block text-xs font-bold text-slate-500 mb-1">Fecha Inicio</label><input type="date" id="rec-start" class="w-full p-2 border rounded text-sm" required></div>
+                    <div><label class="block text-xs font-bold text-slate-500 mb-1">Fecha Fin</label><input type="date" id="rec-end" class="w-full p-2 border rounded text-sm" required></div>
+                </div>
+                <div class="mb-4">
+                    <p class="text-xs font-bold text-slate-500 mb-2">Seleccione los bloques a bloquear (Clic en la tabla)</p>
+                    <div id="matrix-container" class="border rounded p-2 bg-slate-50"></div>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-xs font-bold text-slate-500 mb-1">Acción</label>
+                    <select id="rec-action" class="w-full p-2 border rounded text-sm font-bold">
+                        <option value="block">Bloquear (Clase/Feriado)</option>
+                        <option value="unblock">Desbloquear (Liberar)</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="document.getElementById('recurring-modal').classList.add('hidden')" class="px-4 py-2 text-slate-500 hover:bg-slate-100 rounded">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-[#004274] text-white rounded font-bold hover:bg-[#003366]">Ejecutar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="student-dashboard" class="hidden min-h-screen flex flex-col">
+        <header class="uce-header text-white p-4 shadow-lg sticky top-0 z-30">
+            <div class="max-w-7xl mx-auto flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <div class="bg-white rounded-full p-1 shadow-sm"><img src="https://redi.cedia.edu.ec/members/UCE.png" class="h-10 object-contain"></div>
+                    <div><h1 class="font-bold text-lg leading-tight brand-font">LABORATORIO DE REDES</h1><span class="text-xs text-blue-200 font-mono">Facultad de Ingeniería</span></div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div id="student-header-user-info" class="hidden md:flex items-center bg-white/10 px-4 py-2 rounded-lg backdrop-blur-sm border border-white/10 text-sm"></div>
+                    <button onclick="window.openChangePasswordModal()" class="text-xs text-blue-200 hover:text-white underline font-medium mr-2">Cambiar Clave</button>
+                    <button onclick="window.handleLogout()" class="text-xs bg-[#e1ad01] text-[#003366] font-bold hover:bg-yellow-400 px-4 py-2 rounded-full transition shadow-md">Salir</button>
+                </div>
+            </div>
+        </header>
+        <main class="flex-1 max-w-7xl mx-auto w-full p-4 lg:p-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div class="lg:col-span-3">
+                <div class="calendar-wrapper">
+                    <div class="p-4 bg-white border-b border-slate-100 flex justify-between items-center">
+                        <button id="student-prev-week" class="text-slate-500 hover:bg-slate-50 px-3 py-2 rounded-lg transition"><i class="fas fa-chevron-left"></i></button>
+                        <h2 id="student-week-title" class="font-bold text-lg text-slate-700 tracking-tight"></h2>
+                        <button id="student-next-week" class="text-slate-500 hover:bg-slate-50 px-3 py-2 rounded-lg transition"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                    <table class="calendar-table"><thead id="student-calendar-head"></thead><tbody id="student-calendar-body"></tbody></table>
+                </div>
+            </div>
+            <div class="lg:col-span-1 space-y-6">
+                <div id="student-request-box" class="bg-blue-600 text-white p-5 rounded-xl shadow-lg hidden fade-in relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 w-20 h-20 bg-white/10 rounded-full"></div>
+                    <p class="text-sm text-blue-100 mb-1">Resumen de solicitud</p>
+                    <p id="student-request-count" class="font-bold text-xl mb-4"></p>
+                    <button id="submit-request-btn" class="w-full bg-white text-blue-700 py-2 rounded-lg font-bold hover:bg-blue-50 transition shadow-md">Confirmar Solicitud</button>
+                </div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 text-sm">
+                    <h3 class="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-3 text-xs uppercase tracking-wider">Estado de Turnos</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center"><div class="w-3 h-3 rounded-full bg-white border border-slate-300 mr-3"></div> <span class="text-slate-600">Disponible</span></div>
+                        <div class="flex items-center"><div class="w-3 h-3 rounded-full bg-blue-50 border border-blue-200 mr-3"></div> <span class="text-slate-600">Parcialmente Ocupado</span></div>
+                        <div class="flex items-center"><div class="w-3 h-3 rounded-full bg-blue-600 mr-3 shadow-sm shadow-blue-200"></div> <span class="font-medium text-slate-800">Tu Selección</span></div>
+                        <div class="flex items-center"><div class="w-3 h-3 rounded-full bg-green-500 mr-3 shadow-sm shadow-green-200"></div> <span class="font-medium text-slate-800">Turno Agendado</span></div>
+                        <div class="flex items-center"><div class="w-3 h-3 rounded-full bg-slate-100 border border-slate-200 mr-3"></div> <span class="text-slate-400">No Disponible / Pasado</span></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="attendance-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-xl flex flex-col max-h-[90vh] fade-in overflow-hidden border border-slate-200">
+            <div class="uce-header text-white p-5 flex justify-between items-center shadow-md">
+                <div><h3 class="font-bold text-lg">Control de Asistencia</h3><p id="att-title" class="text-xs text-blue-200 font-mono mt-1"></p></div>
+                <button onclick="document.getElementById('attendance-modal').classList.add('hidden')" class="text-white/70 hover:text-white transition text-xl"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-4 bg-blue-50 border-b border-blue-100 text-xs text-blue-800 flex items-start">
+                <i class="fas fa-info-circle mt-0.5 mr-3 text-blue-600 text-lg"></i>
+                <p>Seleccione <strong>Presente</strong> o <strong>Ausente</strong> para cada estudiante. <br>El cambio se guarda automáticamente y se sincroniza para todo el día.</p>
+            </div>
+            <div id="att-list" class="p-5 overflow-y-auto flex-1 bg-white space-y-4"></div>
+            <div class="p-4 bg-slate-50 border-t border-slate-200 text-right">
+                <button onclick="document.getElementById('attendance-modal').classList.add('hidden')" class="bg-slate-800 text-white px-6 py-2 rounded-lg font-medium hover:bg-slate-900 transition shadow">Cerrar Panel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="loading-view" class="hidden min-h-screen flex flex-col items-center justify-center bg-slate-50">
+        <div class="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+        <p class="text-slate-500 font-medium">Cargando sistema...</p>
+    </div>
+
 </body>
 </html>
