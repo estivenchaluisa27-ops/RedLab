@@ -14,7 +14,12 @@
 
     <style>
         /* --- ESTILOS GENERALES --- */
-        body { font-family: 'Roboto', sans-serif; background-color: #f0f2f5; background-image: radial-gradient(#bdc3c7 1px, transparent 1px); background-size: 20px 20px; }
+        body { 
+            font-family: 'Roboto', sans-serif; 
+            background-color: #f0f2f5;
+            background-image: radial-gradient(#bdc3c7 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
         h1, h2, h3, .brand-font { font-family: 'Montserrat', sans-serif; }
         .fade-in { animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -84,6 +89,11 @@
         const RESERVATIONS_COLLECTION = "reservations";
         const USERS_COLLECTION = "users"; 
 
+        // --- GLOBALS ---
+        window.handleLogin = null;
+        window.handleLogout = null;
+        window.togglePassword = null;
+
         window.addEventListener('DOMContentLoaded', () => {
             const app = initializeApp(firebaseConfig);
             const auth = getAuth(app);
@@ -95,22 +105,78 @@
 
             const views = { login: document.getElementById('login-view'), student: document.getElementById('student-dashboard'), admin: document.getElementById('admin-dashboard'), loading: document.getElementById('loading-view') };
 
+            // --- FUNCIONES DE UI (ESTUDIANTE) CORREGIDAS ---
+            function updateStudentUI(){ 
+                const box = document.getElementById('student-request-box'); 
+                const txt = document.getElementById('student-request-count');
+                const btn = document.getElementById('submit-request-btn');
+                
+                if (box && txt && btn) {
+                    if(selectedSlots.length > 0){
+                        box.classList.remove('hidden'); 
+                        txt.innerText = `${selectedSlots.length} hora(s) seleccionada(s)`; 
+                        btn.disabled = false;
+                    } else {
+                        box.classList.add('hidden'); 
+                        btn.disabled = true;
+                    } 
+                }
+            }
+
+            // --- FUNCIONES GENERALES UI ---
             function showView(name) { Object.values(views).forEach(v => v?.classList.add('hidden')); views[name]?.classList.remove('hidden', 'fade-in'); void views[name]?.offsetWidth; views[name]?.classList.add('fade-in'); }
-            function showMessage(type, text) { const m = document.getElementById('message-box'); m.innerHTML = `<i class="fas ${type==='error'?'fa-exclamation-circle':'fa-check-circle'} mr-2"></i> ${text}`; m.className = `p-4 rounded-lg text-sm font-bold mb-4 shadow-md flex items-center ${type==='error'?'bg-red-50 text-red-700 border border-red-200':'bg-green-50 text-green-700 border border-green-200'}`; m.classList.remove('hidden'); setTimeout(()=>m.classList.add('hidden'), 3000); }
-            function getWeekDays(offset = 0) { const now = new Date(); now.setDate(now.getDate() + (offset * 7)); const d = (now.getDay() === 0) ? -6 : 1 - now.getDay(); const mon = new Date(now.setDate(now.getDate() + d)); const w = []; for(let i=0;i<5;i++){ const x = new Date(mon); x.setDate(x.getDate()+i); w.push(x); } return w; }
-            function formatDateYYYYMMDD(d) { return d.toISOString().split('T')[0]; }
-            function isPastDate(dStr, h) { const now = new Date(); const [y, m, d] = dStr.split('-').map(Number); const slot = new Date(y, m-1, d, h+1); return slot < now; }
+            function showMessage(type, text) { const m = document.getElementById('message-box'); if(m) { m.innerHTML = `<i class="fas ${type==='error'?'fa-exclamation-circle':'fa-check-circle'} mr-2"></i> ${text}`; m.className = `p-4 rounded-lg text-sm font-bold mb-4 shadow-md flex items-center ${type==='error'?'bg-red-50 text-red-700 border border-red-200':'bg-green-50 text-green-700 border border-green-200'}`; m.classList.remove('hidden'); setTimeout(()=>m.classList.add('hidden'), 3000); } else { alert(text); } }
+            function clearListeners() { if (unsubscribeReservations) { unsubscribeReservations(); unsubscribeReservations = null; } if (unsubscribePending) { unsubscribePending(); unsubscribePending = null; } }
 
-            function clearListeners() { if(unsubscribeReservations) {unsubscribeReservations(); unsubscribeReservations=null;} if(unsubscribePending) {unsubscribePending(); unsubscribePending=null;} }
+            function updateAdminActionBox() { 
+                const box = document.getElementById('admin-action-box'); 
+                const count = document.getElementById('admin-selection-count'); 
+                if (box && count) {
+                    if(selectedSlots.length > 0) { box.classList.remove('hidden'); count.innerText = `${selectedSlots.length} seleccionados`; } else { box.classList.add('hidden'); } 
+                }
+            }
 
-            // --- DEFINICIÓN DE FUNCIONES ANTES DE USARLAS ---
+            // --- HANDLERS ---
+            function handleStudentClick(btn) {
+                if(btn.disabled) return; 
+                const id = btn.id; 
+                const st = btn.dataset.status || ''; // Safety check
+                
+                if(st.includes('my')) { 
+                    if(confirm("¿Desea cancelar su reserva?")) window.deleteReservation(btn.dataset.docId); 
+                    return; 
+                }
 
+                if (selectedSlots.includes(id)) { 
+                    selectedSlots = selectedSlots.filter(x => x !== id); 
+                    btn.classList.remove('slot-selected'); 
+                } else { 
+                    selectedSlots.push(id); 
+                    btn.classList.add('slot-selected'); 
+                }
+                updateStudentUI();
+            }
+
+            function handleAdminClick(e, btn) {
+                if(selectedSlots.includes(btn.id)){ selectedSlots = selectedSlots.filter(x => x !== btn.id); btn.classList.remove('slot-selected'); }
+                else { selectedSlots.push(btn.id); btn.classList.add('slot-selected'); }
+                
+                if(selectedSlots.includes(btn.id)) {
+                    if(btn.dataset.status === 'free') btn.innerHTML = '<span><i class="fas fa-check mb-1"></i><br>Seleccionado</span>';
+                    else if(!btn.innerHTML.includes('fa-check-circle')) btn.innerHTML += '<div style="position:absolute; top:2px; left:2px; color:white; font-size:10px;"><i class="fas fa-check-circle"></i></div>';
+                } else {
+                    if(btn.dataset.status === 'free') btn.innerHTML = '<span class="text-xs opacity-50">Disponible</span>';
+                    else { const check = btn.querySelector('.fa-check-circle')?.parentElement; if(check) check.remove(); }
+                }
+                updateAdminActionBox();
+            }
+
+            // --- GLOBALS ---
             window.handleLogin = async (e) => { e.preventDefault(); try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value.trim(), document.getElementById('login-password').value); } catch { showMessage('error', 'Credenciales incorrectas.'); } };
-            
             window.handleLogout = async () => { clearListeners(); await signOut(auth); window.location.reload(); };
-            
             window.deleteReservation = async (id) => { try { await deleteDoc(doc(db, RESERVATIONS_COLLECTION, id)); document.getElementById('attendance-modal').classList.add('hidden'); } catch (e) { alert("Error eliminando"); } };
-
+            
+            // UTILS
             window.togglePassword = (id, el) => { const inpt = document.getElementById(id); if(inpt.type==="password"){inpt.type="text";el.classList.replace("fa-eye","fa-eye-slash");}else{inpt.type="password";el.classList.replace("fa-eye-slash","fa-eye");} };
             window.openResetModal = () => document.getElementById('reset-modal').classList.remove('hidden');
             window.closeResetModal = () => document.getElementById('reset-modal').classList.add('hidden');
@@ -119,45 +185,39 @@
             window.closeChangePasswordModal = () => document.getElementById('change-password-modal').classList.add('hidden');
             window.handleChangePassword = async (e) => { e.preventDefault(); const p1=document.getElementById('new-password').value; const p2=document.getElementById('confirm-password').value; if(p1!==p2 || p1.length<6) return alert("Error en contraseña."); try { await updatePassword(auth.currentUser, p1); alert("Actualizada."); window.closeChangePasswordModal(); } catch(e) { if(e.code==='auth/requires-recent-login') { alert("Re-ingrese."); await signOut(auth); } else alert("Error."); } };
 
-            function getFormattedDateHeader(date) {
-                const dayName = date.toLocaleDateString('es-ES', { weekday: 'long' }); const dayNum = date.getDate(); const monthName = date.toLocaleDateString('es-ES', { month: 'long' }); const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-                return `<div class="flex flex-col leading-tight"><span class="text-lg font-bold text-slate-700">${cap(dayName)} ${dayNum}</span><span class="text-xs text-slate-500 font-medium uppercase tracking-wide mt-1">${cap(monthName)}</span></div>`;
-            }
-            function renderCalendarHeader(weekDays, headId) {
-                const thead = document.getElementById(headId); if(!thead) return;
-                thead.innerHTML = ''; const hr = document.createElement('tr'); const thHora = document.createElement('th'); thHora.innerHTML = '<i class="far fa-clock text-slate-400 mr-2"></i>HORARIO'; thHora.className = 'text-center bg-slate-100 w-24'; hr.appendChild(thHora);
-                weekDays.forEach(d => { const th = document.createElement('th'); th.innerHTML = getFormattedDateHeader(d); hr.appendChild(th); }); thead.appendChild(hr);
-            }
+            // --- DATE HELPERS ---
+            function getWeekDays(offset = 0) { const now = new Date(); now.setDate(now.getDate() + (offset * 7)); const d = (now.getDay() === 0) ? -6 : 1 - now.getDay(); const mon = new Date(now.setDate(now.getDate() + d)); const w = []; for(let i=0;i<5;i++){ const x = new Date(mon); x.setDate(x.getDate()+i); w.push(x); } return w; }
+            function formatDateYYYYMMDD(d) { return d.toISOString().split('T')[0]; }
+            function isPastDate(dStr, h) { const now = new Date(); const [y, m, d] = dStr.split('-').map(Number); const slot = new Date(y, m-1, d, h+1); return slot < now; }
+            function getFormattedDateHeader(date) { const dayName = date.toLocaleDateString('es-ES', { weekday: 'long' }); const dayNum = date.getDate(); const monthName = date.toLocaleDateString('es-ES', { month: 'long' }); const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1); return `<div class="flex flex-col leading-tight"><span class="text-lg font-bold text-slate-700">${cap(dayName)} ${dayNum}</span><span class="text-xs text-slate-500 font-medium uppercase tracking-wide mt-1">${cap(monthName)}</span></div>`; }
+            function renderCalendarHeader(weekDays, headId) { const thead = document.getElementById(headId); if(!thead) return; thead.innerHTML = ''; const hr = document.createElement('tr'); const thHora = document.createElement('th'); thHora.innerHTML = '<i class="far fa-clock text-slate-400 mr-2"></i>HORARIO'; thHora.className = 'text-center bg-slate-100 w-24'; hr.appendChild(thHora); weekDays.forEach(d => { const th = document.createElement('th'); th.innerHTML = getFormattedDateHeader(d); hr.appendChild(th); }); thead.appendChild(hr); }
 
-            // --- FUNCIONES DE VISTAS (DEFINIDAS ANTES DEL AUTH LISTENER) ---
+            // --- AUTH LISTENER ---
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid;
+                    try {
+                        const userDoc = await getDoc(doc(db, USERS_COLLECTION, user.email));
+                        if (userDoc.exists()) {
+                            const userData = userDoc.data();
+                            userRole = userData.role;
+                            currentGroupInfo = { name: userData.groupName || userData.name, color: userData.color || 'gray', userId: userId, email: user.email };
+                            
+                            const headerEl = userRole === 'admin' ? 'admin-header-user-info' : 'student-header-user-info';
+                            const el = document.getElementById(headerEl);
+                            if (el) el.innerHTML = `<div class="text-right leading-tight"><div class="font-bold text-white text-sm">${currentGroupInfo.name}</div><div class="text-xs text-blue-200 opacity-80 font-mono">${user.email}</div></div><div class="ml-3 bg-white/10 p-2 rounded-full"><i class="fas fa-user text-white"></i></div>`;
 
-            function setupAdminView() {
-                clearListeners();
-                const update = () => { const w = getWeekDays(currentWeekOffset); renderAdminCalendar(w); };
-                document.getElementById('admin-prev-week').onclick = () => { currentWeekOffset--; selectedSlots=[]; update(); updateAdminActionBox(); };
-                document.getElementById('admin-next-week').onclick = () => { currentWeekOffset++; selectedSlots=[]; update(); updateAdminActionBox(); };
-                document.getElementById('admin-block-btn').onclick = () => batchBlockAction('block');
-                document.getElementById('admin-unblock-btn').onclick = () => batchBlockAction('unblock');
-                document.getElementById('admin-recurring-btn').onclick = () => document.getElementById('recurring-modal').classList.remove('hidden');
-                renderMatrix();
-                update(); listenAdminPending();
-            }
+                            if(userRole==='admin') { showView('admin'); setupAdminView(); } 
+                            else { showView('student'); setupStudentView(); }
+                        } else { alert("Usuario sin datos."); await signOut(auth); }
+                    } catch(e) { console.error(e); await signOut(auth); }
+                } else { 
+                    clearListeners(); 
+                    showView('login'); 
+                }
+            });
 
-            function setupStudentView() {
-                clearListeners();
-                const update = () => { const w = getWeekDays(currentWeekOffset); renderStudentCalendar(w); };
-                document.getElementById('student-prev-week').onclick = () => { currentWeekOffset--; selectedSlots=[]; update(); };
-                document.getElementById('student-next-week').onclick = () => { currentWeekOffset++; selectedSlots=[]; update(); };
-                document.getElementById('submit-request-btn').onclick = async () => {
-                    const b = writeBatch(db);
-                    selectedSlots.forEach(id => { const [d,h] = id.split('_'); b.set(doc(collection(db, RESERVATIONS_COLLECTION)), {date:d, hour:parseInt(h), status:'pending', userId, groupName:currentGroupInfo.name, groupColor:currentGroupInfo.color, createdAt: serverTimestamp()}); });
-                    await b.commit(); selectedSlots=[]; showMessage('success','Solicitud enviada.');
-                };
-                update();
-            }
-
-            // ... (Funciones de renderizado de calendario student/admin se mantienen, pero ordenadas) ...
-
+            // --- ADMIN RENDER ---
             function renderAdminCalendar(weekDays) {
                 renderCalendarHeader(weekDays, 'admin-calendar-head');
                 const tbody = document.getElementById('admin-calendar-body'); if(!tbody) return; tbody.innerHTML='';
@@ -175,7 +235,7 @@
                     slotMap.forEach((b, k) => {
                         const [dStr, hStr] = k.split('_'); b.disabled=false; const container=b.parentElement; const oldInfo=container.querySelector('.info-btn'); if(oldInfo) oldInfo.remove();
                         if (isPastDate(dStr, parseInt(hStr))) { b.className = 'slot slot-past opacity-60'; b.innerHTML = '<span class="text-xs">Cerrado</span>'; b.dataset.status='past'; } 
-                        else { b.className = 'slot slot-free'; b.innerHTML = '<span class="text-xs opacity-50">Libre</span>'; b.dataset.status='free'; }
+                        else { b.className = 'slot slot-free'; b.innerHTML = '<span class="text-xs opacity-50">Disponible</span>'; b.dataset.status='free'; }
                         if(selectedSlots.includes(k)) { b.classList.add('slot-selected'); if(b.dataset.status==='free') b.innerHTML='<span><i class="fas fa-check mb-1"></i><br>Seleccionado</span>'; }
                     });
                     const map = new Map(); s.forEach(d => { const k=`${d.data().date}_${d.data().hour}`; if(!map.has(k))map.set(k,[]); map.get(k).push({id:d.id,...d.data()}); });
@@ -187,13 +247,14 @@
                             infoBtn.onclick = (e) => { e.stopPropagation(); openAttendanceModal(k.split('_')[0], k.split('_')[1], arr); }; container.appendChild(infoBtn);
                         }
                         if(blocked) { b.className = 'slot slot-blocked slot-admin-has-data'; b.innerHTML = '<span>Bloqueado</span>'; b.dataset.status = 'blocked'; } 
-                        else if(approved > 0) { b.className = `slot slot-admin-has-data ${approved>=4 ? 'slot-full' : 'slot-partial'}`; b.innerHTML = `<span>Ocupado</span><div class="occupancy-badge">${approved}/4</div>` + (pending?`<span class="text-xs text-yellow-700 font-bold mt-1">Wait: ${pending}</span>`:''); b.dataset.status = 'has-data'; } 
+                        else if(approved > 0) { b.className = `slot slot-admin-has-data ${approved>=4 ? 'slot-full' : 'slot-partial'}`; b.innerHTML = `<span>Ocupado</span><div class="occupancy-badge">${approved}/4</div>` + (pending?`<span class="text-xs text-yellow-700 font-bold mt-1">En Espera: ${pending}</span>`:''); b.dataset.status = 'has-data'; } 
                         else if(pending > 0) { b.className = 'slot slot-pending'; b.innerHTML = `<span>Solicitudes: ${pending}</span>`; }
                         if(selectedSlots.includes(k)) { b.classList.add('slot-selected'); if(b.dataset.status !== 'free') b.innerHTML += '<div style="position:absolute; top:2px; left:2px; color:white; font-size:10px;"><i class="fas fa-check-circle"></i></div>'; else b.innerHTML = '<span><i class="fas fa-check mb-1"></i><br>Seleccionado</span>'; }
                     });
                 });
             }
 
+            // --- STUDENT RENDER ---
             function renderStudentCalendar(weekDays) {
                 renderCalendarHeader(weekDays, 'student-calendar-head');
                 const tbody = document.getElementById('student-calendar-body'); if(!tbody) return; tbody.innerHTML='';
@@ -227,30 +288,31 @@
                 });
             }
 
-            function handleAdminClick(e, btn) {
-                if(selectedSlots.includes(btn.id)){ selectedSlots = selectedSlots.filter(x => x !== btn.id); btn.classList.remove('slot-selected'); }
-                else { selectedSlots.push(btn.id); btn.classList.add('slot-selected'); }
-                const event = new Event('change'); 
-                if(selectedSlots.includes(btn.id)) {
-                    if(btn.dataset.status === 'free') btn.innerHTML = '<span><i class="fas fa-check mb-1"></i><br>Seleccionado</span>';
-                    else if(!btn.innerHTML.includes('fa-check-circle')) btn.innerHTML += '<div style="position:absolute; top:2px; left:2px; color:white; font-size:10px;"><i class="fas fa-check-circle"></i></div>';
-                } else {
-                    if(btn.dataset.status === 'free') btn.innerHTML = '<span class="text-xs opacity-50">Libre</span>';
-                    else { const check = btn.querySelector('.fa-check-circle')?.parentElement; if(check) check.remove(); }
-                }
-                updateAdminActionBox();
+            // --- SETUP VIEWS ---
+            function setupAdminView() {
+                clearListeners();
+                const update = () => { const w = getWeekDays(currentWeekOffset); renderAdminCalendar(w); };
+                document.getElementById('admin-prev-week').onclick = () => { currentWeekOffset--; selectedSlots=[]; update(); updateAdminActionBox(); };
+                document.getElementById('admin-next-week').onclick = () => { currentWeekOffset++; selectedSlots=[]; update(); updateAdminActionBox(); };
+                document.getElementById('admin-block-btn').onclick = () => batchBlockAction('block');
+                document.getElementById('admin-unblock-btn').onclick = () => batchBlockAction('unblock');
+                document.getElementById('admin-recurring-btn').onclick = () => document.getElementById('recurring-modal').classList.remove('hidden');
+                renderMatrix();
+                update(); listenAdminPending();
             }
 
-            function handleStudentClick(btn) {
-                if(btn.disabled) return; const id = btn.id; const st = btn.dataset.status;
-                if(st.includes('my')) { if(confirm("¿Cancelar reserva?")) window.deleteReservation(btn.dataset.docId); return; }
-                if (selectedSlots.includes(id)) { selectedSlots = selectedSlots.filter(x => x !== id); btn.classList.remove('slot-selected'); }
-                else { selectedSlots.push(id); btn.classList.add('slot-selected'); }
-                updateStudentUI();
+            function setupStudentView() {
+                clearListeners();
+                const update = () => { const w = getWeekDays(currentWeekOffset); renderStudentCalendar(w); };
+                document.getElementById('student-prev-week').onclick = () => { currentWeekOffset--; selectedSlots=[]; update(); };
+                document.getElementById('student-next-week').onclick = () => { currentWeekOffset++; selectedSlots=[]; update(); };
+                document.getElementById('submit-request-btn').onclick = async () => {
+                    const b = writeBatch(db);
+                    selectedSlots.forEach(id => { const [d,h] = id.split('_'); b.set(doc(collection(db, RESERVATIONS_COLLECTION)), {date:d, hour:parseInt(h), status:'pending', userId, groupName:currentGroupInfo.name, groupColor:currentGroupInfo.color, createdAt: serverTimestamp()}); });
+                    await b.commit(); selectedSlots=[]; showMessage('success','Solicitud enviada.');
+                };
+                update();
             }
-
-            function updateAdminActionBox() { const box = document.getElementById('admin-action-box'); const count = document.getElementById('admin-selection-count'); if(selectedSlots.length > 0) { box.classList.remove('hidden'); count.innerText = `${selectedSlots.length} seleccionados`; } else { box.classList.add('hidden'); } }
-            function updateStudentUI(){ const b=document.getElementById('student-request-box'); if(selectedSlots.length){b.classList.remove('hidden'); document.getElementById('student-request-count').innerText=`${selectedSlots.length} horas seleccionadas.`; document.getElementById('submit-request-btn').disabled=false;}else{b.classList.add('hidden'); document.getElementById('submit-request-btn').disabled=true;} }
 
             window.batchBlockAction = async (action) => {
                 const batch = writeBatch(db);
@@ -261,16 +323,15 @@
                 await batch.commit(); selectedSlots = []; document.querySelectorAll('.slot-selected').forEach(x => x.classList.remove('slot-selected')); updateAdminActionBox();
             };
 
-            // --- LOGICA RECURRENTE (SOLUCIÓN FECHAS) ---
+            // --- RECURRING BLOCK LOGIC ---
             function renderMatrix() {
-                const container = document.getElementById('matrix-container');
-                if(!container) return;
+                const container = document.getElementById('matrix-container'); if(!container) return;
                 container.innerHTML = `<div class="grid-matrix mb-4"><div></div><div class="matrix-header">Lun</div><div class="matrix-header">Mar</div><div class="matrix-header">Mié</div><div class="matrix-header">Jue</div><div class="matrix-header">Vie</div>${[7,8,9,10,11,12,13,14,15,16,17,18,19].map(h => `<div class="matrix-time">${h}:00</div>${[1,2,3,4,5].map(d => `<div class="matrix-cell" data-day="${d}" data-hour="${h}" onclick="this.classList.toggle('selected')"></div>`).join('')}`).join('')}</div>`;
             }
 
             window.executeRecurringBlock = async (e) => {
                 e.preventDefault();
-                const startStr = document.getElementById('rec-start').value; // YYYY-MM-DD local input
+                const startStr = document.getElementById('rec-start').value;
                 const endStr = document.getElementById('rec-end').value;
                 const action = document.getElementById('rec-action').value;
                 const selectedCells = document.querySelectorAll('.matrix-cell.selected');
@@ -279,21 +340,14 @@
                 const blocks = []; selectedCells.forEach(c => blocks.push({ d: parseInt(c.dataset.day), h: parseInt(c.dataset.hour) }));
                 const batch = writeBatch(db); let count = 0;
                 
-                // Crear fechas locales
                 const startDate = new Date(startStr + 'T00:00:00'); 
                 const endDate = new Date(endStr + 'T00:00:00');
 
-                // Loop
                 for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-                    const dayOfWeek = d.getDay(); // 0 Sun, 1 Mon
+                    const dayOfWeek = d.getDay(); 
                     const blocksForDay = blocks.filter(b => b.d === dayOfWeek);
-                    
                     if (blocksForDay.length > 0) {
-                        const y = d.getFullYear();
-                        const m = String(d.getMonth() + 1).padStart(2, '0');
-                        const da = String(d.getDate()).padStart(2, '0');
-                        const dateStr = `${y}-${m}-${da}`;
-                        
+                        const y = d.getFullYear(); const m = String(d.getMonth() + 1).padStart(2, '0'); const da = String(d.getDate()).padStart(2, '0'); const dateStr = `${y}-${m}-${da}`;
                         blocksForDay.forEach(b => {
                             const ref = doc(db, RESERVATIONS_COLLECTION, `BLOCK_${dateStr}_${b.h}`);
                             if (action === 'block') batch.set(ref, { date: dateStr, hour: b.h, status: 'blocked', userId: 'ADMIN', type: 'recurring', createdAt: serverTimestamp() });
@@ -302,7 +356,7 @@
                         });
                     }
                 }
-                if(count > 490) return alert("Rango muy grande. Ejecute por meses.");
+                if(count > 490) return alert("Rango muy grande. Ejecute en partes.");
                 await batch.commit(); alert(`Listo. ${count} bloques actualizados.`);
                 document.getElementById('recurring-modal').classList.add('hidden');
                 document.querySelectorAll('.matrix-cell.selected').forEach(c => c.classList.remove('selected'));
@@ -313,7 +367,7 @@
                 if(!snap.empty) return snap.docs[0].data().members || []; return [];
             }
 
-            // --- ASISTENCIA ---
+            // --- ASISTENCIA MODAL ---
             window.openAttendanceModal = async (date, hour, reservations) => {
                 const modal = document.getElementById('attendance-modal'); document.getElementById('att-title').innerText = `Gestión: ${date} - ${hour}:00`;
                 const list = document.getElementById('att-list'); list.innerHTML = '<div class="p-8 text-center text-slate-500"><i class="fas fa-spinner fa-spin text-3xl mb-2"></i><br>Cargando...</div>';
@@ -350,48 +404,26 @@
             };
 
             function getTimeAgo(timestamp) {
-                if (!timestamp) return '';
-                const diff = Date.now() - timestamp.toMillis();
-                const min = Math.floor(diff / 60000);
-                if (min < 60) return `${min} min`;
-                const h = Math.floor(min / 60);
-                if (h < 24) return `${h} h`;
-                return `${Math.floor(h / 24)} d`;
+                if (!timestamp) return ''; const diff = Date.now() - timestamp.toMillis(); const min = Math.floor(diff / 60000);
+                if (min < 60) return `${min} min`; const h = Math.floor(min / 60); if (h < 24) return `${h} h`; return `${Math.floor(h / 24)} d`;
             }
-
             function listenAdminPending(){ 
                 if(unsubscribePending) unsubscribePending();
                 unsubscribePending = onSnapshot(query(collection(db,RESERVATIONS_COLLECTION), where("status","==","pending")), (s)=>{
-                    const c = document.getElementById('admin-requests-list'); if(!c) return;
-                    c.innerHTML='';
+                    const c = document.getElementById('admin-requests-list'); if(!c) return; c.innerHTML='';
                     if(s.empty) { c.innerHTML='<div class="text-center p-4 text-slate-400 italic">No hay solicitudes pendientes</div>'; return; }
                     const reqs = []; s.forEach(d => reqs.push({id: d.id, ...d.data()}));
                     reqs.sort((a,b) => (a.createdAt?.toMillis() || 0) - (b.createdAt?.toMillis() || 0));
 
                     reqs.forEach(r=>{
-                        const timeAgo = getTimeAgo(r.createdAt);
-                        const isLongWait = (Date.now() - (r.createdAt?.toMillis() || 0)) > 7200000; 
-                        const badgeClass = isLongWait ? 'wait-long' : (timeAgo.includes('min') ? 'wait-normal' : 'wait-warning');
-                        const icon = isLongWait ? '<i class="fas fa-exclamation-circle"></i>' : '<i class="far fa-clock"></i>';
-
+                        const timeAgo = getTimeAgo(r.createdAt); const isLongWait = (Date.now() - (r.createdAt?.toMillis() || 0)) > 7200000; 
+                        const badgeClass = isLongWait ? 'wait-long' : (timeAgo.includes('min') ? 'wait-normal' : 'wait-warning'); const icon = isLongWait ? '<i class="fas fa-exclamation-circle"></i>' : '<i class="far fa-clock"></i>';
                         const el=document.createElement('div'); el.className='bg-white p-3 rounded-lg shadow-sm border border-slate-200 mb-2 flex justify-between items-center fade-in';
-                        el.innerHTML=`
-                            <div>
-                                <div class="font-bold text-sm text-slate-700">${r.groupName}</div>
-                                <div class="flex items-center gap-2 mt-1">
-                                    <span class="text-xs text-slate-500 bg-slate-100 px-1 rounded"><i class="far fa-calendar mr-1"></i>${r.date} ${r.hour}:00</span>
-                                    <span class="wait-badge ${badgeClass}">${icon} ${timeAgo}</span>
-                                </div>
-                            </div>
-                            <div class="flex gap-2">
-                                <button onclick="window.admAct('${r.id}',true,'${r.date}',${r.hour})" class="w-8 h-8 flex items-center justify-center rounded-full bg-green-50 text-green-600 hover:bg-green-100 transition"><i class="fas fa-check"></i></button>
-                                <button onclick="window.rejectReq('${r.id}')" class="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-600 hover:bg-red-100 transition"><i class="fas fa-times"></i></button>
-                            </div>`;
+                        el.innerHTML=`<div><div class="font-bold text-sm text-slate-700">${r.groupName}</div><div class="flex items-center gap-2 mt-1"><span class="text-xs text-slate-500 bg-slate-100 px-1 rounded"><i class="far fa-calendar mr-1"></i>${r.date} ${r.hour}:00</span><span class="wait-badge ${badgeClass}">${icon} ${timeAgo}</span></div></div><div class="flex gap-2"><button onclick="window.admAct('${r.id}',true,'${r.date}',${r.hour})" class="w-8 h-8 flex items-center justify-center rounded-full bg-green-50 text-green-600 hover:bg-green-100 transition"><i class="fas fa-check"></i></button><button onclick="window.rejectReq('${r.id}')" class="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-600 hover:bg-red-100 transition"><i class="fas fa-times"></i></button></div>`;
                         c.appendChild(el);
                     });
                 }); 
             }
-            
             window.admAct = async(id,app,d,h) => {
                 const s = await getDocs(query(collection(db,RESERVATIONS_COLLECTION),where("date","==",d),where("hour","==",h),where("status","in",["approved","blocked"])));
                 if(s.docs.find(x=>x.data().status==='blocked')) return alert("Error: Este horario está bloqueado.");
@@ -399,9 +431,6 @@
                 updateDoc(doc(db,RESERVATIONS_COLLECTION,id),{status:'approved'});
             };
             window.rejectReq = async(id) => { if(confirm("¿Rechazar solicitud?")) await window.deleteReservation(id); };
-
-            // --- COLOCAR LISTENER AUTH AL FINAL PARA ASEGURAR DEFINICIONES ---
-            // (Ya está definido arriba, pero el orden de declaración de funciones importa para evitar ReferenceError)
         });
     </script>
 </head>
@@ -432,7 +461,7 @@
             </form>
             <div id="message-box" class="hidden mt-4"></div>
         </div>
-        <p class="text-xs text-white/90 mt-6 font-medium drop-shadow">Sistema de Gestión de Turnos v16.0</p>
+        <p class="text-xs text-white/90 mt-6 font-medium drop-shadow">Sistema de Gestión de Turnos v19.0</p>
     </div>
 
     <div id="reset-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
@@ -519,7 +548,7 @@
                 <div class="mb-6">
                     <label class="block text-xs font-bold text-slate-500 mb-1">Acción</label>
                     <select id="rec-action" class="w-full p-2 border rounded text-sm font-bold">
-                        <option value="block">Bloquear (Clase/Feriado)</option>
+                        <option value="block">Bloquear (Clase)</option>
                         <option value="unblock">Desbloquear (Liberar)</option>
                     </select>
                 </div>
