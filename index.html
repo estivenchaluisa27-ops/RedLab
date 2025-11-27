@@ -11,6 +11,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Montserrat:wght@600;800&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
 
     <style>
         /* --- ESTILOS GENERALES --- */
@@ -105,7 +106,7 @@
 
             const views = { login: document.getElementById('login-view'), student: document.getElementById('student-dashboard'), admin: document.getElementById('admin-dashboard'), loading: document.getElementById('loading-view') };
 
-            // --- FUNCIONES DE UI (ESTUDIANTE) CORREGIDAS ---
+            // --- FUNCIONES DE UI ---
             function updateStudentUI(){ 
                 const box = document.getElementById('student-request-box'); 
                 const txt = document.getElementById('student-request-count');
@@ -123,7 +124,6 @@
                 }
             }
 
-            // --- FUNCIONES GENERALES UI ---
             function showView(name) { Object.values(views).forEach(v => v?.classList.add('hidden')); views[name]?.classList.remove('hidden', 'fade-in'); void views[name]?.offsetWidth; views[name]?.classList.add('fade-in'); }
             function showMessage(type, text) { const m = document.getElementById('message-box'); if(m) { m.innerHTML = `<i class="fas ${type==='error'?'fa-exclamation-circle':'fa-check-circle'} mr-2"></i> ${text}`; m.className = `p-4 rounded-lg text-sm font-bold mb-4 shadow-md flex items-center ${type==='error'?'bg-red-50 text-red-700 border border-red-200':'bg-green-50 text-green-700 border border-green-200'}`; m.classList.remove('hidden'); setTimeout(()=>m.classList.add('hidden'), 3000); } else { alert(text); } }
             function clearListeners() { if (unsubscribeReservations) { unsubscribeReservations(); unsubscribeReservations = null; } if (unsubscribePending) { unsubscribePending(); unsubscribePending = null; } }
@@ -136,31 +136,126 @@
                 }
             }
 
+            // --- DATE HELPERS ---
+            function getWeekDays(offset = 0) { const now = new Date(); now.setDate(now.getDate() + (offset * 7)); const d = (now.getDay() === 0) ? -6 : 1 - now.getDay(); const mon = new Date(now.setDate(now.getDate() + d)); const w = []; for(let i=0;i<5;i++){ const x = new Date(mon); x.setDate(x.getDate()+i); w.push(x); } return w; }
+            function formatDateYYYYMMDD(d) { return d.toISOString().split('T')[0]; }
+            function isPastDate(dStr, h) { const now = new Date(); const [y, m, d] = dStr.split('-').map(Number); const slot = new Date(y, m-1, d, h+1); return slot < now; }
+            function getFormattedDateHeader(date) { const dayName = date.toLocaleDateString('es-ES', { weekday: 'long' }); const dayNum = date.getDate(); const monthName = date.toLocaleDateString('es-ES', { month: 'long' }); const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1); return `<div class="flex flex-col leading-tight"><span class="text-lg font-bold text-slate-700">${cap(dayName)} ${dayNum}</span><span class="text-xs text-slate-500 font-medium uppercase tracking-wide mt-1">${cap(monthName)}</span></div>`; }
+            function renderCalendarHeader(weekDays, headId) { const thead = document.getElementById(headId); if(!thead) return; thead.innerHTML = ''; const hr = document.createElement('tr'); const thHora = document.createElement('th'); thHora.innerHTML = '<i class="far fa-clock text-slate-400 mr-2"></i>HORARIO'; thHora.className = 'text-center bg-slate-100 w-24'; hr.appendChild(thHora); weekDays.forEach(d => { const th = document.createElement('th'); th.innerHTML = getFormattedDateHeader(d); hr.appendChild(th); }); thead.appendChild(hr); }
+
+            // --- REPORTE EXCEL (NUEVO) ---
+            window.downloadWeeklyReport = async () => {
+                const btn = document.getElementById('btn-download-excel');
+                const originalText = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando...';
+
+                try {
+                    // 1. Obtener la semana visible
+                    const weekDays = getWeekDays(currentWeekOffset);
+                    const startDate = formatDateYYYYMMDD(weekDays[0]);
+                    const endDate = formatDateYYYYMMDD(weekDays[4]);
+
+                    // 2. Traer reservas aprobadas de esa semana
+                    const q = query(collection(db, RESERVATIONS_COLLECTION), 
+                        where("date", ">=", startDate), 
+                        where("date", "<=", endDate),
+                        where("status", "==", "approved")
+                    );
+                    const snapshot = await getDocs(q);
+
+                    if (snapshot.empty) {
+                        alert("No hay reservas aprobadas en esta semana para generar reporte.");
+                        return;
+                    }
+
+                    // 3. Procesar datos
+                    const reportData = [];
+                    
+                    // Cache para no pedir el mismo grupo muchas veces
+                    const groupMembersCache = {}; 
+
+                    for (const docSnap of snapshot.docs) {
+                        const r = docSnap.data();
+                        
+                        // Obtener miembros (desde cache o DB)
+                        let members = [];
+                        if (groupMembersCache[r.groupName]) {
+                            members = groupMembersCache[r.groupName];
+                        } else {
+                            members = await getGroupMembers(r.groupName);
+                            groupMembersCache[r.groupName] = members;
+                        }
+
+                        // Asistencia guardada en la reserva
+                        const attendance = r.attendanceDetail || {};
+
+                        if (members.length === 0) {
+                            // Grupo sin miembros
+                            reportData.push({
+                                "Fecha": r.date,
+                                "Hora": `${r.hour}:00 - ${r.hour+1}:00`,
+                                "Grupo": r.groupName,
+                                "Cédula": "N/A",
+                                "Estudiante": "Sin integrantes registrados",
+                                "Rol": "N/A",
+                                "Estado Asistencia": "No Registrado"
+                            });
+                        } else {
+                            // Iterar por estudiante
+                            members.forEach(st => {
+                                let status = "No Registrado";
+                                if (attendance[st.cedula] === true) status = "PRESENTE";
+                                if (attendance[st.cedula] === false) status = "AUSENTE";
+
+                                reportData.push({
+                                    "Fecha": r.date,
+                                    "Hora": `${r.hour}:00 - ${r.hour+1}:00`,
+                                    "Grupo": r.groupName,
+                                    "Cédula": st.cedula,
+                                    "Estudiante": st.nombre,
+                                    "Rol": st.isLeader ? "Líder" : "Estudiante",
+                                    "Estado Asistencia": status
+                                });
+                            });
+                        }
+                    }
+
+                    // 4. Generar Excel
+                    reportData.sort((a, b) => a.Fecha.localeCompare(b.Fecha) || a.Hora.localeCompare(b.Hora)); // Ordenar
+                    
+                    const ws = XLSX.utils.json_to_sheet(reportData);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "Asistencia Semanal");
+                    
+                    // Ajustar ancho de columnas
+                    const wscols = [{wch:12}, {wch:15}, {wch:15}, {wch:15}, {wch:30}, {wch:10}, {wch:15}];
+                    ws['!cols'] = wscols;
+
+                    XLSX.writeFile(wb, `Reporte_Semanal_${startDate}_al_${endDate}.xlsx`);
+
+                } catch (error) {
+                    console.error("Error reporte:", error);
+                    alert("Hubo un error al generar el reporte.");
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                }
+            };
+
             // --- HANDLERS ---
             function handleStudentClick(btn) {
                 if(btn.disabled) return; 
                 const id = btn.id; 
-                const st = btn.dataset.status || ''; // Safety check
-                
-                if(st.includes('my')) { 
-                    if(confirm("¿Desea cancelar su reserva?")) window.deleteReservation(btn.dataset.docId); 
-                    return; 
-                }
-
-                if (selectedSlots.includes(id)) { 
-                    selectedSlots = selectedSlots.filter(x => x !== id); 
-                    btn.classList.remove('slot-selected'); 
-                } else { 
-                    selectedSlots.push(id); 
-                    btn.classList.add('slot-selected'); 
-                }
+                const st = btn.dataset.status || ''; 
+                if(st.includes('my')) { if(confirm("¿Desea cancelar su reserva?")) window.deleteReservation(btn.dataset.docId); return; }
+                if (selectedSlots.includes(id)) { selectedSlots = selectedSlots.filter(x => x !== id); btn.classList.remove('slot-selected'); } else { selectedSlots.push(id); btn.classList.add('slot-selected'); }
                 updateStudentUI();
             }
 
             function handleAdminClick(e, btn) {
                 if(selectedSlots.includes(btn.id)){ selectedSlots = selectedSlots.filter(x => x !== btn.id); btn.classList.remove('slot-selected'); }
                 else { selectedSlots.push(btn.id); btn.classList.add('slot-selected'); }
-                
                 if(selectedSlots.includes(btn.id)) {
                     if(btn.dataset.status === 'free') btn.innerHTML = '<span><i class="fas fa-check mb-1"></i><br>Seleccionado</span>';
                     else if(!btn.innerHTML.includes('fa-check-circle')) btn.innerHTML += '<div style="position:absolute; top:2px; left:2px; color:white; font-size:10px;"><i class="fas fa-check-circle"></i></div>';
@@ -184,13 +279,6 @@
             window.openChangePasswordModal = () => document.getElementById('change-password-modal').classList.remove('hidden');
             window.closeChangePasswordModal = () => document.getElementById('change-password-modal').classList.add('hidden');
             window.handleChangePassword = async (e) => { e.preventDefault(); const p1=document.getElementById('new-password').value; const p2=document.getElementById('confirm-password').value; if(p1!==p2 || p1.length<6) return alert("Error en contraseña."); try { await updatePassword(auth.currentUser, p1); alert("Actualizada."); window.closeChangePasswordModal(); } catch(e) { if(e.code==='auth/requires-recent-login') { alert("Re-ingrese."); await signOut(auth); } else alert("Error."); } };
-
-            // --- DATE HELPERS ---
-            function getWeekDays(offset = 0) { const now = new Date(); now.setDate(now.getDate() + (offset * 7)); const d = (now.getDay() === 0) ? -6 : 1 - now.getDay(); const mon = new Date(now.setDate(now.getDate() + d)); const w = []; for(let i=0;i<5;i++){ const x = new Date(mon); x.setDate(x.getDate()+i); w.push(x); } return w; }
-            function formatDateYYYYMMDD(d) { return d.toISOString().split('T')[0]; }
-            function isPastDate(dStr, h) { const now = new Date(); const [y, m, d] = dStr.split('-').map(Number); const slot = new Date(y, m-1, d, h+1); return slot < now; }
-            function getFormattedDateHeader(date) { const dayName = date.toLocaleDateString('es-ES', { weekday: 'long' }); const dayNum = date.getDate(); const monthName = date.toLocaleDateString('es-ES', { month: 'long' }); const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1); return `<div class="flex flex-col leading-tight"><span class="text-lg font-bold text-slate-700">${cap(dayName)} ${dayNum}</span><span class="text-xs text-slate-500 font-medium uppercase tracking-wide mt-1">${cap(monthName)}</span></div>`; }
-            function renderCalendarHeader(weekDays, headId) { const thead = document.getElementById(headId); if(!thead) return; thead.innerHTML = ''; const hr = document.createElement('tr'); const thHora = document.createElement('th'); thHora.innerHTML = '<i class="far fa-clock text-slate-400 mr-2"></i>HORARIO'; thHora.className = 'text-center bg-slate-100 w-24'; hr.appendChild(thHora); weekDays.forEach(d => { const th = document.createElement('th'); th.innerHTML = getFormattedDateHeader(d); hr.appendChild(th); }); thead.appendChild(hr); }
 
             // --- AUTH LISTENER ---
             onAuthStateChanged(auth, async (user) => {
@@ -461,7 +549,7 @@
             </form>
             <div id="message-box" class="hidden mt-4"></div>
         </div>
-        <p class="text-xs text-white/90 mt-6 font-medium drop-shadow">Sistema de Gestión de Turnos v19.0</p>
+        <p class="text-xs text-white/90 mt-6 font-medium drop-shadow">Sistema de Gestión de Turnos v20.0</p>
     </div>
 
     <div id="reset-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
@@ -522,8 +610,13 @@
                         <button id="admin-unblock-btn" class="bg-emerald-500 hover:bg-emerald-600 px-5 py-2 rounded-lg font-bold">Desbloquear</button>
                     </div>
                 </div>
-                <div class="mt-4 flex justify-end">
-                    <button id="admin-recurring-btn" class="bg-[#004274] text-white px-4 py-2 rounded shadow hover:bg-[#003366] flex items-center gap-2 font-bold text-sm"><i class="fas fa-calendar-alt"></i> Gestión de Clases (Semestral)</button>
+                <div class="mt-4 flex justify-end gap-2">
+                    <button onclick="window.downloadWeeklyReport()" id="btn-download-excel" class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 flex items-center gap-2 font-bold text-sm transition">
+                        <i class="fas fa-file-excel"></i> Reporte Semanal
+                    </button>
+                    <button id="admin-recurring-btn" class="bg-[#004274] text-white px-4 py-2 rounded shadow hover:bg-[#003366] flex items-center gap-2 font-bold text-sm transition">
+                        <i class="fas fa-calendar-alt"></i> Gestión de Clases
+                    </button>
                 </div>
             </div>
             <div class="lg:col-span-1 bg-white p-5 rounded-xl shadow-sm border border-slate-200 h-fit max-h-[calc(100vh-100px)] overflow-y-auto custom-scrollbar">
