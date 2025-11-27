@@ -143,7 +143,7 @@
             function getFormattedDateHeader(date) { const dayName = date.toLocaleDateString('es-ES', { weekday: 'long' }); const dayNum = date.getDate(); const monthName = date.toLocaleDateString('es-ES', { month: 'long' }); const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1); return `<div class="flex flex-col leading-tight"><span class="text-lg font-bold text-slate-700">${cap(dayName)} ${dayNum}</span><span class="text-xs text-slate-500 font-medium uppercase tracking-wide mt-1">${cap(monthName)}</span></div>`; }
             function renderCalendarHeader(weekDays, headId) { const thead = document.getElementById(headId); if(!thead) return; thead.innerHTML = ''; const hr = document.createElement('tr'); const thHora = document.createElement('th'); thHora.innerHTML = '<i class="far fa-clock text-slate-400 mr-2"></i>HORARIO'; thHora.className = 'text-center bg-slate-100 w-24'; hr.appendChild(thHora); weekDays.forEach(d => { const th = document.createElement('th'); th.innerHTML = getFormattedDateHeader(d); hr.appendChild(th); }); thead.appendChild(hr); }
 
-            // --- REPORTE EXCEL (NUEVO) ---
+            // --- REPORTE EXCEL MEJORADO (v20.1) ---
             window.downloadWeeklyReport = async () => {
                 const btn = document.getElementById('btn-download-excel');
                 const originalText = btn.innerHTML;
@@ -156,7 +156,7 @@
                     const startDate = formatDateYYYYMMDD(weekDays[0]);
                     const endDate = formatDateYYYYMMDD(weekDays[4]);
 
-                    // 2. Traer reservas aprobadas de esa semana
+                    // 2. Traer reservas
                     const q = query(collection(db, RESERVATIONS_COLLECTION), 
                         where("date", ">=", startDate), 
                         where("date", "<=", endDate),
@@ -165,78 +165,91 @@
                     const snapshot = await getDocs(q);
 
                     if (snapshot.empty) {
-                        alert("No hay reservas aprobadas en esta semana para generar reporte.");
+                        alert("No hay reservas aprobadas en esta semana.");
                         return;
                     }
 
-                    // 3. Procesar datos
-                    const reportData = [];
-                    
-                    // Cache para no pedir el mismo grupo muchas veces
+                    // 3. Procesar datos para el Array de Arrays (AOA)
+                    const rawData = [];
                     const groupMembersCache = {}; 
 
                     for (const docSnap of snapshot.docs) {
                         const r = docSnap.data();
                         
-                        // Obtener miembros (desde cache o DB)
                         let members = [];
-                        if (groupMembersCache[r.groupName]) {
-                            members = groupMembersCache[r.groupName];
-                        } else {
-                            members = await getGroupMembers(r.groupName);
-                            groupMembersCache[r.groupName] = members;
-                        }
+                        if (groupMembersCache[r.groupName]) members = groupMembersCache[r.groupName];
+                        else { members = await getGroupMembers(r.groupName); groupMembersCache[r.groupName] = members; }
 
-                        // Asistencia guardada en la reserva
                         const attendance = r.attendanceDetail || {};
+                        const sortKey = `${r.date}-${r.hour.toString().padStart(2, '0')}-${r.groupName}`;
 
                         if (members.length === 0) {
-                            // Grupo sin miembros
-                            reportData.push({
-                                "Fecha": r.date,
-                                "Hora": `${r.hour}:00 - ${r.hour+1}:00`,
-                                "Grupo": r.groupName,
-                                "Cédula": "N/A",
-                                "Estudiante": "Sin integrantes registrados",
-                                "Rol": "N/A",
-                                "Estado Asistencia": "No Registrado"
-                            });
+                            rawData.push({ sortKey, date: r.date, hour: `${r.hour}:00 - ${r.hour+1}:00`, group: r.groupName, cedula: "N/A", name: "Sin integrantes", role: "N/A", status: "No Registrado" });
                         } else {
-                            // Iterar por estudiante
                             members.forEach(st => {
                                 let status = "No Registrado";
                                 if (attendance[st.cedula] === true) status = "PRESENTE";
                                 if (attendance[st.cedula] === false) status = "AUSENTE";
-
-                                reportData.push({
-                                    "Fecha": r.date,
-                                    "Hora": `${r.hour}:00 - ${r.hour+1}:00`,
-                                    "Grupo": r.groupName,
-                                    "Cédula": st.cedula,
-                                    "Estudiante": st.nombre,
-                                    "Rol": st.isLeader ? "Líder" : "Estudiante",
-                                    "Estado Asistencia": status
-                                });
+                                rawData.push({ sortKey, date: r.date, hour: `${r.hour}:00 - ${r.hour+1}:00`, group: r.groupName, cedula: st.cedula, name: st.nombre, role: st.isLeader ? "Líder" : "Estudiante", status: status });
                             });
                         }
                     }
 
-                    // 4. Generar Excel
-                    reportData.sort((a, b) => a.Fecha.localeCompare(b.Fecha) || a.Hora.localeCompare(b.Hora)); // Ordenar
-                    
-                    const ws = XLSX.utils.json_to_sheet(reportData);
-                    const wb = XLSX.utils.book_new();
-                    XLSX.utils.book_append_sheet(wb, ws, "Asistencia Semanal");
-                    
-                    // Ajustar ancho de columnas
-                    const wscols = [{wch:12}, {wch:15}, {wch:15}, {wch:15}, {wch:30}, {wch:10}, {wch:15}];
-                    ws['!cols'] = wscols;
+                    // 4. Ordenar datos
+                    rawData.sort((a,b) => a.sortKey.localeCompare(b.sortKey));
 
-                    XLSX.writeFile(wb, `Reporte_Semanal_${startDate}_al_${endDate}.xlsx`);
+                    // 5. Construir la Hoja con Espaciado y Títulos
+                    const sheetData = [];
+                    
+                    // Título Principal
+                    sheetData.push([`REPORTE DE ASISTENCIA: SEMANA DEL ${startDate} AL ${endDate}`]);
+                    sheetData.push([]); // Espacio vacío
+
+                    // Cabeceras de Tabla
+                    const headers = ["FECHA", "HORA", "GRUPO", "CÉDULA", "ESTUDIANTE", "ROL", "ESTADO"];
+                    sheetData.push(headers);
+
+                    let lastGroupSig = "";
+
+                    rawData.forEach(row => {
+                        // Detectar cambio de grupo para insertar espacio visual
+                        const currentSig = `${row.date}-${row.hour}-${row.group}`;
+                        
+                        // Si no es el primer grupo y es diferente al anterior, insertar fila vacía
+                        if(lastGroupSig !== "" && currentSig !== lastGroupSig) {
+                            sheetData.push([]); 
+                        }
+
+                        sheetData.push([
+                            row.date,
+                            row.hour,
+                            row.group,
+                            row.cedula,
+                            row.name,
+                            row.role,
+                            row.status
+                        ]);
+
+                        lastGroupSig = currentSig;
+                    });
+
+                    // 6. Generar Excel
+                    const ws = XLSX.utils.aoa_to_sheet(sheetData);
+                    
+                    // Ajustar anchos
+                    ws['!cols'] = [{wch:12}, {wch:15}, {wch:12}, {wch:12}, {wch:35}, {wch:10}, {wch:15}];
+                    
+                    // Fusionar celda del título principal
+                    if(!ws['!merges']) ws['!merges'] = [];
+                    ws['!merges'].push({ s: {r:0, c:0}, e: {r:0, c:6} }); // Fusionar A1 hasta G1
+
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "Asistencia");
+                    XLSX.writeFile(wb, `Reporte_${startDate}_al_${endDate}.xlsx`);
 
                 } catch (error) {
-                    console.error("Error reporte:", error);
-                    alert("Hubo un error al generar el reporte.");
+                    console.error(error);
+                    alert("Error generando reporte. Revise la consola.");
                 } finally {
                     btn.disabled = false;
                     btn.innerHTML = originalText;
@@ -549,7 +562,7 @@
             </form>
             <div id="message-box" class="hidden mt-4"></div>
         </div>
-        <p class="text-xs text-white/90 mt-6 font-medium drop-shadow">Sistema de Gestión de Turnos v20.0</p>
+        <p class="text-xs text-white/90 mt-6 font-medium drop-shadow">Sistema de Gestión de Turnos v20.1</p>
     </div>
 
     <div id="reset-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
