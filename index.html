@@ -136,10 +136,40 @@
                 }
             }
 
-            // --- DATE HELPERS ---
-            function getWeekDays(offset = 0) { const now = new Date(); now.setDate(now.getDate() + (offset * 7)); const d = (now.getDay() === 0) ? -6 : 1 - now.getDay(); const mon = new Date(now.setDate(now.getDate() + d)); const w = []; for(let i=0;i<5;i++){ const x = new Date(mon); x.setDate(x.getDate()+i); w.push(x); } return w; }
-            function formatDateYYYYMMDD(d) { return d.toISOString().split('T')[0]; }
-            function isPastDate(dStr, h) { const now = new Date(); const [y, m, d] = dStr.split('-').map(Number); const slot = new Date(y, m-1, d, h+1); return slot < now; }
+            // --- CORRECCIÓN DE FECHAS (BUG FIXED) ---
+            function getWeekDays(offset = 0) { 
+                const now = new Date(); 
+                // Fix: Resetear horas a 00:00:00 para evitar saltos por hora actual
+                now.setHours(0, 0, 0, 0); 
+                
+                now.setDate(now.getDate() + (offset * 7)); 
+                const d = (now.getDay() === 0) ? -6 : 1 - now.getDay(); 
+                const mon = new Date(now.setDate(now.getDate() + d)); 
+                const w = []; 
+                for(let i=0;i<5;i++){ 
+                    const x = new Date(mon); 
+                    x.setDate(x.getDate()+i); 
+                    w.push(x); 
+                } 
+                return w; 
+            }
+
+            // Fix: Usar getters locales en lugar de toISOString() para evitar UTC conversion
+            function formatDateYYYYMMDD(d) { 
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+
+            function isPastDate(dStr, h) { 
+                // Comparar contra fecha actual real (con hora)
+                const now = new Date(); 
+                const [y, m, d] = dStr.split('-').map(Number); 
+                const slot = new Date(y, m-1, d, h+1); // h+1 para dar margen al final de la hora
+                return slot < now; 
+            }
+
             function getFormattedDateHeader(date) { const dayName = date.toLocaleDateString('es-ES', { weekday: 'long' }); const dayNum = date.getDate(); const monthName = date.toLocaleDateString('es-ES', { month: 'long' }); const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1); return `<div class="flex flex-col leading-tight"><span class="text-lg font-bold text-slate-700">${cap(dayName)} ${dayNum}</span><span class="text-xs text-slate-500 font-medium uppercase tracking-wide mt-1">${cap(monthName)}</span></div>`; }
             function renderCalendarHeader(weekDays, headId) { const thead = document.getElementById(headId); if(!thead) return; thead.innerHTML = ''; const hr = document.createElement('tr'); const thHora = document.createElement('th'); thHora.innerHTML = '<i class="far fa-clock text-slate-400 mr-2"></i>HORARIO'; thHora.className = 'text-center bg-slate-100 w-24'; hr.appendChild(thHora); weekDays.forEach(d => { const th = document.createElement('th'); th.innerHTML = getFormattedDateHeader(d); hr.appendChild(th); }); thead.appendChild(hr); }
 
@@ -151,12 +181,10 @@
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando...';
 
                 try {
-                    // 1. Obtener la semana visible
                     const weekDays = getWeekDays(currentWeekOffset);
                     const startDate = formatDateYYYYMMDD(weekDays[0]);
                     const endDate = formatDateYYYYMMDD(weekDays[4]);
 
-                    // 2. Traer reservas
                     const q = query(collection(db, RESERVATIONS_COLLECTION), 
                         where("date", ">=", startDate), 
                         where("date", "<=", endDate),
@@ -169,7 +197,6 @@
                         return;
                     }
 
-                    // 3. Procesar datos para el Array de Arrays (AOA)
                     const rawData = [];
                     const groupMembersCache = {}; 
 
@@ -195,31 +222,20 @@
                         }
                     }
 
-                    // 4. Ordenar datos
                     rawData.sort((a,b) => a.sortKey.localeCompare(b.sortKey));
 
-                    // 5. Construir la Hoja con Espaciado y Títulos
                     const sheetData = [];
-                    
-                    // Título Principal
                     sheetData.push([`REPORTE DE ASISTENCIA: SEMANA DEL ${startDate} AL ${endDate}`]);
-                    sheetData.push([]); // Espacio vacío
-
-                    // Cabeceras de Tabla
+                    sheetData.push([]); 
                     const headers = ["FECHA", "HORA", "GRUPO", "CÉDULA", "ESTUDIANTE", "ROL", "ESTADO"];
                     sheetData.push(headers);
 
                     let lastGroupSig = "";
-
                     rawData.forEach(row => {
-                        // Detectar cambio de grupo para insertar espacio visual
                         const currentSig = `${row.date}-${row.hour}-${row.group}`;
-                        
-                        // Si no es el primer grupo y es diferente al anterior, insertar fila vacía
                         if(lastGroupSig !== "" && currentSig !== lastGroupSig) {
                             sheetData.push([]); 
                         }
-
                         sheetData.push([
                             row.date,
                             row.hour,
@@ -229,19 +245,13 @@
                             row.role,
                             row.status
                         ]);
-
                         lastGroupSig = currentSig;
                     });
 
-                    // 6. Generar Excel
                     const ws = XLSX.utils.aoa_to_sheet(sheetData);
-                    
-                    // Ajustar anchos
                     ws['!cols'] = [{wch:12}, {wch:15}, {wch:12}, {wch:12}, {wch:35}, {wch:10}, {wch:15}];
-                    
-                    // Fusionar celda del título principal
                     if(!ws['!merges']) ws['!merges'] = [];
-                    ws['!merges'].push({ s: {r:0, c:0}, e: {r:0, c:6} }); // Fusionar A1 hasta G1
+                    ws['!merges'].push({ s: {r:0, c:0}, e: {r:0, c:6} }); 
 
                     const wb = XLSX.utils.book_new();
                     XLSX.utils.book_append_sheet(wb, ws, "Asistencia");
@@ -302,6 +312,15 @@
                         if (userDoc.exists()) {
                             const userData = userDoc.data();
                             userRole = userData.role;
+                            
+                            // --- LÓGICA DE CAMBIO DE CONTRASEÑA OBLIGATORIO ---
+                            if (userData.mustChangePassword === true) {
+                                document.getElementById('user-email-force').innerText = user.email;
+                                document.getElementById('force-change-password-modal').classList.remove('hidden');
+                                showView('loading'); 
+                                return; 
+                            }
+
                             currentGroupInfo = { name: userData.groupName || userData.name, color: userData.color || 'gray', userId: userId, email: user.email };
                             
                             const headerEl = userRole === 'admin' ? 'admin-header-user-info' : 'student-header-user-info';
@@ -504,6 +523,43 @@
                 const b = writeBatch(db); s.forEach(doc => b.update(doc.ref, { [`attendanceDetail.${ced}`]: isPresent })); await b.commit();
             };
 
+            // 3. Cambiar Contraseña OBLIGATORIO (Force)
+            window.handleForcedPasswordChange = async (e) => {
+                e.preventDefault();
+                const p1 = document.getElementById('force-new-password').value;
+                const p2 = document.getElementById('force-confirm-password').value;
+
+                if(p1.length < 6) return alert("La contraseña debe tener al menos 6 caracteres.");
+                if(p1 !== p2) return alert("Las contraseñas no coinciden.");
+
+                const user = auth.currentUser;
+                try {
+                    // 1. Actualizar clave en Auth
+                    await updatePassword(user, p1);
+                    
+                    // 2. Actualizar bandera en Firestore para que no vuelva a pedirlo
+                    await updateDoc(doc(db, USERS_COLLECTION, user.email), {
+                        mustChangePassword: false
+                    });
+
+                    alert("Contraseña establecida correctamente. Bienvenido.");
+                    document.getElementById('force-change-password-modal').classList.add('hidden');
+                    
+                    // Recargar la página para procesar el login normal
+                    window.location.reload();
+
+                } catch (error) {
+                    if (error.code === 'auth/requires-recent-login') {
+                        alert("Sesión expirada. Por favor ingresa nuevamente.");
+                        await signOut(auth);
+                        window.location.reload();
+                    } else {
+                        console.error(error);
+                        alert("Error al actualizar. Intenta nuevamente.");
+                    }
+                }
+            };
+
             function getTimeAgo(timestamp) {
                 if (!timestamp) return ''; const diff = Date.now() - timestamp.toMillis(); const min = Math.floor(diff / 60000);
                 if (min < 60) return `${min} min`; const h = Math.floor(min / 60); if (h < 24) return `${h} h`; return `${Math.floor(h / 24)} d`;
@@ -562,7 +618,7 @@
             </form>
             <div id="message-box" class="hidden mt-4"></div>
         </div>
-        <p class="text-xs text-white/90 mt-6 font-medium drop-shadow">Sistema de Gestión de Turnos v20.1</p>
+        <p class="text-xs text-white/90 mt-6 font-medium drop-shadow">Sistema de Gestión de Turnos v20.2</p>
     </div>
 
     <div id="reset-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
@@ -588,6 +644,29 @@
                     <button type="button" onclick="window.closeChangePasswordModal()" class="text-slate-500 hover:bg-slate-100 px-4 py-2 rounded">Cancelar</button>
                     <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded font-bold">Actualizar</button>
                 </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="force-change-password-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-8 fade-in border-t-4 border-red-500 relative">
+            <div class="text-center mb-6">
+                <div class="bg-red-100 p-3 rounded-full inline-block mb-2 text-red-600 text-2xl"><i class="fas fa-lock"></i></div>
+                <h3 class="font-bold text-2xl text-slate-800">Actualización Requerida</h3>
+                <p class="text-sm text-slate-500 mt-2">Hola <span id="user-email-force" class="font-bold text-slate-700"></span>.<br>Estás utilizando una contraseña temporal. Por seguridad, debes establecer una contraseña propia para continuar.</p>
+            </div>
+            <form onsubmit="window.handleForcedPasswordChange(event)" class="space-y-5">
+                <div class="password-container">
+                    <label class="text-xs font-bold text-slate-500">Nueva Contraseña</label>
+                    <input type="password" id="force-new-password" class="w-full p-3 border border-slate-300 rounded focus:ring-2 focus:ring-red-500 outline-none" minlength="6" required>
+                    <i class="fas fa-eye toggle-password" onclick="window.togglePassword('force-new-password', this)"></i>
+                </div>
+                <div class="password-container">
+                    <label class="text-xs font-bold text-slate-500">Confirmar Contraseña</label>
+                    <input type="password" id="force-confirm-password" class="w-full p-3 border border-slate-300 rounded focus:ring-2 focus:ring-red-500 outline-none" minlength="6" required>
+                    <i class="fas fa-eye toggle-password" onclick="window.togglePassword('force-confirm-password', this)"></i>
+                </div>
+                <button type="submit" class="w-full bg-red-600 text-white py-3 rounded-lg font-bold hover:bg-red-700 transition shadow-lg">Establecer Contraseña y Entrar</button>
             </form>
         </div>
     </div>
