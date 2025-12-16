@@ -581,14 +581,33 @@
                     });
                 }); 
             }
-            window.admAct = async(id,app,d,h) => {
-                const s = await getDocs(query(collection(db,RESERVATIONS_COLLECTION),where("date","==",d),where("hour","==",h),where("status","in",["approved","blocked"])));
-                if(s.docs.find(x=>x.data().status==='blocked')) return alert("Error: Este horario está bloqueado.");
-                if(s.size>=4) return alert("Error: Horario lleno (4/4).");
-                updateDoc(doc(db,RESERVATIONS_COLLECTION,id),{status:'approved'});
+            window.admAct = async (id, app, d, h) => {
+                // Verificar primero si está bloqueado
+                const bloqueados = await getDocs(query(
+                    collection(db, RESERVATIONS_COLLECTION),
+                    where("date", "==", d),
+                    where("hour", "==", parseInt(h)),
+                    where("status", "==", "blocked")
+                ));
+                if (!bloqueados.empty) return alert("Error: Este horario está bloqueado.");
+
+                // Contar SOLO los aprobados (no incluir pendientes)
+                const aprobados = await getDocs(query(
+                    collection(db, RESERVATIONS_COLLECTION),
+                    where("date", "==", d),
+                    where("hour", "==", parseInt(h)),
+                    where("status", "==", "approved")
+                ));
+                if (aprobados.size >= 4) return alert("Error: Horario lleno (4/4).");
+
+                // Aprobar la solicitud
+                updateDoc(doc(db, RESERVATIONS_COLLECTION, id), { status: 'approved' });
             };
-            window.rejectReq = async(id) => { if(confirm("¿Rechazar solicitud?")) await window.deleteReservation(id); };
-        });
+
+            window.rejectReq = async (id) => {
+                if (confirm("¿Rechazar solicitud?")) await window.deleteReservation(id);
+            };
+            }); 
     </script>
 </head>
 
