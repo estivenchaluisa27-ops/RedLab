@@ -133,6 +133,16 @@
         let unsubscribeReservations = null; 
         let unsubscribePending = null;
 
+            function escapeHtml(str) {
+            if (str == null) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
         // MAGIA: Sobrescribir alert() nativo por SweetAlert2
         window.alert = function(message) {
             // Si el mensaje contiene la palabra "error" o "lleno", muestra icono rojo
@@ -198,7 +208,7 @@
 
             if (role === 'admin' || role === 'professor') {
                 showView('admin');
-                if (nameEl) nameEl.innerHTML = `<span class="font-bold">${userData.name}</span><span class="ml-2 text-xs bg-yellow-500 text-black px-2 rounded">${role.toUpperCase()}</span>`;
+                if (nameEl) nameEl.innerHTML = `<span class="font-bold">${escapeHtml(userData.name)}</span><span class="ml-2 text-xs bg-yellow-500 text-black px-2 rounded">${role.toUpperCase()}</span>`;
                 loadAdminDashboard();
             } else if (role === 'student') {
                 state.courseId = studentData.courseId;
@@ -218,7 +228,7 @@
                         state.groupName = gData.name;
                         state.weeklyLimit = cData.weeklyLimit || 4; 
                         
-                        if (nameEl) nameEl.innerHTML = `<div class="text-right leading-tight"><div class="font-bold text-white text-sm">${gData.name}</div><div class="text-xs text-blue-200">${state.user.email}</div><span class="course-badge mt-1">${cData.subject} (${cData.parallel})</span></div><div class="ml-3 bg-white/10 p-2 rounded-full"><i class="fas fa-user text-white"></i></div>`;
+                        if (nameEl) nameEl.innerHTML = `<div class="text-right leading-tight"><div class="font-bold text-white text-sm">${escapeHtml(gData.name)}</div><div class="text-xs text-blue-200">${escapeHtml(state.user.email)}</div><span class="course-badge mt-1">${escapeHtml(cData.subject)} (${escapeHtml(cData.parallel)})</span></div><div class="ml-3 bg-white/10 p-2 rounded-full"><i class="fas fa-user text-white"></i></div>`;
                         showView('student');
                         setupStudentView();
                     } 
@@ -245,16 +255,16 @@
                         <div class="bg-white p-5 rounded-lg shadow border-l-4 border-[#004274] hover:shadow-lg transition relative group">
                             <div class="flex justify-between items-start">
                                 <div>
-                                    <h3 class="font-bold text-lg text-slate-800">${c.subject}</h3>
-                                    <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded font-bold">${c.parallel}</span>
+                                    <h3 class="font-bold text-lg text-slate-800">${escapeHtml(c.subject)}</h3>
+                                    <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded font-bold">${escapeHtml(c.parallel)}</span>
                                 </div>
                                 <button onclick="window.openEditCourseModal('${d.id}')" class="text-slate-400 hover:text-blue-600 p-1 bg-slate-50 rounded border border-transparent hover:border-blue-200 transition" title="Editar Curso Completo">
                                     <i class="fas fa-pencil-alt"></i>
                                 </button>
                             </div>
-                            <p class="text-sm text-slate-500 mt-1">${c.career}</p>
+                            <p class="text-sm text-slate-500 mt-1">${escapeHtml(c.career)}</p>
                             <div class="mt-3 flex justify-between items-center text-xs text-slate-400 border-t pt-2">
-                                <span><i class="fas fa-user mr-1"></i>${c.professorEmail}</span>
+                                <span><i class="fas fa-user mr-1"></i>${escapeHtml(c.professorEmail)}</span>
                                 <span class="font-bold text-slate-600"><i class="fas fa-clock mr-1"></i>${c.weeklyLimit}h/sem</span>
                             </div>
                             <div class="mt-2 text-center">
@@ -268,7 +278,7 @@
                 getDocs(collection(db, "professors")).then(snap => {
                     const sel = document.getElementById('c-professor');
                     sel.innerHTML = '<option value="">Seleccione Profesor...</option>';
-                    snap.forEach(d => { sel.innerHTML += `<option value="${d.id}">${d.data().name}</option>`; });
+                    snap.forEach(d => { sel.innerHTML += `<option value="${d.id}">${escapeHtml(d.data().name)}</option>`; });
                 });
             }
             setupAdminCalendarLogic();
@@ -492,7 +502,7 @@
                 profSnaps.forEach(p => {
                     const pData = p.data();
                     const isSelected = p.id === courseData.professorEmail ? 'selected' : '';
-                    profSelect.innerHTML += `<option value="${p.id}" ${isSelected}>${pData.name}</option>`;
+                    profSelect.innerHTML += `<option value="${p.id}" ${isSelected}>${escapeHtml(pData.name)}</option>`;
                 });
 
                 document.getElementById('modal-edit-course').classList.remove('hidden');
@@ -560,11 +570,11 @@
                     
                         <td class="py-3 pl-3">
                             <button onclick="window.openGroupDetails('${d.id}')" class="font-bold text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-2 transition-colors">
-                                <span class="text-sm">${g.name}</span>
+                                <span class="text-sm">${escapeHtml(g.name)}</span>
                                 <i class="fas fa-external-link-alt text-[11px] text-blue-400"></i>
                             </button>
                         </td>                    
-                        <td class="py-3 text-xs text-slate-600 font-medium">${g.leader.email}</td>
+                        <td class="py-3 text-xs text-slate-600 font-medium">${escapeHtml(g.leader.email)}</td>
                         <td class="py-3 text-sm text-slate-700 font-bold text-center">
                             ${membersCount}
                         </td>
@@ -907,14 +917,14 @@
                     el.className='bg-white p-3 rounded-lg shadow-sm border border-slate-200 mb-2 flex justify-between items-center fade-in';
                     el.innerHTML=`
                     <div>
-                        <div class="font-bold text-sm text-slate-700">${r.groupName}</div>
-                        <div class="text-xs text-slate-500">${r.date} ${r.hour}:00</div>
+                        <div class="font-bold text-sm text-slate-700">${escapeHtml(r.groupName)}</div>
+                        <div class="text-xs text-slate-500">${escapeHtml(r.date)} ${r.hour}:00</div>
                         <div class="text-[13px] text-blue-600 font-bold mt-1">
-                            <i class="fas fa-chalkboard-teacher mr-1"></i>${profName}
+                            <i class="fas fa-chalkboard-teacher mr-1"></i>${escapeHtml(profName)}
                         </div>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="window.admAct('${r.id}',true,'${r.date}',${r.hour},'${r.groupName}')" class="w-8 h-8 flex items-center justify-center rounded-full bg-green-50 text-green-600 hover:bg-green-100 border border-green-200 transition"><i class="fas fa-check"></i></button>
+                        <button onclick="window.admAct('${r.id}',true,'${escapeHtml(r.date)}',${r.hour},'${r.groupName}')" class="w-8 h-8 flex items-center justify-center rounded-full bg-green-50 text-green-600 hover:bg-green-100 border border-green-200 transition"><i class="fas fa-check"></i></button>
                         <button onclick="window.rejectReq('${r.id}')" class="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 transition"><i class="fas fa-times"></i></button>
                     </div>`;
                     c.appendChild(el);
@@ -978,7 +988,7 @@
                 }
 
                 const groupDiv = document.createElement('div'); groupDiv.className = 'border border-slate-200 rounded-lg mb-4 bg-white overflow-hidden shadow-sm';
-                let html = `<div class="bg-slate-50 p-3 flex justify-between items-center border-b border-slate-200"><span class="font-bold text-slate-700 text-sm"><i class="fas fa-users mr-2 text-blue-500"></i>${res.groupName}</span><button onclick="window.deleteReservation('${res.id}')" class="text-red-500 text-xs font-medium border border-red-200 bg-white px-2 py-1 rounded">Derrogar</button></div><div class="p-0">`;
+                let html = `<div class="bg-slate-50 p-3 flex justify-between items-center border-b border-slate-200"><span class="font-bold text-slate-700 text-sm"><i class="fas fa-users mr-2 text-blue-500"></i>${escapeHtml(res.groupName)}</span><button onclick="window.deleteReservation('${res.id}')" class="text-red-500 text-xs font-medium border border-red-200 bg-white px-2 py-1 rounded">Derrogar</button></div><div class="p-0">`;
                 
                 if(students.length === 0) {
                     html += '<p class="text-sm text-gray-400 italic p-4 text-center">No se encontraron integrantes (Reserva antigua o grupo borrado).</p>';
@@ -989,12 +999,12 @@
                         const badge = st.isLeader ? '<span class="badge-jf">JF</span>' : '';
                         html += `<div class="flex justify-between items-center p-3 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition">
                             <div>
-                                <div class="text-sm font-medium text-slate-700 flex items-center">${st.nombre} ${badge}</div>
-                                <div class="text-sm text-slate-500 font-medium">${st.cedula}</div>
+                                <div class="text-sm font-medium text-slate-700 flex items-center">${escapeHtml(st.nombre)} ${badge}</div>
+                                <div class="text-sm text-slate-500 font-medium">${escapeHtml(st.cedula)}</div>
                             </div>
                             <div class="flex gap-2">
-                                <div onclick="window.setAttendance('${res.groupName}','${res.date}','${st.cedula}', false, this)" class="att-btn absent ${isAbsent ? 'active' : ''}"><div class="att-circle"></div> Ausente</div>
-                                <div onclick="window.setAttendance('${res.groupName}','${res.date}','${st.cedula}', true, this)" class="att-btn present ${isPresent ? 'active' : ''}"><div class="att-circle"></div> Presente</div>
+                                <div onclick="window.setAttendance('${res.groupName}','${escapeHtml(res.date)}','${st.cedula}', false, this)" class="att-btn absent ${isAbsent ? 'active' : ''}"><div class="att-circle"></div> Ausente</div>
+                                <div onclick="window.setAttendance('${res.groupName}','${escapeHtml(res.date)}','${st.cedula}', true, this)" class="att-btn present ${isPresent ? 'active' : ''}"><div class="att-circle"></div> Presente</div>
                             </div>
                         </div>`;
                     });
@@ -1111,8 +1121,8 @@
                     // MODO EDICIÓN (INPUTS)
                     rowHtml = `
                     <tr class="bg-yellow-50 border-b border-yellow-200">
-                        <td class="px-4 py-2"><input type="text" id="edit-mem-ced-${index}" value="${mem.cedula}" class="w-full p-1 border border-yellow-300 rounded text-xs bg-white"></td>
-                        <td class="px-4 py-2"><input type="text" id="edit-mem-name-${index}" value="${mem.nombre}" class="w-full p-1 border border-yellow-300 rounded text-xs bg-white"></td>
+                        <td class="px-4 py-2"><input type="text" id="edit-mem-ced-${index}" value="${escapeHtml(mem.cedula)}" class="w-full p-1 border border-yellow-300 rounded text-xs bg-white"></td>
+                        <td class="px-4 py-2"><input type="text" id="edit-mem-name-${index}" value="${escapeHtml(mem.nombre)}" class="w-full p-1 border border-yellow-300 rounded text-xs bg-white"></td>
                         <td class="px-4 py-2 text-xs text-slate-500">${isLeader ? '<b>Líder</b>' : 'Estudiante'}</td>
                         <td class="px-4 py-2 text-right flex justify-end gap-2">
                             <button onclick="window.saveMemberChange(${index})" class="text-green-600 hover:text-green-800 bg-green-100 px-2 py-1 rounded text-xs font-bold"><i class="fas fa-check mr-1"></i>Guardar</button>
@@ -1123,8 +1133,8 @@
                     // MODO VISUALIZACIÓN (TEXTO)
                     rowHtml = `
                     <tr class="hover:bg-slate-50 transition border-b border-slate-100 last:border-0">
-                        <td class="px-4 py-3 text-sm text-slate-600 font-medium">${mem.cedula}</td>
-                        <td class="px-4 py-3 text-sm text-slate-800 font-medium">${mem.nombre}</td>
+                        <td class="px-4 py-3 text-sm text-slate-600 font-medium">${escapeHtml(mem.cedula)}</td>
+                        <td class="px-4 py-3 text-sm text-slate-800 font-medium">${escapeHtml(mem.nombre)}</td>
                         <td class="px-4 py-3 text-xs">
                             ${isLeader 
                                 ? '<span class="bg-[#004274] text-white px-2 py-0.5 rounded font-bold text-[10px]">LÍDER</span>' 
@@ -1275,7 +1285,7 @@
                     list.innerHTML += `
                         <label class="flex items-center space-x-2 p-1.5 hover:bg-white rounded cursor-pointer transition-colors">
                             <input type="checkbox" value="${id}" class="rep-course-cb rounded text-blue-600 w-4 h-4 cursor-pointer">
-                            <span class="text-slate-700 font-medium">${course.subject} (${course.parallel})</span>
+                            <span class="text-slate-700 font-medium">${escapeHtml(course.subject)} (${escapeHtml(course.parallel)})</span>
                         </label>
                     `;
                 }

@@ -1,0 +1,158 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ==============================
+    // FUNCIONES AUXILIARES
+    // ==============================
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
+    }
+
+    function isProfessor() {
+      return exists(/databases/$(database)/documents/professors/$(request.auth.token.email));
+    }
+
+    function isStudent() {
+      return exists(/databases/$(database)/documents/student_directory/$(request.auth.token.email));
+    }
+
+    function professorEmailMatches() {
+      return request.auth.token.email == resource.data.professorEmail;
+    }
+
+    function incomingProfessorEmailMatches() {
+      return request.auth.token.email == request.resource.data.professorEmail;
+    }
+
+    function studentOwnsDoc() {
+      return request.auth.uid == resource.data.userId;
+    }
+
+    function incomingStudentOwnsDoc() {
+      return request.auth.uid == request.resource.data.userId;
+    }
+
+    function isValidReservationCreate() {
+      let r = request.resource.data;
+      return r.date is string
+          && r.date != ''
+          && r.hour is number
+          && r.status == 'pending'
+          && r.userId == request.auth.uid
+          && r.userId is string
+          && r.userId != ''
+          && r.groupName is string
+          && r.groupName != ''
+          && r.courseId is string
+          && r.courseId != ''
+          && r.attendanceDetail == null;
+    }
+
+    // ==============================
+    // ADMINISTRADORES
+    // ==============================
+    match /admins/{email} {
+      allow read: if isSignedIn() && (isAdmin() || isProfessor());
+      allow write: if isSignedIn() && isAdmin();
+    }
+
+    // ==============================
+    // PROFESORES
+    // ==============================
+    match /professors/{email} {
+      allow read: if isSignedIn() && (isAdmin() || isProfessor());
+      allow write: if isSignedIn() && isAdmin();
+    }
+
+    // ==============================
+    // DIRECTORIO ESTUDIANTIL
+    // ==============================
+    match /student_directory/{email} {
+      allow read: if isSignedIn() && (
+        isAdmin()
+        || email == request.auth.token.email
+      );
+      allow write: if isSignedIn() && isAdmin();
+    }
+
+    // ==============================
+    // CURSOS
+    // ==============================
+    match /courses/{courseId} {
+      allow read: if isSignedIn() && (
+        isAdmin()
+        || (isProfessor() && resource.data.professorEmail == request.auth.token.email)
+        || (isStudent() && resource.data.professorEmail != null)
+      );
+      allow create: if isSignedIn() && isAdmin();
+      allow update: if isSignedIn() && (
+        isAdmin()
+        || (isProfessor() && resource.data.professorEmail == request.auth.token.email)
+      );
+      allow delete: if isSignedIn() && isAdmin();
+
+      // ==============================
+      // GRUPOS (subcolección)
+      // ==============================
+      match /groups/{groupId} {
+        allow read: if isSignedIn() && (
+          isAdmin()
+          || (isProfessor() && get(/databases/$(database)/documents/courses/$(courseId)).data.professorEmail == request.auth.token.email)
+          || (isStudent() && get(/databases/$(database)/documents/student_directory/$(request.auth.token.email)).data.courseId == courseId)
+        );
+        allow write: if isSignedIn() && (
+          isAdmin()
+          || (isProfessor() && get(/databases/$(database)/documents/courses/$(courseId)).data.professorEmail == request.auth.token.email)
+        );
+      }
+    }
+
+    // ==============================
+    // RESERVAS
+    // ==============================
+    match /reservations/{reservationId} {
+
+      // LECTURA: Admins todo, profesores de sus cursos, estudiantes todo (calendario)
+      allow read: if isSignedIn() && (
+        isAdmin()
+        || isProfessor()
+        || isStudent()
+      );
+
+      // CREACIÓN: Solo estudiantes autenticados con validación estricta
+      allow create: if isSignedIn()
+          && isStudent()
+          && isValidReservationCreate()
+          && request.resource.data.status == 'pending';
+
+      // ACTUALIZACIÓN: Solo admin/profesor puede cambiar status/attendanceDetail
+      allow update: if isSignedIn() && (
+        isAdmin()
+        || (isProfessor()
+            && resource.data.courseId != null
+            && get(/databases/$(database)/documents/courses/$(resource.data.courseId)).data.professorEmail == request.auth.token.email)
+      );
+
+      // ELIMINACIÓN: Admin elimina cualquier; estudiante solo sus pendientes
+      allow delete: if isSignedIn() && (
+        isAdmin()
+        || (isStudent()
+            && resource.data.userId == request.auth.uid
+            && resource.data.status == 'pending')
+      );
+    }
+
+    // ==============================
+    // DENEGAR TODO LO DEMÁS
+    // ==============================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
