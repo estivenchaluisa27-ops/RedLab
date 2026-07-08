@@ -6,58 +6,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Turnos - Laboratorio de Redes UCE</title>
 
-    <link rel="icon" type="image/png" href="https://redi.cedia.edu.ec/members/UCE.png">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 512'%3E%3Cpath fill='%23004274' d='M0 336c0 79.5 64.5 144 144 144h368c70.7 0 128-57.3 128-128 0-61.9-44-113.6-102.4-125.4C514.3 81.3 425 0 320 0 217.6 0 130.7 77.8 120 177.3 51.6 188.4 0 249.6 0 320zm144 96c-53 0-96-43-96-96s43-96 96-96h32c13.3 0 24-10.7 24-24V80c0-26.5 21.5-48 48-48h128c26.5 0 48 21.5 48 48v16c0 13.3 10.7 24 24 24h32c53 0 96 43 96 96s-43 96-96 96H144z'/%3E%3C/svg%3E">
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Montserrat:wght@600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
-        /* --- ESTILOS GENERALES --- */
-        body { 
-            font-family: 'Roboto', sans-serif; 
-            background-color: #f0f2f5;
-            background-image: radial-gradient(#bdc3c7 1px, transparent 1px);
-            background-size: 20px 20px;
-        }
-        h1, h2, h3, .brand-font { font-family: 'Montserrat', sans-serif; }
+        body { font-family: 'Roboto', sans-serif; background-color: #f0f2f5; background-image: radial-gradient(#bdc3c7 1px, transparent 1px); background-size: 20px 20px; }
+        h1, h2, h3, .brand-font { font-weight: 800; }
+        .font-details { font-weight: 500; letter-spacing: 0.3px; }
         .fade-in { animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .uce-header { background-color: #004274 !important; border-bottom: 4px solid #e1ad01; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2); }
-        #login-view { background-image: linear-gradient(rgba(0, 66, 116, 0.9), rgba(0, 51, 102, 0.95)), url('https://ecuadoruniversitario.com/wp-content/uploads/2015/03/uce.jpg'); background-size: cover; background-position: center; background-attachment: fixed; }
+        #login-view { background-image: linear-gradient(rgba(0, 66, 116, 0.85), rgba(0, 51, 102, 0.95)), url('https://ecuadoruniversitario.com/wp-content/uploads/2015/03/uce.jpg'); background-size: cover; background-position: center; background-attachment: fixed; }
 
-        /* DISTINTIVOS */
         .badge-jf { background-color: #004274; color: white; font-size: 0.65rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-left: 8px; display: inline-flex; align-items: center; border: 1px solid #003366; }
-        .wait-badge { font-size: 0.65rem; font-weight: 800; padding: 2px 8px; border-radius: 12px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
-        .wait-normal { background-color: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
-        .wait-warning { background-color: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
-        .wait-long { background-color: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; animation: pulse-red 2s infinite; }
-        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
-
-        /* ASISTENCIA */
-        .att-btn { display: flex; align-items: center; justify-content: center; padding: 6px 12px; border-radius: 8px; border: 1px solid #cbd5e1; background-color: white; cursor: pointer; transition: all 0.2s ease; color: #64748b; font-size: 0.75rem; font-weight: 600; width: 100px; }
-        .att-circle { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #cbd5e1; margin-right: 8px; background-color: white; transition: all 0.2s; }
-        .att-btn.present.active { background-color: #dcfce7; border-color: #22c55e; color: #15803d; }
-        .att-btn.present.active .att-circle { background-color: #22c55e; border-color: #22c55e; box-shadow: 0 0 0 2px white inset; }
-        .att-btn.absent.active { background-color: #fee2e2; border-color: #ef4444; color: #b91c1c; }
-        .att-btn.absent.active .att-circle { background-color: #ef4444; border-color: #ef4444; box-shadow: 0 0 0 2px white inset; }
-        .att-btn:hover:not(.active) { background-color: #f8fafc; }
-
-        /* TABLA */
-        .calendar-wrapper { background: white; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); overflow: hidden; border: 1px solid #e2e8f0; }
+        .course-badge { font-size: 0.75rem; font-weight: 900; padding: 2px 6px; border-radius: 4px; margin-right: 6px; border: 1px solid rgba(0,0,0,0.1); display: inline-block; background-color: #f3f4f6; color: #4b5563; }
+        
+        /* --- MEJORA VISUAL TABLA (PUNTO 2) --- */
+        .calendar-wrapper { background: white; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); overflow: hidden; border: 1px solid #cbd5e1; }
         .calendar-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        .calendar-table th, .calendar-table td { border: 1px solid #eef0f2; padding: 0; vertical-align: top; height: 80px; }
-        .calendar-table th { background-color: #f8fafc; color: #334155; padding: 0.8rem; text-transform: capitalize; border-bottom: 2px solid #e2e8f0; }
-        .calendar-table .time-label { background-color: #f1f5f9; color: #475569; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; height: 100%; text-align: center; }
+        .calendar-table th, .calendar-table td { border: 1px solid #cbd5e1; padding: 0; vertical-align: top; height: 85px; } /* Bordes más oscuros */
+        .calendar-table th { background-color: #f8fafc; color: #334155; padding: 0.8rem; text-transform: capitalize; border-bottom: 2px solid #94a3b8; }
+        
+        .time-cell-content { background-color: #f1f5f9; color: #475569; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; height: 100%; width: 100%; text-align: center; }
         .slot-container { width: 100%; height: 100%; padding: 3px; position: relative; }
         .slot { width: 100%; height: 100%; border-radius: 6px; border: 1px solid transparent; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-size: 0.75rem; font-weight: 600; line-height: 1.2; overflow: hidden; }
-        .slot:hover { transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .occupancy-badge { font-size: 0.65rem; margin-top: 3px; padding: 2px 8px; border-radius: 12px; background-color: rgba(255,255,255,0.95); color: #1e293b; font-weight: 800; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-        .info-btn { position: absolute; top: 4px; right: 4px; background: white; border-radius: 50%; width: 22px; height: 22px; font-size: 11px; display: flex; align-items: center; justify-content: center; color: #3b82f6; z-index: 10; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.2); transition: transform 0.2s; }
-        .info-btn:hover { transform: scale(1.15); color: #1d4ed8; }
+        .info-btn { position: absolute; top: 4px; right: 4px; background: white; border-radius: 50%; width: 22px; height: 22px; font-size: 11px; display: flex; align-items: center; justify-content: center; color: #3b82f6; z-index: 10; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.2); transition: transform 0.2s; border: 1px solid #bfdbfe; }
+        .info-btn:hover { transform: scale(1.15); color: #1d4ed8; background-color: #eff6ff; }
 
-        /* ESTADOS */
         .slot-free { background-color: #ffffff; border-color: #e2e8f0; color: #64748b; }
         .slot-free:hover { background-color: #f8fafc; border-color: #cbd5e1; color: #3b82f6; }
         .slot-blocked, .slot-past { background-color: #f1f5f9 !important; color: #cbd5e1 !important; border-color: #e2e8f0 !important; cursor: not-allowed; background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, #e2e8f0 5px, #e2e8f0 10px); }
@@ -68,8 +50,15 @@
         .slot-approved-self { background-color: #22c55e; border-color: #16a34a; color: white; box-shadow: 0 2px 4px rgba(34, 197, 94, 0.2); }
         .slot-admin-has-data { border-width: 2px; }
         
-        /* UTILS */
         .modal-backdrop { background-color: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); z-index: 50; }
+        .att-btn { display: flex; align-items: center; justify-content: center; padding: 6px 12px; border-radius: 8px; border: 1px solid #cbd5e1; background-color: white; cursor: pointer; transition: all 0.2s ease; color: #64748b; font-size: 0.75rem; font-weight: 600; width: 100px; }
+        .att-circle { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #cbd5e1; margin-right: 8px; background-color: white; transition: all 0.2s; }
+        .att-btn.present.active { background-color: #dcfce7; border-color: #22c55e; color: #15803d; }
+        .att-btn.present.active .att-circle { background-color: #22c55e; border-color: #22c55e; box-shadow: 0 0 0 2px white inset; }
+        .att-btn.absent.active { background-color: #fee2e2; border-color: #ef4444; color: #b91c1c; }
+        .att-btn.absent.active .att-circle { background-color: #ef4444; border-color: #ef4444; box-shadow: 0 0 0 2px white inset; }
+        .att-btn:hover:not(.active) { background-color: #f8fafc; }
+
         .password-container { position: relative; }
         .toggle-password { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #64748b; }
         .grid-matrix { display: grid; grid-template-columns: 40px repeat(5, 1fr); gap: 2px; font-size: 0.75rem; }
@@ -78,360 +67,1365 @@
         .matrix-cell:hover { background-color: #e2e8f0; }
         .matrix-cell.selected { background-color: #004274; color: white; border-color: #003366; }
         .matrix-time { font-weight: bold; color: #475569; display: flex; align-items: center; justify-content: flex-end; padding-right: 6px; }
+        
+        .watermark { position: fixed; bottom: 1rem; left: 1rem; font-size: 0.7rem; font-weight: 700; font-family: 'Montserrat', monospace; pointer-events: none; user-select: none; z-index: 100; color: rgba(100, 116, 139, 0.5); }
+        #login-view .watermark { color: rgba(255,255,255,0.4); }
+
+        /* Estilo EXCLUSIVO para correos en Gestión de Grupos */
+        /* Estilo EXCLUSIVO para correos en Gestión de Grupos */
+        #groups-table-body td:nth-child(2) {
+            font-size: 14.5px;
+            font-weight: 500;
+            color: #334155;
+        }
+
+    /* MICRO-INTERACCIONES (Botones que "viven") */
+        
+        /* 1. Transición suave para TODOS los botones */
+        button, a, .item {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        
+        /* 2. Efecto de "Hundimiento" al hacer clic (Táctil) */
+        button:active:not(:disabled) {
+            transform: scale(0.95) !important;
+        }
+
+        /* 3. Efecto de "Elevación" y Sombra al pasar el mouse 
+              (Solo aplica a botones que tengan un color de fondo) */
+        button[class*="bg-"]:hover:not(:disabled):not(.matrix-cell) {
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.12) !important;
+            transform: translateY(-1.5px);
+        }
+        
+        /* 4. Los botones deshabilitados se vuelven opacos y pierden efectos */
+        button:disabled {
+            opacity: 0.5 !important;
+            cursor: not-allowed !important;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        /* 5. Excepciones: Evitar que las pestañas (Tabs) o celdas salten feo */
+        #tab-btn-cal:hover, #tab-btn-cou:hover,
+        #tab-btn-cal:active, #tab-btn-cou:active,
+        .slot, .matrix-cell {
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        
     </style>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail, updatePassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, where, onSnapshot, updateDoc, doc, deleteDoc, serverTimestamp, writeBatch, getDocs, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, where, onSnapshot, updateDoc, doc, deleteDoc, serverTimestamp, writeBatch, getDocs, getDoc, setDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = { apiKey: "AIzaSyCR4Kk7kIBpSW3cF02b8zUHegvV4WQNuyI", authDomain: "lab-redes-turnos.firebaseapp.com", projectId: "lab-redes-turnos", storageBucket: "lab-redes-turnos.firebasestorage.app", messagingSenderId: "592544790067", appId: "1:592544790067:web:00bde37b50d3edf9f59546" };
-        const RESERVATIONS_COLLECTION = "reservations";
-        const USERS_COLLECTION = "users"; 
 
-        // --- GLOBALS ---
-        window.handleLogin = null;
-        window.handleLogout = null;
-        window.togglePassword = null;
+        const RESERVATIONS_COLLECTION = "reservations";
+        let db, auth;
+        let state = {
+            user: null, role: null, courseId: null, groupId: null, groupName: null, 
+            currentViewCourse: null, weekOffset: 0, selectedSlots: [], 
+            coursesCache: {} // Caché para evitar lecturas repetidas de nombres de cursos/profes
+        };
+        let unsubscribeReservations = null; 
+        let unsubscribePending = null;
+
+        // MAGIA: Sobrescribir alert() nativo por SweetAlert2
+        window.alert = function(message) {
+            // Si el mensaje contiene la palabra "error" o "lleno", muestra icono rojo
+            const isError = message.toLowerCase().includes("error") || message.toLowerCase().includes("lleno") || message.toLowerCase().includes("bloqueado");
+            
+            Swal.fire({
+                text: message,
+                icon: isError ? 'error' : 'info',
+                confirmButtonColor: '#004274', // Color azul UCE
+                confirmButtonText: 'Aceptar',
+                customClass: {
+                    popup: 'rounded-xl shadow-2xl border-t-4 border-[#004274]'
+                }
+            });
+        };
 
         window.addEventListener('DOMContentLoaded', () => {
             const app = initializeApp(firebaseConfig);
-            const auth = getAuth(app);
-            const db = getFirestore(app);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            initAuthListener();
+        });
 
-            let userId = null; let userRole = null; let currentGroupInfo = {}; let currentWeekOffset = 0; let selectedSlots = []; 
-            let unsubscribeReservations = null;
-            let unsubscribePending = null;
+        function clearListeners() {
+            if (unsubscribeReservations) { unsubscribeReservations(); unsubscribeReservations = null; }
+            if (unsubscribePending) { unsubscribePending(); unsubscribePending = null; }
+        }
 
-            const views = { login: document.getElementById('login-view'), student: document.getElementById('student-dashboard'), admin: document.getElementById('admin-dashboard'), loading: document.getElementById('loading-view') };
+       function initAuthListener() {
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    state.user = user;
+                    try {
+                        // OPTIMIZACIÓN 1: Buscar en las 3 colecciones de roles AL MISMO TIEMPO
+                        const [adminSnap, profSnap, studentSnap] = await Promise.all([
+                            getDoc(doc(db, "admins", user.email)),
+                            getDoc(doc(db, "professors", user.email)),
+                            getDoc(doc(db, "student_directory", user.email))
+                        ]);
 
-            // --- FUNCIONES DE UI (ESTUDIANTE) CORREGIDAS ---
-            function updateStudentUI(){ 
-                const box = document.getElementById('student-request-box'); 
-                const txt = document.getElementById('student-request-count');
-                const btn = document.getElementById('submit-request-btn');
+                        if (adminSnap.exists()) { setupSession('admin', adminSnap.data(), null); return; }
+                        if (profSnap.exists()) { setupSession('professor', profSnap.data(), null); return; }
+                        if (studentSnap.exists()) { setupSession('student', null, studentSnap.data()); return; }
+                        
+                        alert("Usuario no registrado."); await signOut(auth);
+                    } catch (error) {
+                        console.error(error);
+                        alert("Error de conexión al verificar tu perfil.");
+                        await signOut(auth);
+                    }
+                } else {
+                    resetState(); showView('login');
+                    const btn = document.getElementById('login-submit-btn');
+                    if(btn) { btn.disabled = false; btn.innerHTML = 'INGRESAR'; }
+                }
+            });
+        }
+
+        async function setupSession(role, userData, studentData) {
+            state.role = role;
+            const headerEl = role === 'student' ? 'student-header-user-info' : 'admin-header-user-info';
+            const nameEl = document.getElementById(headerEl);
+
+            if (role === 'admin' || role === 'professor') {
+                showView('admin');
+                if (nameEl) nameEl.innerHTML = `<span class="font-bold">${userData.name}</span><span class="ml-2 text-xs bg-yellow-500 text-black px-2 rounded">${role.toUpperCase()}</span>`;
+                loadAdminDashboard();
+            } else if (role === 'student') {
+                state.courseId = studentData.courseId;
+                state.groupId = studentData.groupId;
                 
-                if (box && txt && btn) {
-                    if(selectedSlots.length > 0){
-                        box.classList.remove('hidden'); 
-                        txt.innerText = `${selectedSlots.length} hora(s) seleccionada(s)`; 
-                        btn.disabled = false;
-                    } else {
-                        box.classList.add('hidden'); 
-                        btn.disabled = true;
+                try {
+                    // OPTIMIZACIÓN 2: Buscar Curso y Grupo AL MISMO TIEMPO
+                    const [courseDoc, groupDoc] = await Promise.all([
+                        getDoc(doc(db, "courses", state.courseId)),
+                        getDoc(doc(db, "courses", state.courseId, "groups", state.groupId))
+                    ]);
+                    
+                    if (courseDoc.exists() && groupDoc.exists()) {
+                        const cData = courseDoc.data();
+                        const gData = groupDoc.data();
+                        
+                        state.groupName = gData.name;
+                        state.weeklyLimit = cData.weeklyLimit || 4; 
+                        
+                        if (nameEl) nameEl.innerHTML = `<div class="text-right leading-tight"><div class="font-bold text-white text-sm">${gData.name}</div><div class="text-xs text-blue-200">${state.user.email}</div><span class="course-badge mt-1">${cData.subject} (${cData.parallel})</span></div><div class="ml-3 bg-white/10 p-2 rounded-full"><i class="fas fa-user text-white"></i></div>`;
+                        showView('student');
+                        setupStudentView();
                     } 
+                } catch(error) {
+                    console.error("Error cargando perfil:", error);
                 }
+            }  
+        }
+
+
+        function loadAdminDashboard() {
+            window.switchTab('calendar');
+            const q = state.role === 'admin' ? query(collection(db, "courses")) : query(collection(db, "courses"), where("professorEmail", "==", state.user.email));
+            
+            onSnapshot(q, (snap) => {
+                const grid = document.getElementById('courses-grid');
+                grid.innerHTML = '';
+                snap.forEach(d => {
+                    const c = d.data();
+                    state.coursesCache[d.id] = c; 
+                    
+                    // CAMBIO AQUÍ: Agregamos c.weeklyLimit al onclick
+                    grid.innerHTML += `
+                        <div class="bg-white p-5 rounded-lg shadow border-l-4 border-[#004274] hover:shadow-lg transition relative group">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="font-bold text-lg text-slate-800">${c.subject}</h3>
+                                    <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded font-bold">${c.parallel}</span>
+                                </div>
+                                <button onclick="window.openEditCourseModal('${d.id}')" class="text-slate-400 hover:text-blue-600 p-1 bg-slate-50 rounded border border-transparent hover:border-blue-200 transition" title="Editar Curso Completo">
+                                    <i class="fas fa-pencil-alt"></i>
+                                </button>
+                            </div>
+                            <p class="text-sm text-slate-500 mt-1">${c.career}</p>
+                            <div class="mt-3 flex justify-between items-center text-xs text-slate-400 border-t pt-2">
+                                <span><i class="fas fa-user mr-1"></i>${c.professorEmail}</span>
+                                <span class="font-bold text-slate-600"><i class="fas fa-clock mr-1"></i>${c.weeklyLimit}h/sem</span>
+                            </div>
+                            <div class="mt-2 text-center">
+                                <button onclick="window.openCourseManager('${d.id}')" class="text-[#004274] font-bold hover:underline text-xs w-full py-1 bg-slate-50 rounded">Gestionar Grupos <i class="fas fa-arrow-right ml-1"></i></button>
+                            </div>
+                        </div>`;
+                });
+            });
+
+            if (state.role === 'admin') {
+                getDocs(collection(db, "professors")).then(snap => {
+                    const sel = document.getElementById('c-professor');
+                    sel.innerHTML = '<option value="">Seleccione Profesor...</option>';
+                    snap.forEach(d => { sel.innerHTML += `<option value="${d.id}">${d.data().name}</option>`; });
+                });
+            }
+            setupAdminCalendarLogic();
+        }
+
+        function setupAdminCalendarLogic() {
+            clearListeners();
+            const update = () => { const w = getWeekDays(state.weekOffset); renderAdminCalendar(w); };
+            document.getElementById('admin-prev-week').onclick = () => { state.weekOffset--; state.selectedSlots=[]; update(); updateAdminActionBox(); };
+            document.getElementById('admin-next-week').onclick = () => { state.weekOffset++; state.selectedSlots=[]; update(); updateAdminActionBox(); };
+            document.getElementById('admin-block-btn').onclick = () => batchBlockAction('block');
+            document.getElementById('admin-unblock-btn').onclick = () => batchBlockAction('unblock');
+            renderMatrix(); update(); listenAdminPending();
+        }
+
+        function renderAdminCalendar(weekDays) {
+            renderCalendarHeader(weekDays, 'admin-calendar-head');
+            const tbody = document.getElementById('admin-calendar-body'); tbody.innerHTML='';
+            const slotMap = new Map();
+            for(let h=7; h<=19; h++){
+                const tr=document.createElement('tr'); tr.innerHTML=`<td><div class="time-cell-content">${h}:00 - ${h+1}:00</div></td>`;
+                weekDays.forEach(d=>{
+                    const id = `${formatDateYYYYMMDD(d)}_${h}`; const td=document.createElement('td'); td.innerHTML = `<div class="slot-container"><button id="${id}" class="slot slot-free"></button></div>`;
+                    tr.appendChild(td); const btn = td.querySelector('button'); btn.onclick = (e) => handleAdminClick(e, btn); slotMap.set(id, btn);
+                }); tbody.appendChild(tr);
+            }
+            if(unsubscribeReservations) unsubscribeReservations();
+            unsubscribeReservations = onSnapshot(query(collection(db, RESERVATIONS_COLLECTION), where("date",">=",formatDateYYYYMMDD(weekDays[0])), where("date","<=",formatDateYYYYMMDD(weekDays[4]))), (s)=>{
+                slotMap.forEach((b, k) => {
+                    const [dStr, hStr] = k.split('_'); b.disabled=false; const container=b.parentElement; const oldInfo=container.querySelector('.info-btn'); if(oldInfo) oldInfo.remove();
+                    if (isPastDate(dStr, parseInt(hStr))) { b.className = 'slot slot-past opacity-60'; b.innerHTML = '<span class="text-xs">Cerrado</span>'; b.dataset.status='past'; } 
+                    else { b.className = 'slot slot-free'; b.innerHTML = '<span class="text-xs opacity-50">Disponible</span>'; b.dataset.status='free'; }
+                    if(state.selectedSlots.includes(k)) { b.classList.add('slot-selected'); }
+                });
+                const map = new Map(); s.forEach(d => { const k=`${d.data().date}_${d.data().hour}`; if(!map.has(k))map.set(k,[]); map.get(k).push({id:d.id,...d.data()}); });
+                map.forEach((arr, k) => {
+                    const b = slotMap.get(k); if(!b) return; const container = b.parentElement;
+                    const blocked = arr.find(x => x.status === 'blocked'); const approved = arr.filter(x => x.status === 'approved').length; const pending = arr.filter(x => x.status === 'pending').length;
+                    const uniqueApprovedCount = new Set(arr.filter(x => x.status === 'approved').map(x => x.groupName)).size;
+
+                    if (approved > 0 || pending > 0 || (blocked && arr.length > 1)) {
+                        const infoBtn = document.createElement('div'); infoBtn.className = 'info-btn'; infoBtn.innerHTML = '<i class="fas fa-eye"></i>';
+                        // PASAMOS courseId para poder recuperar los miembros en el modal
+                        infoBtn.onclick = (e) => { e.stopPropagation(); window.openAttendanceModal(k.split('_')[0], k.split('_')[1], arr); }; 
+                        container.appendChild(infoBtn);
+                    }
+                    if(blocked) { b.className = 'slot slot-blocked slot-admin-has-data'; b.innerHTML = '<span>Bloqueado</span>'; b.dataset.status = 'blocked'; } 
+                    else if(uniqueApprovedCount > 0) {
+                        b.className = `slot slot-admin-has-data ${uniqueApprovedCount>=4 ? 'slot-full' : 'slot-partial'}`; 
+                        b.innerHTML = `<span>Ocupado</span><div class="occupancy-badge">${uniqueApprovedCount}/4</div>` + (pending?`<span class="text-xs text-yellow-700 font-bold mt-1">Espera: ${pending}</span>`:''); 
+                        b.dataset.status = 'has-data'; 
+                    } 
+                    else if(pending > 0) { b.className = 'slot slot-pending'; b.innerHTML = `<span>Solicitudes: ${pending}</span>`; }
+                    if(state.selectedSlots.includes(k)) { b.classList.add('slot-selected'); }
+                });
+            });
+        }
+
+        function setupStudentView() {
+            clearListeners();
+            const update = () => { const w = getWeekDays(state.weekOffset); renderStudentCalendar(w); };
+            document.getElementById('student-prev-week').onclick = () => { state.weekOffset--; state.selectedSlots=[]; update(); };
+            document.getElementById('student-next-week').onclick = () => { state.weekOffset++; state.selectedSlots=[]; update(); };
+            update();
+        }
+
+        function renderStudentCalendar(weekDays) {
+            renderCalendarHeader(weekDays, 'student-calendar-head');
+            const tbody = document.getElementById('student-calendar-body'); tbody.innerHTML='';
+            const map = new Map();
+            for(let h=7; h<=19; h++){
+                const tr=document.createElement('tr'); tr.innerHTML=`<td><div class="time-cell-content">${h}:00 - ${h+1}:00</div></td>`;
+                weekDays.forEach(d=>{
+                    const id = `${formatDateYYYYMMDD(d)}_${h}`; const td=document.createElement('td'); td.innerHTML=`<div class="slot-container"><button id="${id}" class="slot slot-free"><span class="opacity-50">Disponible</span></button></div>`;
+                    tr.appendChild(td); const btn=td.querySelector('button'); btn.onclick=()=>handleStudentClick(btn); map.set(id, btn);
+                }); tbody.appendChild(tr);
+            }
+            if(unsubscribeReservations) unsubscribeReservations();
+            unsubscribeReservations = onSnapshot(query(collection(db,RESERVATIONS_COLLECTION), where("date",">=",formatDateYYYYMMDD(weekDays[0])), where("date","<=",formatDateYYYYMMDD(weekDays[4]))), (s)=>{
+                map.forEach((b, k) => {
+                    const [dStr, hStr] = k.split('_');
+                    if (isPastDate(dStr, parseInt(hStr))) { b.className = 'slot slot-past opacity-50'; b.innerHTML = '<span class="text-xs">No Disp.</span>'; b.dataset.status = 'past'; b.disabled = true; }
+                    else { b.className = 'slot slot-free'; b.innerHTML = '<span class="opacity-50">Disponible</span>'; b.dataset.status = 'free'; b.disabled = false; }
+                });
+                const groups = new Map(); s.forEach(d=>{const k=`${d.data().date}_${d.data().hour}`; if(!groups.has(k))groups.set(k,[]); groups.get(k).push({id:d.id,...d.data()});});
+                groups.forEach((arr,k)=>{
+                    const b = map.get(k); if(!b || b.dataset.status === 'past') return;
+                    const blocked = arr.find(x=>x.status==='blocked'); 
+                    const mine = arr.find(x=>x.groupName === state.groupName && x.status !== 'blocked'); 
+                    const uniqueApproved = new Set(arr.filter(x => x.status === 'approved').map(x => x.groupName)).size;
+                    if(blocked) { b.className='slot slot-blocked'; b.innerHTML='<span>No disp.</span>'; b.dataset.status='blocked'; b.disabled = true; } 
+                    else if(mine) { b.className=`slot ${mine.status==='approved'?'slot-approved-self':'slot-pending'}`; b.innerHTML=`<span>${mine.status==='approved'?'Agendado':'Pendiente'}</span>`; b.dataset.status=`my-${mine.status}`; b.dataset.docId=mine.id; }
+                    else if(uniqueApproved >= 4) { b.className='slot slot-full'; b.innerHTML='<span>Lleno</span>'; b.dataset.status='full'; b.disabled = true; }
+                    else if(uniqueApproved > 0) { b.className='slot slot-partial'; b.innerHTML=`<span>Disp.</span><div class="occupancy-badge">${uniqueApproved}/4</div>`; b.dataset.status='partial'; }
+                });
+                state.selectedSlots.forEach(id=>{const b=map.get(id);if(b && !b.disabled){b.classList.add('slot-selected');b.innerHTML='<span><i class="fas fa-check mb-1"></i><br>Selecc.</span>';}});
+                updateStudentUI();
+            });
+        }
+
+        window.handleLogin = async (e) => { 
+            e.preventDefault(); 
+            const btn = document.getElementById('login-submit-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>VALIDANDO...';
+            
+            try { 
+                await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value); 
+            } catch { 
+                btn.disabled = false;
+                btn.innerHTML = 'INGRESAR';
+                showMessage('error', 'Credenciales incorrectas.'); 
+            } 
+        };
+        window.handleLogout = async () => { clearListeners(); await signOut(auth); window.location.reload(); };
+        window.togglePassword = (id, el) => { const inpt = document.getElementById(id); if(inpt.type==="password"){inpt.type="text";el.classList.replace("fa-eye","fa-eye-slash");}else{inpt.type="password";el.classList.replace("fa-eye-slash","fa-eye");} };
+        window.openResetModal = () => document.getElementById('reset-modal').classList.remove('hidden');
+        window.closeResetModal = () => document.getElementById('reset-modal').classList.add('hidden');
+        window.sendResetLink = async (e) => { e.preventDefault(); try { await sendPasswordResetEmail(auth, document.getElementById('reset-email').value); alert("Enlace enviado."); window.closeResetModal(); } catch { alert("Error al enviar."); } };
+        window.openChangePasswordModal = () => document.getElementById('change-password-modal').classList.remove('hidden');
+        window.closeChangePasswordModal = () => document.getElementById('change-password-modal').classList.add('hidden');
+        window.handleChangePassword = async (e) => { e.preventDefault(); const p1=document.getElementById('new-password').value; const p2=document.getElementById('confirm-password').value; if(p1!==p2 || p1.length<6) return alert("Error en contraseña."); try { await updatePassword(auth.currentUser, p1); alert("Actualizada."); window.closeChangePasswordModal(); } catch(e) { if(e.code==='auth/requires-recent-login') { alert("Re-ingrese."); await signOut(auth); } else alert("Error."); } };
+
+        window.switchTab = (tab) => {
+            document.getElementById('tab-calendar').classList.add('hidden');
+            document.getElementById('tab-courses').classList.add('hidden');
+            document.getElementById('tab-btn-cal').classList.remove('border-[#004274]', 'text-[#004274]');
+            document.getElementById('tab-btn-cou').classList.remove('border-[#004274]', 'text-[#004274]');
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            const btn = tab === 'calendar' ? 'tab-btn-cal' : 'tab-btn-cou';
+            document.getElementById(btn).classList.add('border-[#004274]', 'text-[#004274]');
+        };
+
+        window.openCreateCourseModal = () => document.getElementById('modal-course').classList.remove('hidden');
+
+        // REEMPLAZA TU FUNCIÓN createCourse POR ESTA COMPLETA
+        window.createCourse = async (e) => {
+            e.preventDefault();
+            
+            // 1. Obtener valores
+            const subjectVal = document.getElementById('c-subject').value;
+            const parallelVal = document.getElementById('c-parallel').value;
+            
+            // DIAGNÓSTICO 1: Verificar que el paralelo no esté vacío
+            if (!subjectVal || !parallelVal) {
+                return alert("Error: La Materia o el Paralelo están vacíos.");
             }
 
-            // --- FUNCIONES GENERALES UI ---
-            function showView(name) { Object.values(views).forEach(v => v?.classList.add('hidden')); views[name]?.classList.remove('hidden', 'fade-in'); void views[name]?.offsetWidth; views[name]?.classList.add('fade-in'); }
-            function showMessage(type, text) { const m = document.getElementById('message-box'); if(m) { m.innerHTML = `<i class="fas ${type==='error'?'fa-exclamation-circle':'fa-check-circle'} mr-2"></i> ${text}`; m.className = `p-4 rounded-lg text-sm font-bold mb-4 shadow-md flex items-center ${type==='error'?'bg-red-50 text-red-700 border border-red-200':'bg-green-50 text-green-700 border border-green-200'}`; m.classList.remove('hidden'); setTimeout(()=>m.classList.add('hidden'), 3000); } else { alert(text); } }
-            function clearListeners() { if (unsubscribeReservations) { unsubscribeReservations(); unsubscribeReservations = null; } if (unsubscribePending) { unsubscribePending(); unsubscribePending = null; } }
+            const subject = subjectVal.trim();
+            const career = document.getElementById('c-career').value.trim();
+            const parallel = parallelVal.trim();
+            const limit = parseInt(document.getElementById('c-limit').value);
+            const professor = document.getElementById('c-professor').value;
 
-            function updateAdminActionBox() { 
-                const box = document.getElementById('admin-action-box'); 
-                const count = document.getElementById('admin-selection-count'); 
-                if (box && count) {
-                    if(selectedSlots.length > 0) { box.classList.remove('hidden'); count.innerText = `${selectedSlots.length} seleccionados`; } else { box.classList.add('hidden'); } 
-                }
+            // 2. CONSTRUCCIÓN DEL ID (Materia + Paralelo)
+            const cleanSubject = subject.toUpperCase()
+                .replace(/\s+/g, '_')           
+                .replace(/[^A-Z0-9_]/g, '');    
+
+            const cleanParallel = parallel.toUpperCase()
+                .replace(/\s+/g, '')            
+                .replace(/[^A-Z0-9]/g, '');     
+
+            // ID FINAL
+            const customId = `${cleanSubject}_${cleanParallel}`;
+
+            // DIAGNÓSTICO 2: ALERTA DE SEGURIDAD
+            // Si ves esta alerta, el código está funcionando bien.
+            if(!confirm(`¿Confirmar creación?\n\nEl ID en base de datos será: "${customId}"`)) {
+                return; // Cancelar si el usuario dice que no
             }
 
-            // --- HANDLERS ---
-            function handleStudentClick(btn) {
-                if(btn.disabled) return; 
-                const id = btn.id; 
-                const st = btn.dataset.status || ''; // Safety check
+            try {
+                // 3. ERROR COMÚN AQUÍ:
+                // NO USAR: await addDoc(collection(db, "courses"), ...)  <-- ESTO GENERA IDs ALEATORIOS
+                // USAR ESTO:
+                await setDoc(doc(db, "courses", customId), {
+                    subject: subject,
+                    career: career,
+                    parallel: parallel,
+                    weeklyLimit: limit,
+                    professorEmail: professor,
+                    createdAt: serverTimestamp()
+                });
+
+                alert(`¡Éxito! Curso creado: ${customId}`);
+                document.getElementById('modal-course').classList.add('hidden');
+                e.target.reset();
+            } catch(err) { 
+                console.error(err);
+                alert("Error crítico: " + err.message); 
+            }
+        };
+
+
+        // 1. ABRIR MODAL Y CARGAR DATOS
+        window.openEditCourseModal = async (courseId) => {
+            try {
+                // Guardar ID para saber qué editamos
+                document.getElementById('edit-course-id').value = courseId;
+
+                // Buscar datos (Caché o DB)
+                let courseData = state.coursesCache[courseId];
+                if (!courseData) {
+                    const docSnap = await getDoc(doc(db, "courses", courseId));
+                    if (!docSnap.exists()) return alert("El curso no existe.");
+                    courseData = docSnap.data();
+                }
+
+                // Llenar Inputs
+                document.getElementById('e-subject').value = courseData.subject;
+                document.getElementById('e-parallel').value = courseData.parallel;
+                document.getElementById('e-limit').value = courseData.weeklyLimit || 4;
+
+                // Cargar Profesores y seleccionar el actual
+                const profSelect = document.getElementById('e-professor');
+                profSelect.innerHTML = '<option value="">Cargando...</option>';
+                const profSnaps = await getDocs(collection(db, "professors"));
+                profSelect.innerHTML = ''; 
                 
-                if(st.includes('my')) { 
-                    if(confirm("¿Desea cancelar su reserva?")) window.deleteReservation(btn.dataset.docId); 
+                profSnaps.forEach(p => {
+                    const pData = p.data();
+                    const isSelected = p.id === courseData.professorEmail ? 'selected' : '';
+                    profSelect.innerHTML += `<option value="${p.id}" ${isSelected}>${pData.name}</option>`;
+                });
+
+                document.getElementById('modal-edit-course').classList.remove('hidden');
+
+            } catch (e) { console.error(e); alert("Error: " + e.message); }
+        };
+
+        // 2. GUARDAR LOS CAMBIOS
+        window.saveCourseChanges = async (e) => {
+            e.preventDefault();
+            const courseId = document.getElementById('edit-course-id').value;
+            const newSubject = document.getElementById('e-subject').value;
+            const newParallel = document.getElementById('e-parallel').value;
+            const newLimit = parseInt(document.getElementById('e-limit').value);
+            const newProfEmail = document.getElementById('e-professor').value;
+
+            try {
+                await updateDoc(doc(db, "courses", courseId), {
+                    subject: newSubject,
+                    parallel: newParallel,
+                    weeklyLimit: newLimit,
+                    professorEmail: newProfEmail
+                });
+                
+                alert("Curso actualizado.");
+                document.getElementById('modal-edit-course').classList.add('hidden');
+                
+                // Actualizar caché visual
+                if(state.coursesCache[courseId]) {
+                    Object.assign(state.coursesCache[courseId], { subject: newSubject, parallel: newParallel, weeklyLimit: newLimit, professorEmail: newProfEmail });
+                }
+            } catch (err) { alert("Error al guardar: " + err.message); }
+        };
+
+        window.openCourseManager = (courseId) => {
+            state.currentViewCourse = courseId;
+            document.getElementById('modal-group-manage').classList.remove('hidden');
+            
+            // Listener en tiempo real
+            onSnapshot(collection(db, "courses", courseId, "groups"), (snap) => {
+                const tbody = document.getElementById('groups-table-body'); 
+                tbody.innerHTML = '';
+
+                // 1. Extraer los datos a un arreglo preservando la estructura exacta de Firebase
+                let groupsArray = [];
+                snap.forEach(d => {
+                    groupsArray.push({ id: d.id, data: d.data() });
+                });
+
+                // 2. Ordenar alfanuméricamente por el nombre del grupo (G1, G2, G10)
+                groupsArray.sort((a, b) => {
+                    const nameA = a.data.name || '';
+                    const nameB = b.data.name || '';
+                    return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' });
+                });
+                
+                // 3. Iterar sobre el arreglo ordenado sin tocar tu estructura HTML original
+                groupsArray.forEach(item => {
+                    const d = { id: item.id }; // Simulamos 'd.id' para no tocar el HTML
+                    const g = item.data;       // 'g' sigue siendo exactamente d.data()
+                    const membersCount = g.members ? g.members.length : 0;
+                    
+                    tbody.innerHTML += `
+                    <tr class="border-b last:border-0 hover:bg-slate-50 transition">
+                    
+                        <td class="py-3 pl-3">
+                            <button onclick="window.openGroupDetails('${d.id}')" class="font-bold text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-2 transition-colors">
+                                <span class="text-sm">${g.name}</span>
+                                <i class="fas fa-external-link-alt text-[11px] text-blue-400"></i>
+                            </button>
+                        </td>                    
+                        <td class="py-3 text-xs text-slate-600 font-medium">${g.leader.email}</td>
+                        <td class="py-3 text-sm text-slate-700 font-bold text-center">
+                            ${membersCount}
+                        </td>
+                        <td class="py-3 text-right pr-3 flex justify-end gap-2">
+                            <button onclick="window.deleteGroup('${d.id}')" class="text-red-400 hover:text-red-600 p-1 transition" title="Eliminar Grupo"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>`;
+                });
+            });
+        };
+
+        // IMPLEMENTACIÓN PUNTO 1: AGREGAR MIEMBROS ADICIONALES
+        window.addMemberToGroup = async (groupId) => {
+            const cedula = prompt("Ingrese Cédula del estudiante:");
+            if(!cedula) return;
+            const nombre = prompt("Ingrese Nombres Completos:");
+            if(!nombre) return;
+
+            try {
+                const groupRef = doc(db, "courses", state.currentViewCourse, "groups", groupId);
+                await updateDoc(groupRef, {
+                    members: arrayUnion({
+                        cedula: cedula,
+                        nombre: nombre,
+                        isLeader: false
+                    })
+                });
+                alert("Miembro agregado correctamente.");
+            } catch(e) { alert("Error: " + e.message); }
+        };
+
+        window.addGroup = async () => {
+            // 1. Obtener valores y limpiar espacios
+            const name = document.getElementById('new-group-name').value.trim();
+            const emailRaw = document.getElementById('new-group-leader').value;
+            const cedula = document.getElementById('new-group-cedula').value.trim();
+            const fullName = document.getElementById('new-group-fullname').value.trim();
+
+            if(!name || !emailRaw || !cedula || !fullName) {
+                return Swal.fire({ icon: 'warning', text: 'Complete todos los campos.', confirmButtonColor: '#004274' });
+            }
+
+            // 2. REGLA DE ORO PARA EL LOGIN: Forzar minúsculas y quitar espacios
+            const email = emailRaw.toLowerCase().trim();
+
+            try {
+                const batch = writeBatch(db);
+
+                // A. Crear el Grupo en la subcolección del curso
+                const gRef = doc(db, "courses", state.currentViewCourse, "groups", email);
+                batch.set(gRef, { 
+                    name: name, 
+                    leader: { email, cedula, fullName }, 
+                    members: [{ cedula, nombre: fullName, isLeader: true }] 
+                });
+
+                // B. Crear el Pasaporte en el Directorio (Idéntico a tu captura de BD)
+                // Usamos el caché para obtener el nombre real de la materia
+                const courseName = state.coursesCache[state.currentViewCourse] ? state.coursesCache[state.currentViewCourse].subject : state.currentViewCourse;
+                
+                const dRef = doc(db, "student_directory", email);
+                batch.set(dRef, { 
+                    courseId: state.currentViewCourse, 
+                    courseName: courseName, // Campo extraído de tu imagen
+                    email: email,           // Campo extraído de tu imagen
+                    groupId: email,
+                    role: "student" 
+                });
+
+                // 3. Ejecutar todo
+                await batch.commit();
+
+                // 4. Limpiar Formulario
+                document.getElementById('new-group-name').value = ''; 
+                document.getElementById('new-group-leader').value = '';
+                document.getElementById('new-group-cedula').value = ''; 
+                document.getElementById('new-group-fullname').value = '';
+
+                // 5. Alerta de Éxito
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Grupo Creado',
+                    text: `El líder ${email} ya está registrado y puede ingresar al sistema.`,
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+
+            } catch (error) {
+                Swal.fire({ icon: 'error', title: 'Error', text: error.message, confirmButtonColor: '#004274' });
+            }
+        };
+
+        window.deleteGroup = async (groupId) => {
+            const result = await Swal.fire({
+                title: '¿Estás seguro?',
+                text: "Se eliminará el grupo y el estudiante perderá el acceso al sistema.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626', // Rojo Tailwind
+                cancelButtonColor: '#64748b', // Gris Tailwind
+                confirmButtonText: '<i class="fas fa-trash mr-2"></i> Eliminar',
+                cancelButtonText: 'Cancelar'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    await deleteDoc(doc(db, "courses", state.currentViewCourse, "groups", groupId));
+                    await deleteDoc(doc(db, "student_directory", groupId));
+                    Swal.fire({
+                        title: '¡Eliminado!',
+                        text: 'El grupo ha sido borrado correctamente.',
+                        icon: 'success',
+                        confirmButtonColor: '#004274'
+                    });
+                } catch(e) {
+                    alert("Error al eliminar: " + e.message);
+                }
+            }
+        };
+
+        function getWeekDays(offset = 0) { const now = new Date(); now.setHours(12, 0, 0, 0); now.setDate(now.getDate() + (offset * 7)); const d = (now.getDay() === 0) ? -6 : 1 - now.getDay(); const mon = new Date(now.setDate(now.getDate() + d)); const w = []; for(let i=0;i<5;i++){ const x = new Date(mon); x.setDate(x.getDate()+i); w.push(x); } return w; }
+        function formatDateYYYYMMDD(d) { const year = d.getFullYear(); const month = String(d.getMonth() + 1).padStart(2, '0'); const day = String(d.getDate()).padStart(2, '0'); return `${year}-${month}-${day}`; }
+        function isPastDate(dStr, h) { const now = new Date(); const [y, m, d] = dStr.split('-').map(Number); const slot = new Date(y, m-1, d, h+1); return slot < now; }
+        function renderCalendarHeader(weekDays, headId) { const thead = document.getElementById(headId); if(!thead) return; thead.innerHTML = ''; const hr = document.createElement('tr'); const thHora = document.createElement('th'); thHora.innerHTML = '<i class="far fa-clock text-slate-400 mr-2"></i>HORARIO'; thHora.className = 'text-center bg-slate-100 w-24'; hr.appendChild(thHora); weekDays.forEach(d => { const th = document.createElement('th'); th.innerHTML = `<div class="flex flex-col leading-tight"><span class="text-lg font-bold text-slate-700">${d.toLocaleDateString('es-ES', {weekday:'long'})} ${d.getDate()}</span><span class="text-xs text-slate-500 font-medium uppercase mt-1">${d.toLocaleDateString('es-ES', {month:'long'})}</span></div>`; hr.appendChild(th); }); thead.appendChild(hr); }
+
+        function handleAdminClick(e, btn) {
+            if(state.selectedSlots.includes(btn.id)){ state.selectedSlots = state.selectedSlots.filter(x => x !== btn.id); btn.classList.remove('slot-selected'); } else { state.selectedSlots.push(btn.id); btn.classList.add('slot-selected'); }
+            updateAdminActionBox();
+        }
+        function handleStudentClick(btn) {
+            if(btn.disabled) return; const id = btn.id; const st = btn.dataset.status || ''; 
+            if(st.includes('my')) { 
+                Swal.fire({
+                    title: '¿Cancelar tu reserva?',
+                    text: "Liberarás este horario y otro grupo podrá tomarlo.",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc2626',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Sí, cancelar turno',
+                    cancelButtonText: 'Mantener turno'
+                }).then((result) => {
+                    if (result.isConfirmed) window.deleteReservation(btn.dataset.docId);
+                });
+                return; 
+            }
+            if (state.selectedSlots.includes(id)) { state.selectedSlots = state.selectedSlots.filter(x => x !== id); btn.classList.remove('slot-selected'); } else { state.selectedSlots.push(id); btn.classList.add('slot-selected'); }
+            updateStudentUI();
+        }
+
+        function updateAdminActionBox() { const box = document.getElementById('admin-action-box'); const count = document.getElementById('admin-selection-count'); if(state.selectedSlots.length > 0) { box.classList.remove('hidden'); count.innerText = `${state.selectedSlots.length} seleccionados`; } else { box.classList.add('hidden'); } }
+        function updateStudentUI(){ const b=document.getElementById('student-request-box'); const txt=document.getElementById('student-request-count'); const btn=document.getElementById('submit-request-btn'); if (b && txt && btn) { if(state.selectedSlots.length > 0){ b.classList.remove('hidden'); txt.innerText = `${state.selectedSlots.length} hora(s)`; btn.disabled = false; } else { b.classList.add('hidden'); btn.disabled = true; } } }
+
+        window.batchBlockAction = async (action) => {
+            const batch = writeBatch(db);
+            state.selectedSlots.forEach(id => {
+                const [d, h] = id.split('_'); const blockId = `BLOCK_${d}_${h}`; const ref = doc(db, RESERVATIONS_COLLECTION, blockId);
+                if (action === 'block') batch.set(ref, { date: d, hour: parseInt(h), status: 'blocked', userId: 'ADMIN', createdAt: serverTimestamp() }); else batch.delete(ref);
+            });
+            await batch.commit(); state.selectedSlots = []; updateAdminActionBox();
+        };
+
+        //ENVÍO CON VALIDACIÓN DE LÍMITE SEMANAL
+        window.submitReservation = async () => {
+            const btn = document.getElementById('submit-request-btn');
+            
+            // 1. VALIDACIÓN BÁSICA
+            if (state.selectedSlots.length === 0) return alert("Selecciona al menos una hora.");
+            
+            btn.disabled = true; 
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
+
+            try {
+                // 2. OBTENER LÍMITE DEL CURSO
+                const limit = state.weeklyLimit || 4; // Si falla, usa 4 por seguridad
+                const newSlotsCount = state.selectedSlots.length;
+
+                // 3. CALCULAR RANGO DE FECHAS DE LA SEMANA SELECCIONADA
+                // Tomamos la fecha del primer slot seleccionado para saber "en qué semana estamos"
+                const firstSlotDate = state.selectedSlots[0].split('_')[0]; // "2026-01-27"
+                const dateObj = new Date(firstSlotDate + "T12:00:00");
+                
+                // Calcular Lunes y Viernes de esa semana
+                const day = dateObj.getDay(); // 0 (Dom) - 6 (Sab)
+                const diffToMon = dateObj.getDate() - day + (day === 0 ? -6 : 1); // Ajuste al Lunes
+                const monday = new Date(dateObj.setDate(diffToMon));
+                const friday = new Date(dateObj.setDate(diffToMon + 4));
+                
+                const startStr = formatDateYYYYMMDD(monday);
+                const endStr = formatDateYYYYMMDD(friday);
+
+                // 4. CONTAR RESERVAS YA EXISTENTES EN ESA SEMANA (Pending + Approved)
+                const q = query(
+                    collection(db, RESERVATIONS_COLLECTION),
+                    where("courseId", "==", state.courseId),
+                    where("groupName", "==", state.groupName), // Busca solo para MI grupo
+                    where("date", ">=", startStr),
+                    where("date", "<=", endStr)
+                );
+
+                const snap = await getDocs(q);
+                let existingCount = 0;
+                
+                snap.forEach(doc => {
+                    const st = doc.data().status;
+                    // Contamos las aprobadas y las pendientes (ignora las rechazadas/bloqueadas)
+                    if (st === 'approved' || st === 'pending') {
+                        existingCount++;
+                    }
+                });
+
+                // 5. VERIFICACIÓN MATEMÁTICA
+                const total = existingCount + newSlotsCount;
+
+                if (total > limit) {
+                    const remaining = Math.max(0, limit - existingCount);
+                    alert(` LÍMITE EXCEDIDO\n\nEste curso permite máximo ${limit} horas por semana.\nYa tienes: ${existingCount} horas (agendadas o pendientes).\nIntentas pedir: ${newSlotsCount} horas.\n\nSolo puedes pedir: ${remaining} horas más esta semana.`);
+                    btn.disabled = false;
+                    btn.innerText = "Confirmar";
+                    return; // 🛑 AQUÍ DETENEMOS EL PROCESO
+                }
+
+                // 6. SI PASA LA VALIDACIÓN, GUARDAMOS
+                const batch = writeBatch(db);
+                state.selectedSlots.forEach(id => { 
+                    const [d,h] = id.split('_'); 
+                    const ref = doc(collection(db, RESERVATIONS_COLLECTION));
+                    batch.set(ref, {
+                        date: d, hour: parseInt(h), status: 'pending', userId: state.user.uid, 
+                        groupName: state.groupName, 
+                        courseId: state.courseId,   
+                        createdAt: serverTimestamp()
+                    }); 
+                });
+
+                await batch.commit(); 
+                state.selectedSlots = []; 
+                updateStudentUI(); 
+                
+                // NUEVO MODAL DE ÉXITO CON SWEETALERT (Limpio y sin fondo azul)
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Solicitud Enviada!',
+                    html: `
+                        <p class="text-sm text-slate-600 mb-4">Tu solicitud ha sido registrada correctamente.</p>
+                        <p class="text-sm font-bold text-slate-700">
+                            El turno será confirmado cuando un encargado del laboratorio acepte dicha solicitud.
+                        </p>
+                    `,
+                    confirmButtonColor: '#004274',
+                    confirmButtonText: 'ENTENDIDO',
+                    customClass: {
+                        popup: 'rounded-2xl shadow-2xl',
+                        confirmButton: 'w-full py-3 rounded-lg font-bold tracking-wider text-xs uppercase'
+                    }
+                });
+
+            } catch (error) { 
+                console.error(error); 
+                alert("Error al procesar solicitud: " + error.message); 
+            } finally { 
+                btn.disabled = false; 
+                btn.innerText = "Confirmar"; 
+            }
+        };
+        
+        document.getElementById('submit-request-btn').onclick = window.submitReservation;
+
+        // NOTIFICACIONES CON NOMBRE DE DOCENTE (DOBLE LOOKUP)        
+        // Inicializar caché de profesores en el estado si no existe
+        state.professorsCache = state.professorsCache || {};
+
+        function listenAdminPending(){ 
+            if(unsubscribePending) unsubscribePending();
+            
+            unsubscribePending = onSnapshot(query(collection(db,RESERVATIONS_COLLECTION), where("status","==","pending")), async (s)=>{
+                const c = document.getElementById('admin-requests-list'); if(!c) return; c.innerHTML='';
+                
+                if(s.empty) { 
+                    c.innerHTML='<div class="text-center p-4 text-slate-400 italic">No hay solicitudes</div>'; 
                     return; 
                 }
 
-                if (selectedSlots.includes(id)) { 
-                    selectedSlots = selectedSlots.filter(x => x !== id); 
-                    btn.classList.remove('slot-selected'); 
-                } else { 
-                    selectedSlots.push(id); 
-                    btn.classList.add('slot-selected'); 
-                }
-                updateStudentUI();
-            }
+                const reqs = []; 
+                s.forEach(d => reqs.push({id: d.id, ...d.data()}));
+                reqs.sort((a,b) => (a.createdAt?.toMillis() || 0) - (b.createdAt?.toMillis() || 0));
 
-            function handleAdminClick(e, btn) {
-                if(selectedSlots.includes(btn.id)){ selectedSlots = selectedSlots.filter(x => x !== btn.id); btn.classList.remove('slot-selected'); }
-                else { selectedSlots.push(btn.id); btn.classList.add('slot-selected'); }
-                
-                if(selectedSlots.includes(btn.id)) {
-                    if(btn.dataset.status === 'free') btn.innerHTML = '<span><i class="fas fa-check mb-1"></i><br>Seleccionado</span>';
-                    else if(!btn.innerHTML.includes('fa-check-circle')) btn.innerHTML += '<div style="position:absolute; top:2px; left:2px; color:white; font-size:10px;"><i class="fas fa-check-circle"></i></div>';
-                } else {
-                    if(btn.dataset.status === 'free') btn.innerHTML = '<span class="text-xs opacity-50">Disponible</span>';
-                    else { const check = btn.querySelector('.fa-check-circle')?.parentElement; if(check) check.remove(); }
-                }
-                updateAdminActionBox();
-            }
+                // Procesar cada solicitud (Usamos for...of para poder usar await)
+                for(const r of reqs) {
+                    let profName = "Cargando...";
+                    let profEmail = null;
 
-            // --- GLOBALS ---
-            window.handleLogin = async (e) => { e.preventDefault(); try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value.trim(), document.getElementById('login-password').value); } catch { showMessage('error', 'Credenciales incorrectas.'); } };
-            window.handleLogout = async () => { clearListeners(); await signOut(auth); window.location.reload(); };
-            window.deleteReservation = async (id) => { try { await deleteDoc(doc(db, RESERVATIONS_COLLECTION, id)); document.getElementById('attendance-modal').classList.add('hidden'); } catch (e) { alert("Error eliminando"); } };
+                    // PASO 1: OBTENER EMAIL DEL PROFESOR (Del Curso)
+                    if(r.courseId) {
+                         // A. Buscar curso en caché
+                         if(state.coursesCache[r.courseId]) {
+                             profEmail = state.coursesCache[r.courseId].professorEmail;
+                         } else {
+                             // B. Buscar curso en DB si no está en caché
+                             try {
+                                // ... dentro del try { ...
+
+                            const cSnap = await getDoc(doc(db, "courses", r.courseId));
+
+                            if(cSnap.exists()) {
+                                // CASO NORMAL: El curso existe
+                                state.coursesCache[r.courseId] = cSnap.data();
+                                profEmail = cSnap.data().professorEmail;
+                            } else {
+                                // ✅ CORRECCIÓN: Si el curso G3 fue borrado, avisamos para quitar el "Cargando..."
+                                profName = "Curso Eliminado / Datos Antiguos";
+                            }
+                            // ... fin del try
+                             } catch(e) { console.error("Error curso", e); }
+                         }
+                    }
+
+                    // PASO 2: OBTENER NOMBRE REAL (Del Profesor)
+                    if (profEmail) {
+                        // A. Buscar nombre en caché de profesores
+                        if (state.professorsCache[profEmail]) {
+                            profName = state.professorsCache[profEmail];
+                        } else {
+                            // B. Buscar nombre en DB
+                            try {
+                                const pSnap = await getDoc(doc(db, "professors", profEmail));
+                                if (pSnap.exists()) {
+                                    profName = pSnap.data().name; // ¡AQUÍ ESTÁ EL NOMBRE REAL!
+                                } else {
+                                    profName = profEmail; // Si no existe el perfil, mostramos el email
+                                }
+                                // Guardar en caché para la próxima
+                                state.professorsCache[profEmail] = profName;
+                            } catch (e) { console.error("Error profe", e); }
+                        }
+                    }
+
+                    // RENDERIZAR LA TARJETA
+                    const el=document.createElement('div'); 
+                    el.className='bg-white p-3 rounded-lg shadow-sm border border-slate-200 mb-2 flex justify-between items-center fade-in';
+                    el.innerHTML=`
+                    <div>
+                        <div class="font-bold text-sm text-slate-700">${r.groupName}</div>
+                        <div class="text-xs text-slate-500">${r.date} ${r.hour}:00</div>
+                        <div class="text-[13px] text-blue-600 font-bold mt-1">
+                            <i class="fas fa-chalkboard-teacher mr-1"></i>${profName}
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="window.admAct('${r.id}',true,'${r.date}',${r.hour},'${r.groupName}')" class="w-8 h-8 flex items-center justify-center rounded-full bg-green-50 text-green-600 hover:bg-green-100 border border-green-200 transition"><i class="fas fa-check"></i></button>
+                        <button onclick="window.rejectReq('${r.id}')" class="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 transition"><i class="fas fa-times"></i></button>
+                    </div>`;
+                    c.appendChild(el);
+                }
+            }); 
+        }
+
+        window.admAct = async(id,app,d,h,gn) => {
+            const s = await getDocs(query(collection(db,RESERVATIONS_COLLECTION),where("date","==",d),where("hour","==",h),where("status","in",["approved","blocked"])));
+            if(s.docs.find(x=>x.data().status==='blocked')) return alert("Horario bloqueado.");
+            const uniqueApproved = new Set(s.docs.filter(doc => doc.data().status === 'approved').map(doc => doc.data().groupName)).size;
+            if(uniqueApproved >= 4) return alert("Horario lleno.");
+            updateDoc(doc(db,RESERVATIONS_COLLECTION,id),{status:'approved'});
+        };
+
+        window.rejectReq = async(id) => { 
+            const result = await Swal.fire({
+                title: '¿Rechazar solicitud?',
+                text: "El grupo perderá este turno y se liberará el horario.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: '<i class="fas fa-times mr-1"></i> Sí, rechazar',
+                cancelButtonText: 'Cancelar'
+            });
+            if (result.isConfirmed) {
+                await deleteDoc(doc(db, RESERVATIONS_COLLECTION, id));
+            }
+        };
+        window.deleteReservation = async (id) => { try { await deleteDoc(doc(db, RESERVATIONS_COLLECTION, id)); document.getElementById('attendance-modal').classList.add('hidden'); } catch (e) { alert("Error eliminando"); } };
+
+        // IMPLEMENTACIÓN PUNTO 1 (ASISTENCIA): RECUPERAR MIEMBROS REALES
+        window.openAttendanceModal = async (date, hour, reservations) => {
+            const modal = document.getElementById('attendance-modal'); 
+            document.getElementById('att-title').innerText = `Gestión: ${date} - ${hour}:00`;
+            const list = document.getElementById('att-list'); 
+            list.innerHTML = '<div class="p-8 text-center text-slate-500"><i class="fas fa-spinner fa-spin text-3xl mb-2"></i><br>Cargando integrantes...</div>';
+            modal.classList.remove('hidden');
             
-            // UTILS
-            window.togglePassword = (id, el) => { const inpt = document.getElementById(id); if(inpt.type==="password"){inpt.type="text";el.classList.replace("fa-eye","fa-eye-slash");}else{inpt.type="password";el.classList.replace("fa-eye-slash","fa-eye");} };
-            window.openResetModal = () => document.getElementById('reset-modal').classList.remove('hidden');
-            window.closeResetModal = () => document.getElementById('reset-modal').classList.add('hidden');
-            window.sendResetLink = async (e) => { e.preventDefault(); try { await sendPasswordResetEmail(auth, document.getElementById('reset-email').value); alert("Enlace enviado."); window.closeResetModal(); } catch { alert("Error al enviar."); } };
-            window.openChangePasswordModal = () => document.getElementById('change-password-modal').classList.remove('hidden');
-            window.closeChangePasswordModal = () => document.getElementById('change-password-modal').classList.add('hidden');
-            window.handleChangePassword = async (e) => { e.preventDefault(); const p1=document.getElementById('new-password').value; const p2=document.getElementById('confirm-password').value; if(p1!==p2 || p1.length<6) return alert("Error en contraseña."); try { await updatePassword(auth.currentUser, p1); alert("Actualizada."); window.closeChangePasswordModal(); } catch(e) { if(e.code==='auth/requires-recent-login') { alert("Re-ingrese."); await signOut(auth); } else alert("Error."); } };
-
-            // --- DATE HELPERS ---
-            function getWeekDays(offset = 0) { const now = new Date(); now.setDate(now.getDate() + (offset * 7)); const d = (now.getDay() === 0) ? -6 : 1 - now.getDay(); const mon = new Date(now.setDate(now.getDate() + d)); const w = []; for(let i=0;i<5;i++){ const x = new Date(mon); x.setDate(x.getDate()+i); w.push(x); } return w; }
-            function formatDateYYYYMMDD(d) { return d.toISOString().split('T')[0]; }
-            function isPastDate(dStr, h) { const now = new Date(); const [y, m, d] = dStr.split('-').map(Number); const slot = new Date(y, m-1, d, h+1); return slot < now; }
-            function getFormattedDateHeader(date) { const dayName = date.toLocaleDateString('es-ES', { weekday: 'long' }); const dayNum = date.getDate(); const monthName = date.toLocaleDateString('es-ES', { month: 'long' }); const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1); return `<div class="flex flex-col leading-tight"><span class="text-lg font-bold text-slate-700">${cap(dayName)} ${dayNum}</span><span class="text-xs text-slate-500 font-medium uppercase tracking-wide mt-1">${cap(monthName)}</span></div>`; }
-            function renderCalendarHeader(weekDays, headId) { const thead = document.getElementById(headId); if(!thead) return; thead.innerHTML = ''; const hr = document.createElement('tr'); const thHora = document.createElement('th'); thHora.innerHTML = '<i class="far fa-clock text-slate-400 mr-2"></i>HORARIO'; thHora.className = 'text-center bg-slate-100 w-24'; hr.appendChild(thHora); weekDays.forEach(d => { const th = document.createElement('th'); th.innerHTML = getFormattedDateHeader(d); hr.appendChild(th); }); thead.appendChild(hr); }
-
-            // --- AUTH LISTENER ---
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    userId = user.uid;
+            const approved = reservations.filter(r => r.status === 'approved');
+            // Agrupar por nombre de grupo para no duplicar cabeceras
+            const grouped = {}; 
+            approved.forEach(r => { if(!grouped[r.groupName]) grouped[r.groupName] = r; });
+            
+            list.innerHTML = ''; 
+            for (const groupName in grouped) {
+                const res = grouped[groupName]; 
+                
+                // LÓGICA CRÍTICA: Buscar miembros en la DB usando courseId
+                let students = [];
+                if(res.courseId) {
                     try {
-                        const userDoc = await getDoc(doc(db, USERS_COLLECTION, user.email));
-                        if (userDoc.exists()) {
-                            const userData = userDoc.data();
-                            userRole = userData.role;
-                            currentGroupInfo = { name: userData.groupName || userData.name, color: userData.color || 'gray', userId: userId, email: user.email };
-                            
-                            const headerEl = userRole === 'admin' ? 'admin-header-user-info' : 'student-header-user-info';
-                            const el = document.getElementById(headerEl);
-                            if (el) el.innerHTML = `<div class="text-right leading-tight"><div class="font-bold text-white text-sm">${currentGroupInfo.name}</div><div class="text-xs text-blue-200 opacity-80 font-mono">${user.email}</div></div><div class="ml-3 bg-white/10 p-2 rounded-full"><i class="fas fa-user text-white"></i></div>`;
-
-                            if(userRole==='admin') { showView('admin'); setupAdminView(); } 
-                            else { showView('student'); setupStudentView(); }
-                        } else { alert("Usuario sin datos."); await signOut(auth); }
-                    } catch(e) { console.error(e); await signOut(auth); }
-                } else { 
-                    clearListeners(); 
-                    showView('login'); 
+                        // Buscar el grupo dentro del curso específico
+                        const qGroup = query(collection(db, "courses", res.courseId, "groups"), where("name", "==", groupName));
+                        const gSnap = await getDocs(qGroup);
+                        if(!gSnap.empty) {
+                            students = gSnap.docs[0].data().members || [];
+                        }
+                    } catch(e) { console.error("Error fetching members", e); }
                 }
+
+                const groupDiv = document.createElement('div'); groupDiv.className = 'border border-slate-200 rounded-lg mb-4 bg-white overflow-hidden shadow-sm';
+                let html = `<div class="bg-slate-50 p-3 flex justify-between items-center border-b border-slate-200"><span class="font-bold text-slate-700 text-sm"><i class="fas fa-users mr-2 text-blue-500"></i>${res.groupName}</span><button onclick="window.deleteReservation('${res.id}')" class="text-red-500 text-xs font-medium border border-red-200 bg-white px-2 py-1 rounded">Derrogar</button></div><div class="p-0">`;
+                
+                if(students.length === 0) {
+                    html += '<p class="text-sm text-gray-400 italic p-4 text-center">No se encontraron integrantes (Reserva antigua o grupo borrado).</p>';
+                } else {
+                    const att = res.attendanceDetail || {};
+                    students.forEach((st) => {
+                        const isPresent = att[st.cedula] === true; const isAbsent = att[st.cedula] === false;
+                        const badge = st.isLeader ? '<span class="badge-jf">JF</span>' : '';
+                        html += `<div class="flex justify-between items-center p-3 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition">
+                            <div>
+                                <div class="text-sm font-medium text-slate-700 flex items-center">${st.nombre} ${badge}</div>
+                                <div class="text-sm text-slate-500 font-medium">${st.cedula}</div>
+                            </div>
+                            <div class="flex gap-2">
+                                <div onclick="window.setAttendance('${res.groupName}','${res.date}','${st.cedula}', false, this)" class="att-btn absent ${isAbsent ? 'active' : ''}"><div class="att-circle"></div> Ausente</div>
+                                <div onclick="window.setAttendance('${res.groupName}','${res.date}','${st.cedula}', true, this)" class="att-btn present ${isPresent ? 'active' : ''}"><div class="att-circle"></div> Presente</div>
+                            </div>
+                        </div>`;
+                    });
+                }
+                html += '</div>'; groupDiv.innerHTML = html; list.appendChild(groupDiv);
+            }
+        };
+
+        window.setAttendance = async (gn, d, ced, isPresent, btnElement) => {
+            const parent = btnElement.parentElement; parent.querySelectorAll('.att-btn').forEach(b => b.classList.remove('active')); btnElement.classList.add('active');
+            const s = await getDocs(query(collection(db, RESERVATIONS_COLLECTION), where("date","==",d), where("groupName","==",gn), where("status","==","approved")));
+            const b = writeBatch(db); s.forEach(docSnap => { b.set(docSnap.ref, { attendanceDetail: { [ced]: isPresent } }, { merge: true }); }); await b.commit();
+        };
+
+        function showView(name) {
+            ['login-view','admin-dashboard','student-dashboard'].forEach(v => document.getElementById(v).classList.add('hidden'));
+            document.getElementById(name==='login'?'login-view':name==='admin'?'admin-dashboard':'student-dashboard').classList.remove('hidden');
+        }
+        function showMessage(type, text) { const m = document.getElementById('message-box'); if(m) { m.innerHTML = text; m.classList.remove('hidden'); } else alert(text); }
+
+        function resetState() { 
+    state = { 
+        user: null, 
+        role: null, 
+        courseId: null, 
+        groupId: null, 
+        groupName: null,
+        currentViewCourse: null, 
+        weekOffset: 0, 
+        selectedSlots: [],
+        coursesCache: {},      
+        professorsCache: {}    
+    }; 
+}
+
+        function renderMatrix() {
+            const container = document.getElementById('matrix-container'); if(!container) return;
+            container.innerHTML = `<div class="grid-matrix mb-4"><div></div><div class="matrix-header">Lun</div><div class="matrix-header">Mar</div><div class="matrix-header">Mié</div><div class="matrix-header">Jue</div><div class="matrix-header">Vie</div>${[7,8,9,10,11,12,13,14,15,16,17,18,19].map(h => `<div class="matrix-time">${h}:00</div>${[1,2,3,4,5].map(d => `<div class="matrix-cell" data-day="${d}" data-hour="${h}" onclick="this.classList.toggle('selected')"></div>`).join('')}`).join('')}</div>`;
+        }
+        window.executeRecurringBlock = async (e) => {
+            e.preventDefault();
+            const startStr = document.getElementById('rec-start').value; const endStr = document.getElementById('rec-end').value; const action = document.getElementById('rec-action').value;
+            const selectedCells = document.querySelectorAll('.matrix-cell.selected'); if(selectedCells.length === 0) return alert("Seleccione bloques.");
+            const blocks = []; selectedCells.forEach(c => blocks.push({ d: parseInt(c.dataset.day), h: parseInt(c.dataset.hour) }));
+            const batch = writeBatch(db); let count = 0;
+            const startDate = new Date(startStr + 'T00:00:00'); const endDate = new Date(endStr + 'T00:00:00');
+            for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+                const dayOfWeek = d.getDay(); const blocksForDay = blocks.filter(b => b.d === dayOfWeek);
+                if (blocksForDay.length > 0) {
+                    const y = d.getFullYear(); const m = String(d.getMonth() + 1).padStart(2, '0'); const da = String(d.getDate()).padStart(2, '0'); const dateStr = `${y}-${m}-${da}`;
+                    blocksForDay.forEach(b => {
+                        const ref = doc(db, RESERVATIONS_COLLECTION, `BLOCK_${dateStr}_${b.h}`);
+                        if (action === 'block') batch.set(ref, { date: dateStr, hour: b.h, status: 'blocked', userId: 'ADMIN', type: 'recurring', createdAt: serverTimestamp() }); else batch.delete(ref);
+                        count++;
+                    });
+                }
+            }
+            if(count > 490) return alert("Rango muy grande.");
+            await batch.commit(); alert(`Listo. ${count} bloques.`); document.getElementById('recurring-modal').classList.add('hidden');
+        };
+
+        // =============================================================================
+        // 🛠️ MÓDULO DE EDICIÓN PROFUNDA DE GRUPOS
+        // =============================================================================
+        
+        let editingGroupData = null; // Cache temporal para edición
+        let editingGroupId = null;
+        let editingMemberIndex = -1; // -1 significa que nadie se está editando
+
+        // 1. ABRIR MODAL Y CARGAR DATOS
+        window.openGroupDetails = async (groupId) => {
+            editingGroupId = groupId;
+            editingMemberIndex = -1; // Reset
+            
+            // Fetch de datos actuales
+            try {
+                const docSnap = await getDoc(doc(db, "courses", state.currentViewCourse, "groups", groupId));
+                if (!docSnap.exists()) return alert("El grupo ya no existe.");
+                
+                editingGroupData = docSnap.data();
+                
+                // Llenar Formulario Cabecera
+                document.getElementById('edit-group-name').value = editingGroupData.name;
+                document.getElementById('edit-leader-email').value = editingGroupData.leader.email;
+                document.getElementById('edit-leader-cedula').value = editingGroupData.leader.cedula;
+                document.getElementById('edit-leader-name').value = editingGroupData.leader.fullName;
+
+                // Renderizar Tabla Integrantes
+                renderMembersTable();
+
+                // Mostrar Modal
+                document.getElementById('modal-group-details').classList.remove('hidden');
+                
+            } catch (e) {
+                console.error(e);
+                alert("Error cargando grupo: " + e.message);
+            }
+        };
+
+        // 2. RENDERIZADOR REACTIVO DE LA TABLA
+        function renderMembersTable() {
+            const tbody = document.getElementById('edit-members-tbody');
+            const members = editingGroupData.members || [];
+            document.getElementById('members-count-badge').innerText = members.length;
+            tbody.innerHTML = '';
+
+            members.forEach((mem, index) => {
+                const isEditing = index === editingMemberIndex;
+                const isLeader = mem.isLeader || false; // O usar email comparison
+
+                let rowHtml = '';
+
+                if (isEditing) {
+                    // MODO EDICIÓN (INPUTS)
+                    rowHtml = `
+                    <tr class="bg-yellow-50 border-b border-yellow-200">
+                        <td class="px-4 py-2"><input type="text" id="edit-mem-ced-${index}" value="${mem.cedula}" class="w-full p-1 border border-yellow-300 rounded text-xs bg-white"></td>
+                        <td class="px-4 py-2"><input type="text" id="edit-mem-name-${index}" value="${mem.nombre}" class="w-full p-1 border border-yellow-300 rounded text-xs bg-white"></td>
+                        <td class="px-4 py-2 text-xs text-slate-500">${isLeader ? '<b>Líder</b>' : 'Estudiante'}</td>
+                        <td class="px-4 py-2 text-right flex justify-end gap-2">
+                            <button onclick="window.saveMemberChange(${index})" class="text-green-600 hover:text-green-800 bg-green-100 px-2 py-1 rounded text-xs font-bold"><i class="fas fa-check mr-1"></i>Guardar</button>
+                            <button onclick="window.cancelMemberEdit()" class="text-slate-500 hover:text-slate-700 text-xs px-2 py-1"><i class="fas fa-times"></i></button>
+                        </td>
+                    </tr>`;
+                } else {
+                    // MODO VISUALIZACIÓN (TEXTO)
+                    rowHtml = `
+                    <tr class="hover:bg-slate-50 transition border-b border-slate-100 last:border-0">
+                        <td class="px-4 py-3 text-sm text-slate-600 font-medium">${mem.cedula}</td>
+                        <td class="px-4 py-3 text-sm text-slate-800 font-medium">${mem.nombre}</td>
+                        <td class="px-4 py-3 text-xs">
+                            ${isLeader 
+                                ? '<span class="bg-[#004274] text-white px-2 py-0.5 rounded font-bold text-[10px]">LÍDER</span>' 
+                                : '<span class="text-slate-400">Estudiante</span>'}
+                        </td>
+                        <td class="px-4 py-3 text-right flex justify-end gap-2">
+                            <button onclick="window.enableMemberEdit(${index})" class="text-blue-500 hover:text-blue-700 bg-blue-50 p-1.5 rounded transition" title="Editar"><i class="fas fa-pencil-alt"></i></button>
+                            ${!isLeader ? `<button onclick="window.deleteMember(${index})" class="text-red-400 hover:text-red-600 bg-red-50 p-1.5 rounded transition" title="Eliminar"><i class="fas fa-trash"></i></button>` : ''}
+                        </td>
+                    </tr>`;
+                }
+                tbody.innerHTML += rowHtml;
+            });
+        }
+
+        // 3. FUNCIONES DE ACCIÓN (CRUD ARRAY)
+
+        // A. Guardar Nombre Básico del Grupo
+        window.saveGroupBasicInfo = async () => {
+            const newName = document.getElementById('edit-group-name').value;
+            if(!newName) return;
+            try {
+                await updateDoc(doc(db, "courses", state.currentViewCourse, "groups", editingGroupId), { name: newName });
+                editingGroupData.name = newName; // Update local
+                alert("Nombre actualizado.");
+            } catch(e) { alert("Error: " + e.message); }
+        };
+
+        // B. Guardar Info del Líder (Complejo: Actualiza Doc + Array Members)
+        window.saveLeaderInfo = async () => {
+            const newCedula = document.getElementById('edit-leader-cedula').value;
+            const newName = document.getElementById('edit-leader-name').value;
+            
+            // 1. Actualizar objeto leader en root
+            const updatedLeader = { ...editingGroupData.leader, cedula: newCedula, fullName: newName };
+            
+            // 2. Actualizar también su entrada en el array members para consistencia
+            const updatedMembers = editingGroupData.members.map(m => {
+                if(m.isLeader) return { ...m, cedula: newCedula, nombre: newName };
+                return m;
             });
 
-            // --- ADMIN RENDER ---
-            function renderAdminCalendar(weekDays) {
-                renderCalendarHeader(weekDays, 'admin-calendar-head');
-                const tbody = document.getElementById('admin-calendar-body'); if(!tbody) return; tbody.innerHTML='';
-                const slotMap = new Map();
-                for(let h=7; h<=19; h++){
-                    const tr=document.createElement('tr'); tr.innerHTML=`<td class="time-label">${h}:00 - ${h+1}:00</td>`;
-                    weekDays.forEach(d=>{
-                        const id = `${formatDateYYYYMMDD(d)}_${h}`; const td=document.createElement('td'); td.innerHTML = `<div class="slot-container"><button id="${id}" class="slot slot-free"></button></div>`;
-                        tr.appendChild(td); const btn = td.querySelector('button'); btn.onclick = (e) => handleAdminClick(e, btn); slotMap.set(id, btn);
-                    }); tbody.appendChild(tr);
-                }
+            try {
+                await updateDoc(doc(db, "courses", state.currentViewCourse, "groups", editingGroupId), {
+                    leader: updatedLeader,
+                    members: updatedMembers
+                });
+                editingGroupData.leader = updatedLeader;
+                editingGroupData.members = updatedMembers;
+                renderMembersTable(); // Refrescar tabla
+                alert("Jefe de grupo actualizado.");
+            } catch(e) { alert("Error: " + e.message); }
+        };
 
-                if(unsubscribeReservations) unsubscribeReservations();
-                unsubscribeReservations = onSnapshot(query(collection(db, RESERVATIONS_COLLECTION), where("date",">=",formatDateYYYYMMDD(weekDays[0])), where("date","<=",formatDateYYYYMMDD(weekDays[4]))), (s)=>{
-                    slotMap.forEach((b, k) => {
-                        const [dStr, hStr] = k.split('_'); b.disabled=false; const container=b.parentElement; const oldInfo=container.querySelector('.info-btn'); if(oldInfo) oldInfo.remove();
-                        if (isPastDate(dStr, parseInt(hStr))) { b.className = 'slot slot-past opacity-60'; b.innerHTML = '<span class="text-xs">Cerrado</span>'; b.dataset.status='past'; } 
-                        else { b.className = 'slot slot-free'; b.innerHTML = '<span class="text-xs opacity-50">Disponible</span>'; b.dataset.status='free'; }
-                        if(selectedSlots.includes(k)) { b.classList.add('slot-selected'); if(b.dataset.status==='free') b.innerHTML='<span><i class="fas fa-check mb-1"></i><br>Seleccionado</span>'; }
-                    });
-                    const map = new Map(); s.forEach(d => { const k=`${d.data().date}_${d.data().hour}`; if(!map.has(k))map.set(k,[]); map.get(k).push({id:d.id,...d.data()}); });
-                    map.forEach((arr, k) => {
-                        const b = slotMap.get(k); if(!b) return; const container = b.parentElement;
-                        const blocked = arr.find(x => x.status === 'blocked'); const approved = arr.filter(x => x.status === 'approved').length; const pending = arr.filter(x => x.status === 'pending').length;
-                        if (approved > 0 || pending > 0 || (blocked && arr.length > 1)) {
-                            const infoBtn = document.createElement('div'); infoBtn.className = 'info-btn'; infoBtn.innerHTML = '<i class="fas fa-eye"></i>';
-                            infoBtn.onclick = (e) => { e.stopPropagation(); openAttendanceModal(k.split('_')[0], k.split('_')[1], arr); }; container.appendChild(infoBtn);
+        // C. Habilitar Edición de Miembro
+        window.enableMemberEdit = (index) => {
+            editingMemberIndex = index;
+            renderMembersTable();
+        };
+
+        window.cancelMemberEdit = () => {
+            editingMemberIndex = -1;
+            renderMembersTable();
+        };
+
+        // D. Guardar Cambio de un Miembro (UPDATE ARRAY)
+        window.saveMemberChange = async (index) => {
+            const newCed = document.getElementById(`edit-mem-ced-${index}`).value;
+            const newName = document.getElementById(`edit-mem-name-${index}`).value;
+
+            if(!newCed || !newName) return alert("Datos vacíos");
+
+            // Modificar array localmente
+            const updatedMembers = [...editingGroupData.members];
+            updatedMembers[index].cedula = newCed;
+            updatedMembers[index].nombre = newName;
+
+            try {
+                // Enviar array completo
+                await updateDoc(doc(db, "courses", state.currentViewCourse, "groups", editingGroupId), {
+                    members: updatedMembers
+                });
+                
+                // Actualizar estado local
+                editingGroupData.members = updatedMembers;
+                editingMemberIndex = -1;
+                renderMembersTable();
+            } catch(e) { alert("Error guardando miembro: " + e.message); }
+        };
+
+        // E. Eliminar Miembro (DELETE FROM ARRAY)
+        window.deleteMember = async (index) => {
+            if(!confirm("¿Seguro de eliminar a este integrante?")) return;
+
+            const updatedMembers = editingGroupData.members.filter((_, i) => i !== index);
+
+            try {
+                await updateDoc(doc(db, "courses", state.currentViewCourse, "groups", editingGroupId), {
+                    members: updatedMembers
+                });
+                editingGroupData.members = updatedMembers;
+                renderMembersTable();
+            } catch(e) { alert("Error eliminando: " + e.message); }
+        };
+
+        // F. Agregar Nuevo Miembro (PUSH TO ARRAY)
+        window.addNewMember = async () => {
+            const ced = document.getElementById('add-mem-cedula').value;
+            const name = document.getElementById('add-mem-name').value;
+            
+            if(!ced || !name) return alert("Ingrese Cédula y Nombre");
+
+            const newMember = { cedula: ced, nombre: name, isLeader: false };
+            const updatedMembers = [...editingGroupData.members, newMember];
+
+            try {
+                await updateDoc(doc(db, "courses", state.currentViewCourse, "groups", editingGroupId), {
+                    members: updatedMembers
+                });
+                
+                // Limpiar inputs y refrescar
+                document.getElementById('add-mem-cedula').value = "";
+                document.getElementById('add-mem-name').value = "";
+                editingGroupData.members = updatedMembers;
+                renderMembersTable();
+            } catch(e) { alert("Error agregando: " + e.message); }
+        };
+
+        // GENERACIÓN DE REPORTES EN EXCEL
+        // 1. Abrir Modal y cargar cursos dinámicamente
+        window.openReportModal = () => {
+            const list = document.getElementById('rep-courses-list');
+            list.innerHTML = '';
+            
+            // Botón rápido de "Seleccionar Todos"
+            list.innerHTML += `
+                <label class="flex items-center space-x-2 p-1.5 hover:bg-slate-200 rounded cursor-pointer border-b border-slate-200 mb-1">
+                    <input type="checkbox" onchange="window.toggleAllCourses(this)" class="rounded text-blue-600 w-4 h-4 cursor-pointer">
+                    <span class="font-bold text-[#004274] text-xs uppercase tracking-wide">Seleccionar Todos</span>
+                </label>
+            `;
+
+            // Cargar cursos desde la caché
+            if(Object.keys(state.coursesCache).length === 0) {
+                list.innerHTML += `<p class="text-xs text-slate-500 italic p-2 text-center">No hay cursos registrados.</p>`;
+            } else {
+                for (const [id, course] of Object.entries(state.coursesCache)) {
+                    list.innerHTML += `
+                        <label class="flex items-center space-x-2 p-1.5 hover:bg-white rounded cursor-pointer transition-colors">
+                            <input type="checkbox" value="${id}" class="rep-course-cb rounded text-blue-600 w-4 h-4 cursor-pointer">
+                            <span class="text-slate-700 font-medium">${course.subject} (${course.parallel})</span>
+                        </label>
+                    `;
+                }
+            }
+            
+            // Setear fechas por defecto (Mes actual)
+            const today = new Date();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            document.getElementById('rep-start').value = formatDateYYYYMMDD(firstDay);
+            document.getElementById('rep-end').value = formatDateYYYYMMDD(today);
+
+            document.getElementById('modal-report').classList.remove('hidden');
+        };
+
+        // 2. Función auxiliar para marcar/desmarcar todos
+        window.toggleAllCourses = (source) => {
+            const checkboxes = document.querySelectorAll('.rep-course-cb');
+            checkboxes.forEach(cb => cb.checked = source.checked);
+        };
+
+        // 3. Generar y descargar el Excel (VERSIÓN ASISTENCIA DE ESTUDIANTES)
+        window.executeReport = async (e) => {
+            e.preventDefault();
+            
+            const startStr = document.getElementById('rep-start').value;
+            const endStr = document.getElementById('rep-end').value;
+            
+            const checkboxes = document.querySelectorAll('.rep-course-cb:checked');
+            if (checkboxes.length === 0) {
+                return Swal.fire({ icon: 'warning', text: 'Debes seleccionar al menos un curso para el reporte.', confirmButtonColor: '#004274' });
+            }
+            const selectedCourses = Array.from(checkboxes).map(cb => cb.value);
+
+            Swal.fire({
+                title: 'Generando Reporte de Asistencia...',
+                html: 'Recopilando datos de estudiantes...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            try {
+                // 1. Consultar reservas aprobadas
+                const q = query(
+                    collection(db, RESERVATIONS_COLLECTION), 
+                    where("date", ">=", startStr),
+                    where("date", "<=", endStr),
+                    where("status", "==", "approved")
+                );
+
+                const snap = await getDocs(q);
+                const reportData = [];
+                
+                // Caché temporal para no consultar el mismo grupo múltiples veces y saturar la base de datos
+                const groupsMembersCache = {}; 
+
+                // Usamos for...of para poder hacer await al buscar los grupos
+                for (const docSnap of snap.docs) {
+                    const r = docSnap.data();
+                    
+                    if (r.courseId && selectedCourses.includes(r.courseId)) {
+                        const course = state.coursesCache[r.courseId] || { subject: 'Desconocido', parallel: '' };
+                        const courseName = `${course.subject} (${course.parallel})`;
+                        
+                        // Llave única para el caché del grupo
+                        const cacheKey = `${r.courseId}_${r.groupName}`;
+
+                        // Si no tenemos los miembros de este grupo en memoria, los buscamos en la BD
+                        if (!groupsMembersCache[cacheKey]) {
+                            const qGroup = query(collection(db, "courses", r.courseId, "groups"), where("name", "==", r.groupName));
+                            const gSnap = await getDocs(qGroup);
+                            if (!gSnap.empty) {
+                                groupsMembersCache[cacheKey] = gSnap.docs[0].data().members || [];
+                            } else {
+                                groupsMembersCache[cacheKey] = []; // Grupo no encontrado o eliminado
+                            }
                         }
-                        if(blocked) { b.className = 'slot slot-blocked slot-admin-has-data'; b.innerHTML = '<span>Bloqueado</span>'; b.dataset.status = 'blocked'; } 
-                        else if(approved > 0) { b.className = `slot slot-admin-has-data ${approved>=4 ? 'slot-full' : 'slot-partial'}`; b.innerHTML = `<span>Ocupado</span><div class="occupancy-badge">${approved}/4</div>` + (pending?`<span class="text-xs text-yellow-700 font-bold mt-1">En Espera: ${pending}</span>`:''); b.dataset.status = 'has-data'; } 
-                        else if(pending > 0) { b.className = 'slot slot-pending'; b.innerHTML = `<span>Solicitudes: ${pending}</span>`; }
-                        if(selectedSlots.includes(k)) { b.classList.add('slot-selected'); if(b.dataset.status !== 'free') b.innerHTML += '<div style="position:absolute; top:2px; left:2px; color:white; font-size:10px;"><i class="fas fa-check-circle"></i></div>'; else b.innerHTML = '<span><i class="fas fa-check mb-1"></i><br>Seleccionado</span>'; }
-                    });
-                });
-            }
 
-            // --- STUDENT RENDER ---
-            function renderStudentCalendar(weekDays) {
-                renderCalendarHeader(weekDays, 'student-calendar-head');
-                const tbody = document.getElementById('student-calendar-body'); if(!tbody) return; tbody.innerHTML='';
-                const map = new Map();
-                for(let h=7; h<=19; h++){
-                    const tr=document.createElement('tr'); tr.innerHTML=`<td class="time-label">${h}:00 - ${h+1}:00</td>`;
-                    weekDays.forEach(d=>{
-                        const id = `${formatDateYYYYMMDD(d)}_${h}`; const td=document.createElement('td'); td.innerHTML=`<div class="slot-container"><button id="${id}" class="slot slot-free"><span class="opacity-50">Disponible</span></button></div>`;
-                        tr.appendChild(td); const btn=td.querySelector('button'); btn.onclick=()=>handleStudentClick(btn); map.set(id, btn);
-                    }); tbody.appendChild(tr);
-                }
+                        const members = groupsMembersCache[cacheKey];
+                        const attendanceDetail = r.attendanceDetail || {}; // Aquí está el registro de asistencia de esa fecha
 
-                if(unsubscribeReservations) unsubscribeReservations();
-                unsubscribeReservations = onSnapshot(query(collection(db,RESERVATIONS_COLLECTION), where("date",">=",formatDateYYYYMMDD(weekDays[0])), where("date","<=",formatDateYYYYMMDD(weekDays[4]))), (s)=>{
-                    map.forEach((b, k) => {
-                        const [dStr, hStr] = k.split('_');
-                        if (isPastDate(dStr, parseInt(hStr))) { b.className = 'slot slot-past opacity-50'; b.innerHTML = '<span class="text-xs">No Disp.</span>'; b.dataset.status = 'past'; b.disabled = true; }
-                        else { b.className = 'slot slot-free'; b.innerHTML = '<span class="opacity-50">Disponible</span>'; b.dataset.status = 'free'; b.disabled = false; }
-                    });
-                    const groups = new Map(); s.forEach(d=>{const k=`${d.data().date}_${d.data().hour}`; if(!groups.has(k))groups.set(k,[]); groups.get(k).push({id:d.id,...d.data()});});
-                    groups.forEach((arr,k)=>{
-                        const b = map.get(k); if(!b || b.dataset.status === 'past') return;
-                        const blocked = arr.find(x=>x.status==='blocked'); const mine = arr.find(x=>x.userId===userId); const app = arr.filter(x=>x.status==='approved').length;
-                        if(blocked) { b.className='slot slot-blocked'; b.innerHTML='<span>No disp.</span>'; b.dataset.status='blocked'; b.disabled = true; } 
-                        else if(mine) { b.className=`slot ${mine.status==='approved'?'slot-approved-self':'slot-pending'}`; b.innerHTML=`<span>${mine.status==='approved'?'Agendado':'Pendiente'}</span>`; b.dataset.status=`my-${mine.status}`; b.dataset.docId=mine.id; }
-                        else if(app>=4) { b.className='slot slot-full'; b.innerHTML='<span>Lleno</span>'; b.dataset.status='full'; b.disabled = true; }
-                        else if(app>0) { b.className='slot slot-partial'; b.innerHTML=`<span>Disp.</span><div class="occupancy-badge">${app}/4</div>`; b.dataset.status='partial'; }
-                    });
-                    selectedSlots.forEach(id=>{const b=map.get(id);if(b && !b.disabled){b.classList.add('slot-selected');b.innerHTML='<span><i class="fas fa-check mb-1"></i><br>Selecc.</span>';}});
-                    updateStudentUI();
-                });
-            }
+                        // Si el grupo no tiene miembros, dejamos constancia
+                        if (members.length === 0) {
+                            reportData.push({
+                                "Fecha": r.date,
+                                "Hora": `${r.hour}:00 - ${r.hour + 1}:00`,
+                                "Curso": courseName,
+                                "Grupo": r.groupName,
+                                "Cédula": "-",
+                                "Estudiante": "Sin integrantes en el sistema",
+                                "Estado Asistencia": "-"
+                            });
+                        } else {
+                            // Crear una fila de Excel POR CADA ESTUDIANTE
+                            members.forEach(st => {
+                                let estado = "No Registrada"; // Por si el admin olvidó tomar lista
+                                if (attendanceDetail[st.cedula] === true) estado = "Presente";
+                                else if (attendanceDetail[st.cedula] === false) estado = "Ausente";
 
-            // --- SETUP VIEWS ---
-            function setupAdminView() {
-                clearListeners();
-                const update = () => { const w = getWeekDays(currentWeekOffset); renderAdminCalendar(w); };
-                document.getElementById('admin-prev-week').onclick = () => { currentWeekOffset--; selectedSlots=[]; update(); updateAdminActionBox(); };
-                document.getElementById('admin-next-week').onclick = () => { currentWeekOffset++; selectedSlots=[]; update(); updateAdminActionBox(); };
-                document.getElementById('admin-block-btn').onclick = () => batchBlockAction('block');
-                document.getElementById('admin-unblock-btn').onclick = () => batchBlockAction('unblock');
-                document.getElementById('admin-recurring-btn').onclick = () => document.getElementById('recurring-modal').classList.remove('hidden');
-                renderMatrix();
-                update(); listenAdminPending();
-            }
-
-            function setupStudentView() {
-                clearListeners();
-                const update = () => { const w = getWeekDays(currentWeekOffset); renderStudentCalendar(w); };
-                document.getElementById('student-prev-week').onclick = () => { currentWeekOffset--; selectedSlots=[]; update(); };
-                document.getElementById('student-next-week').onclick = () => { currentWeekOffset++; selectedSlots=[]; update(); };
-                document.getElementById('submit-request-btn').onclick = async () => {
-                    const b = writeBatch(db);
-                    selectedSlots.forEach(id => { const [d,h] = id.split('_'); b.set(doc(collection(db, RESERVATIONS_COLLECTION)), {date:d, hour:parseInt(h), status:'pending', userId, groupName:currentGroupInfo.name, groupColor:currentGroupInfo.color, createdAt: serverTimestamp()}); });
-                    await b.commit(); selectedSlots=[]; showMessage('success','Solicitud enviada.');
-                };
-                update();
-            }
-
-            window.batchBlockAction = async (action) => {
-                const batch = writeBatch(db);
-                selectedSlots.forEach(id => {
-                    const [d, h] = id.split('_'); const blockId = `BLOCK_${d}_${h}`; const ref = doc(db, RESERVATIONS_COLLECTION, blockId);
-                    if (action === 'block') batch.set(ref, { date: d, hour: parseInt(h), status: 'blocked', userId: 'ADMIN', createdAt: serverTimestamp() }); else batch.delete(ref);
-                });
-                await batch.commit(); selectedSlots = []; document.querySelectorAll('.slot-selected').forEach(x => x.classList.remove('slot-selected')); updateAdminActionBox();
-            };
-
-            // --- RECURRING BLOCK LOGIC ---
-            function renderMatrix() {
-                const container = document.getElementById('matrix-container'); if(!container) return;
-                container.innerHTML = `<div class="grid-matrix mb-4"><div></div><div class="matrix-header">Lun</div><div class="matrix-header">Mar</div><div class="matrix-header">Mié</div><div class="matrix-header">Jue</div><div class="matrix-header">Vie</div>${[7,8,9,10,11,12,13,14,15,16,17,18,19].map(h => `<div class="matrix-time">${h}:00</div>${[1,2,3,4,5].map(d => `<div class="matrix-cell" data-day="${d}" data-hour="${h}" onclick="this.classList.toggle('selected')"></div>`).join('')}`).join('')}</div>`;
-            }
-
-            window.executeRecurringBlock = async (e) => {
-                e.preventDefault();
-                const startStr = document.getElementById('rec-start').value;
-                const endStr = document.getElementById('rec-end').value;
-                const action = document.getElementById('rec-action').value;
-                const selectedCells = document.querySelectorAll('.matrix-cell.selected');
-                if(selectedCells.length === 0) return alert("Seleccione bloques.");
-                
-                const blocks = []; selectedCells.forEach(c => blocks.push({ d: parseInt(c.dataset.day), h: parseInt(c.dataset.hour) }));
-                const batch = writeBatch(db); let count = 0;
-                
-                const startDate = new Date(startStr + 'T00:00:00'); 
-                const endDate = new Date(endStr + 'T00:00:00');
-
-                for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-                    const dayOfWeek = d.getDay(); 
-                    const blocksForDay = blocks.filter(b => b.d === dayOfWeek);
-                    if (blocksForDay.length > 0) {
-                        const y = d.getFullYear(); const m = String(d.getMonth() + 1).padStart(2, '0'); const da = String(d.getDate()).padStart(2, '0'); const dateStr = `${y}-${m}-${da}`;
-                        blocksForDay.forEach(b => {
-                            const ref = doc(db, RESERVATIONS_COLLECTION, `BLOCK_${dateStr}_${b.h}`);
-                            if (action === 'block') batch.set(ref, { date: dateStr, hour: b.h, status: 'blocked', userId: 'ADMIN', type: 'recurring', createdAt: serverTimestamp() });
-                            else batch.delete(ref);
-                            count++;
-                        });
+                                reportData.push({
+                                    "Fecha": r.date,
+                                    "Hora": `${r.hour}:00 - ${r.hour + 1}:00`,
+                                    "Curso": courseName,
+                                    "Grupo": r.groupName,
+                                    "Cédula": st.cedula,
+                                    "Estudiante": st.nombre,
+                                    "Estado Asistencia": estado
+                                });
+                            });
+                        }
                     }
                 }
-                if(count > 490) return alert("Rango muy grande. Ejecute en partes.");
-                await batch.commit(); alert(`Listo. ${count} bloques actualizados.`);
-                document.getElementById('recurring-modal').classList.add('hidden');
-                document.querySelectorAll('.matrix-cell.selected').forEach(c => c.classList.remove('selected'));
-            };
 
-            async function getGroupMembers(groupName) {
-                const q = query(collection(db, USERS_COLLECTION), where("groupName", "==", groupName)); const snap = await getDocs(q);
-                if(!snap.empty) return snap.docs[0].data().members || []; return [];
-            }
-
-            // --- ASISTENCIA MODAL ---
-            window.openAttendanceModal = async (date, hour, reservations) => {
-                const modal = document.getElementById('attendance-modal'); document.getElementById('att-title').innerText = `Gestión: ${date} - ${hour}:00`;
-                const list = document.getElementById('att-list'); list.innerHTML = '<div class="p-8 text-center text-slate-500"><i class="fas fa-spinner fa-spin text-3xl mb-2"></i><br>Cargando...</div>';
-                modal.classList.remove('hidden');
-                const approved = reservations.filter(r => r.status === 'approved'); const blocked = reservations.find(r => r.status === 'blocked');
-                if(blocked) { list.innerHTML = `<div class="p-6 text-center bg-slate-50 rounded-lg border border-slate-200"><div class="text-red-500 text-4xl mb-3"><i class="fas fa-lock"></i></div><p class="font-bold text-slate-700">Bloqueado</p><button onclick="window.deleteReservation('${blocked.id}')" class="mt-4 bg-white border border-red-300 text-red-600 px-4 py-2 rounded hover:bg-red-50 font-medium">Desbloquear Ahora</button></div>`; return; }
-                if(approved.length === 0) { list.innerHTML = '<p class="text-slate-400 text-center py-10">Sin grupos aprobados.</p>'; return; }
-
-                const grouped = {}; approved.forEach(r => { if(!grouped[r.groupName]) grouped[r.groupName] = r; });
-                list.innerHTML = ''; 
-                for (const groupName in grouped) {
-                    const res = grouped[groupName]; const groupDiv = document.createElement('div'); groupDiv.className = 'border border-slate-200 rounded-lg mb-4 bg-white overflow-hidden shadow-sm';
-                    let students = await getGroupMembers(res.groupName);
-                    students.sort((a, b) => (b.isLeader ? 1 : 0) - (a.isLeader ? 1 : 0));
-
-                    let html = `<div class="bg-slate-50 p-3 flex justify-between items-center border-b border-slate-200"><span class="font-bold text-slate-700 text-sm"><i class="fas fa-users mr-2 text-blue-500"></i>${res.groupName}</span><button onclick="window.deleteReservation('${res.id}')" class="text-red-500 text-xs font-medium border border-red-200 bg-white px-2 py-1 rounded">Derrogar</button></div><div class="p-0">`;
-                    const att = res.attendanceDetail || {};
-                    if(students.length === 0) html += '<p class="text-xs text-gray-400 italic p-4 text-center">Sin integrantes.</p>';
-                    else {
-                        students.forEach((st) => {
-                            const isPresent = att[st.cedula] === true; const isAbsent = att[st.cedula] === false;
-                            const badge = st.isLeader ? '<span class="badge-jf">JF</span>' : '';
-                            html += `<div class="flex justify-between items-center p-3 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition"><div><div class="text-sm font-medium text-slate-700 flex items-center">${st.nombre} ${badge}</div><div class="text-xs text-slate-400 font-mono">${st.cedula}</div></div><div class="flex gap-2"><div onclick="window.setAttendance('${res.groupName}','${res.date}','${st.cedula}', false, this)" class="att-btn absent ${isAbsent ? 'active' : ''}"><div class="att-circle"></div> Ausente</div><div onclick="window.setAttendance('${res.groupName}','${res.date}','${st.cedula}', true, this)" class="att-btn present ${isPresent ? 'active' : ''}"><div class="att-circle"></div> Presente</div></div></div>`;
-                        });
-                    }
-                    html += '</div>'; groupDiv.innerHTML = html; list.appendChild(groupDiv);
+                if (reportData.length === 0) {
+                    return Swal.fire('Sin Datos', 'No hay registros de asistencia para los parámetros seleccionados.', 'info');
                 }
-            };
 
-            window.setAttendance = async (gn, d, ced, isPresent, btnElement) => {
-                const parent = btnElement.parentElement; parent.querySelectorAll('.att-btn').forEach(b => b.classList.remove('active')); btnElement.classList.add('active');
-                const s = await getDocs(query(collection(db, RESERVATIONS_COLLECTION), where("date","==",d), where("groupName","==",gn), where("status","==","approved")));
-                const b = writeBatch(db); s.forEach(doc => b.update(doc.ref, { [`attendanceDetail.${ced}`]: isPresent })); await b.commit();
-            };
+                // 2. ORDENAR LOS DATOS (Primero por Fecha, luego por Grupo, luego por Nombre del alumno)
+                reportData.sort((a, b) => {
+                    if (a.Fecha !== b.Fecha) return a.Fecha.localeCompare(b.Fecha);
+                    if (a.Grupo !== b.Grupo) return a.Grupo.localeCompare(b.Grupo);
+                    return a.Estudiante.localeCompare(b.Estudiante);
+                });
 
-            function getTimeAgo(timestamp) {
-                if (!timestamp) return ''; const diff = Date.now() - timestamp.toMillis(); const min = Math.floor(diff / 60000);
-                if (min < 60) return `${min} min`; const h = Math.floor(min / 60); if (h < 24) return `${h} h`; return `${Math.floor(h / 24)} d`;
+                // 3. Generar Excel
+                const worksheet = XLSX.utils.json_to_sheet(reportData);
+                const workbook = XLSX.utils.book_new();
+                
+                // Ajustar anchos de columna para que se vea bien al abrir
+                worksheet['!cols'] = [
+                    {wch: 12}, // Fecha
+                    {wch: 15}, // Hora
+                    {wch: 25}, // Curso
+                    {wch: 12}, // Grupo
+                    {wch: 12}, // Cedula
+                    {wch: 35}, // Estudiante
+                    {wch: 18}  // Estado Asistencia
+                ];
+
+                XLSX.utils.book_append_sheet(workbook, worksheet, "Asistencia");
+                XLSX.writeFile(workbook, `Asistencia_RedLab_${startStr}_al_${endStr}.xlsx`);
+
+                Swal.close();
+                document.getElementById('modal-report').classList.add('hidden');
+
+            } catch (error) {
+                console.error(error);
+                Swal.fire('Error', 'Hubo un problema procesando los datos: ' + error.message, 'error');
             }
-            function listenAdminPending(){ 
-                if(unsubscribePending) unsubscribePending();
-                unsubscribePending = onSnapshot(query(collection(db,RESERVATIONS_COLLECTION), where("status","==","pending")), (s)=>{
-                    const c = document.getElementById('admin-requests-list'); if(!c) return; c.innerHTML='';
-                    if(s.empty) { c.innerHTML='<div class="text-center p-4 text-slate-400 italic">No hay solicitudes pendientes</div>'; return; }
-                    const reqs = []; s.forEach(d => reqs.push({id: d.id, ...d.data()}));
-                    reqs.sort((a,b) => (a.createdAt?.toMillis() || 0) - (b.createdAt?.toMillis() || 0));
-
-                    reqs.forEach(r=>{
-                        const timeAgo = getTimeAgo(r.createdAt); const isLongWait = (Date.now() - (r.createdAt?.toMillis() || 0)) > 7200000; 
-                        const badgeClass = isLongWait ? 'wait-long' : (timeAgo.includes('min') ? 'wait-normal' : 'wait-warning'); const icon = isLongWait ? '<i class="fas fa-exclamation-circle"></i>' : '<i class="far fa-clock"></i>';
-                        const el=document.createElement('div'); el.className='bg-white p-3 rounded-lg shadow-sm border border-slate-200 mb-2 flex justify-between items-center fade-in';
-                        el.innerHTML=`<div><div class="font-bold text-sm text-slate-700">${r.groupName}</div><div class="flex items-center gap-2 mt-1"><span class="text-xs text-slate-500 bg-slate-100 px-1 rounded"><i class="far fa-calendar mr-1"></i>${r.date} ${r.hour}:00</span><span class="wait-badge ${badgeClass}">${icon} ${timeAgo}</span></div></div><div class="flex gap-2"><button onclick="window.admAct('${r.id}',true,'${r.date}',${r.hour})" class="w-8 h-8 flex items-center justify-center rounded-full bg-green-50 text-green-600 hover:bg-green-100 transition"><i class="fas fa-check"></i></button><button onclick="window.rejectReq('${r.id}')" class="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-600 hover:bg-red-100 transition"><i class="fas fa-times"></i></button></div>`;
-                        c.appendChild(el);
-                    });
-                }); 
-            }
-            window.admAct = async(id,app,d,h) => {
-                const s = await getDocs(query(collection(db,RESERVATIONS_COLLECTION),where("date","==",d),where("hour","==",h),where("status","in",["approved","blocked"])));
-                if(s.docs.find(x=>x.data().status==='blocked')) return alert("Error: Este horario está bloqueado.");
-                if(s.size>=4) return alert("Error: Horario lleno (4/4).");
-                updateDoc(doc(db,RESERVATIONS_COLLECTION,id),{status:'approved'});
-            };
-            window.rejectReq = async(id) => { if(confirm("¿Rechazar solicitud?")) await window.deleteReservation(id); };
-        });
+        };
+        
     </script>
 </head>
 
@@ -445,188 +1439,226 @@
                 <p class="text-sm font-medium text-slate-500 mt-1">Laboratorio de Redes y Telecomunicaciones</p>
             </div>
             <form onsubmit="window.handleLogin(event)" class="space-y-5">
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Correo Institucional</label>
-                    <input type="email" id="login-email" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#004274] focus:border-transparent outline-none transition bg-white" required>
-                </div>
-                <div class="password-container">
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Contraseña</label>
-                    <input type="password" id="login-password" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#004274] focus:border-transparent outline-none transition bg-white" required>
-                    <i class="fas fa-eye toggle-password" onclick="window.togglePassword('login-password', this)"></i>
-                </div>
-                <div class="text-right">
-                    <button type="button" onclick="window.openResetModal()" class="text-xs text-[#004274] font-bold hover:underline">¿Olvidaste tu contraseña?</button>
-                </div>
-                <button type="submit" class="w-full bg-[#004274] text-white py-3 rounded-lg font-bold hover:bg-[#003366] transition shadow-lg transform active:scale-95">INGRESAR</button>
+                <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Correo Institucional</label>
+                <input type="email" id="login-email" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#004274] outline-none transition bg-white" required></div>
+                <div class="password-container"><label class="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Contraseña</label>
+                <input type="password" id="login-password" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#004274] outline-none transition bg-white" required>
+                <i class="fas fa-eye toggle-password" onclick="window.togglePassword('login-password', this)"></i></div>
+                <div class="text-right"><button type="button" onclick="window.openResetModal()" class="text-xs text-[#004274] font-bold hover:underline">¿Olvidaste tu contraseña?</button></div>
+                <button type="submit" id="login-submit-btn" class="w-full bg-[#004274] text-white py-3 rounded-lg font-bold hover:bg-[#002244] transition shadow-lg transform active:scale-95">INGRESAR</button>
+
             </form>
-            <div id="message-box" class="hidden mt-4"></div>
+            <div id="message-box" class="hidden mt-4 text-center text-red-600 font-bold text-sm"></div>
         </div>
-        <p class="text-xs text-white/90 mt-6 font-medium drop-shadow">Sistema de Gestión de Turnos v19.0</p>
+        <div class="watermark text-white/30 font-bold text-xs pointer-events-none">RedLab v4.1 </div>
     </div>
 
-    <div id="reset-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 fade-in">
-            <h3 class="font-bold text-lg text-slate-800 mb-2">Recuperar Contraseña</h3>
-            <form onsubmit="window.sendResetLink(event)" class="space-y-4">
-                <input type="email" id="reset-email" placeholder="ejemplo@uce.edu.ec" class="w-full p-2 border border-slate-300 rounded" required>
-                <div class="flex justify-end gap-2">
-                    <button type="button" onclick="window.closeResetModal()" class="text-slate-500 hover:bg-slate-100 px-4 py-2 rounded">Cancelar</button>
-                    <button type="submit" class="bg-[#004274] text-white px-4 py-2 rounded font-bold">Enviar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div id="change-password-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 fade-in">
-            <h3 class="font-bold text-lg text-slate-800 mb-2">Cambiar Contraseña</h3>
-            <form onsubmit="window.handleChangePassword(event)" class="space-y-4">
-                <input type="password" id="new-password" placeholder="Nueva contraseña" class="w-full p-2 border border-slate-300 rounded" minlength="6" required>
-                <input type="password" id="confirm-password" placeholder="Confirmar contraseña" class="w-full p-2 border border-slate-300 rounded" minlength="6" required>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="window.closeChangePasswordModal()" class="text-slate-500 hover:bg-slate-100 px-4 py-2 rounded">Cancelar</button>
-                    <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded font-bold">Actualizar</button>
-                </div>
-            </form>
-        </div>
-    </div>
+    <div id="reset-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 fade-in"><h3 class="font-bold text-lg text-slate-800 mb-2">Recuperar Contraseña</h3><form onsubmit="window.sendResetLink(event)" class="space-y-4"><input type="email" id="reset-email" placeholder="ejemplo@uce.edu.ec" class="w-full p-2 border rounded" required><div class="flex justify-end gap-2"><button type="button" onclick="window.closeResetModal()" class="text-slate-500 px-4 py-2">Cancelar</button><button type="submit" class="bg-[#004274] text-white px-4 py-2 rounded font-bold">Enviar</button></div></form></div></div>
+    <div id="change-password-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 fade-in"><h3 class="font-bold text-lg text-slate-800 mb-2">Cambiar Contraseña</h3><form onsubmit="window.handleChangePassword(event)" class="space-y-4"><input type="password" id="new-password" placeholder="Nueva" class="w-full p-2 border rounded" minlength="6" required><input type="password" id="confirm-password" placeholder="Confirmar" class="w-full p-2 border rounded" minlength="6" required><div class="flex justify-end gap-2 pt-2"><button type="button" onclick="window.closeChangePasswordModal()" class="text-slate-500 px-4 py-2">Cancelar</button><button type="submit" class="bg-green-600 text-white px-4 py-2 rounded font-bold">Actualizar</button></div></form></div></div>
 
     <div id="admin-dashboard" class="hidden min-h-screen flex flex-col">
-        <header class="uce-header text-white p-4 shadow-lg sticky top-0 z-30">
-            <div class="max-w-7xl mx-auto flex justify-between items-center">
-                <div class="flex items-center gap-4">
-                    <div class="bg-white rounded-full p-1 shadow-sm"><img src="https://redi.cedia.edu.ec/members/UCE.png" class="h-10 object-contain"></div>
-                    <div><h1 class="font-bold text-lg leading-tight brand-font">PANEL ADMINISTRADOR</h1><span class="text-xs text-blue-200 font-mono">Gestión de Laboratorios</span></div>
-                </div>
-                <div class="flex items-center gap-4">
-                    <div id="admin-header-user-info" class="hidden md:flex items-center bg-white/10 px-4 py-2 rounded-lg backdrop-blur-sm border border-white/10 text-sm"></div>
-                    <button onclick="window.openChangePasswordModal()" class="text-xs text-blue-200 hover:text-white underline font-medium mr-2">Cambiar Clave</button>
-                    <button onclick="window.handleLogout()" class="text-xs bg-[#e1ad01] text-[#003366] font-bold hover:bg-yellow-400 px-4 py-2 rounded-full transition shadow-md">Salir</button>
-                </div>
+        <header class="uce-header text-white p-4 shadow-lg sticky top-0 z-30"><div class="max-w-7xl mx-auto flex justify-between items-center"><div class="flex items-center gap-4"><div class="bg-white rounded-full p-1 shadow-sm"><img src="https://redi.cedia.edu.ec/members/UCE.png" class="h-10 object-contain"></div><div><h1 class="font-bold text-lg leading-tight brand-font">PANEL ADMINISTRADOR</h1><span class="text-base text-blue-200 font-details">Laboratorio de Redes</span></div></div><div class="flex items-center gap-4"><div id="admin-header-user-info" class="hidden md:flex items-center bg-white/10 px-4 py-2 rounded-lg backdrop-blur-sm text-sm"></div><button onclick="window.openChangePasswordModal()" class="text-xs text-blue-200 hover:text-white underline mr-2">Clave</button><button onclick="window.handleLogout()" class="text-xs bg-[#e1ad01] text-[#003366] font-bold hover:bg-yellow-400 px-4 py-2 rounded-full shadow-md">Salir</button></div></div></header>
+        
+        <main class="flex-1 max-w-7xl mx-auto w-full p-4 lg:p-8">
+            <div class="flex gap-4 mb-6 border-b border-slate-200 pb-1">
+                <button id="tab-btn-cal" onclick="window.switchTab('calendar')" class="px-4 py-2 font-bold text-[#004274] border-b-2 border-[#004274] hover:bg-slate-100 rounded-t">Calendario</button>
+                <button id="tab-btn-cou" onclick="window.switchTab('courses')" class="px-4 py-2 font-bold text-slate-500 hover:text-[#004274] border-b-2 border-transparent hover:bg-slate-100 rounded-t">Cursos</button>
             </div>
-        </header>
-        <main class="flex-1 max-w-7xl mx-auto w-full p-4 lg:p-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
-            <div class="lg:col-span-3">
-                <div class="calendar-wrapper mb-4">
-                    <div class="p-4 bg-white border-b border-slate-100 flex justify-between items-center">
-                        <button id="admin-prev-week" class="text-slate-500 hover:bg-slate-50 px-3 py-2 rounded-lg transition"><i class="fas fa-chevron-left"></i></button>
-                        <h2 id="admin-week-title" class="font-bold text-lg text-slate-700 tracking-tight"></h2>
-                        <button id="admin-next-week" class="text-slate-500 hover:bg-slate-50 px-3 py-2 rounded-lg transition"><i class="fas fa-chevron-right"></i></button>
-                    </div>
-                    <table class="calendar-table"><thead id="admin-calendar-head"></thead><tbody id="admin-calendar-body"></tbody></table>
-                </div>
-                <div id="admin-action-box" class="hidden bg-slate-800 text-white p-4 rounded-xl flex justify-between items-center shadow-xl fade-in border border-slate-700">
-                    <span id="admin-selection-count" class="font-bold text-lg"></span>
-                    <div class="flex gap-3">
-                        <button id="admin-block-btn" class="bg-red-500 hover:bg-red-600 px-5 py-2 rounded-lg font-bold">Bloquear</button>
-                        <button id="admin-unblock-btn" class="bg-emerald-500 hover:bg-emerald-600 px-5 py-2 rounded-lg font-bold">Desbloquear</button>
-                    </div>
-                </div>
-                <div class="mt-4 flex justify-end">
-                    <button id="admin-recurring-btn" class="bg-[#004274] text-white px-4 py-2 rounded shadow hover:bg-[#003366] flex items-center gap-2 font-bold text-sm"><i class="fas fa-calendar-alt"></i> Gestión de Clases (Semestral)</button>
-                </div>
+
+            <div id="tab-calendar" class="fade-in grid grid-cols-1 lg:grid-cols-4 gap-8">
+                <div class="lg:col-span-3"><div class="calendar-wrapper mb-4"><div class="p-4 bg-white border-b flex justify-between items-center"><button id="admin-prev-week" class="text-slate-500 px-3 py-2"><i class="fas fa-chevron-left"></i></button><h2 id="admin-week-title" class="font-bold text-lg text-slate-700"></h2><button id="admin-next-week" class="text-slate-500 px-3 py-2"><i class="fas fa-chevron-right"></i></button></div><table class="calendar-table"><thead id="admin-calendar-head"></thead><tbody id="admin-calendar-body"></tbody></table></div><div id="admin-action-box" class="hidden bg-slate-800 text-white p-4 rounded-xl flex justify-between items-center shadow-xl fade-in border border-slate-700"><span id="admin-selection-count" class="font-bold text-lg"></span><div class="flex gap-3"><button id="admin-block-btn" class="bg-red-500 hover:bg-red-600 px-5 py-2 rounded-lg font-bold">Bloquear</button><button id="admin-unblock-btn" class="bg-emerald-500 hover:bg-emerald-600 px-5 py-2 rounded-lg font-bold">Desbloquear</button></div></div>
+                    <div class="mt-4 flex justify-end gap-2">
+                        <button onclick="window.openReportModal()" class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 flex items-center gap-2 font-bold text-sm transition-all active:scale-95">
+                            <i class="fas fa-file-excel"></i> Reportes
+                        </button>
+                        <button id="admin-recurring-btn" onclick="document.getElementById('recurring-modal').classList.remove('hidden')" class="bg-[#004274] text-white px-4 py-2 rounded shadow hover:bg-[#003366] flex items-center gap-2 font-bold text-sm transition-all active:scale-95">
+                            <i class="fas fa-calendar-alt"></i> Gestión Clases
+                        </button>
+                    </div>     
+                </div>           
+                <div class="lg:col-span-1 bg-white p-5 rounded-xl shadow-sm border border-slate-200 h-fit max-h-[calc(100vh-100px)] overflow-y-auto custom-scrollbar"><h3 class="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-4 text-xs uppercase tracking-wider">Solicitudes Pendientes</h3><div id="admin-requests-list" class="space-y-2"></div></div>
             </div>
-            <div class="lg:col-span-1 bg-white p-5 rounded-xl shadow-sm border border-slate-200 h-fit max-h-[calc(100vh-100px)] overflow-y-auto custom-scrollbar">
-                <h3 class="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-4 text-xs uppercase tracking-wider">Solicitudes Pendientes</h3>
-                <div id="admin-requests-list" class="space-y-2"></div>
+
+            <div id="tab-courses" class="hidden fade-in">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-slate-700">Cursos Activos</h2>
+                    <button onclick="window.openCreateCourseModal()" class="bg-[#004274] text-white px-4 py-2 rounded shadow hover:bg-[#003366] font-bold text-sm"><i class="fas fa-plus mr-2"></i>Nuevo Curso</button>
+                </div>
+                <div id="courses-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
             </div>
         </main>
     </div>
 
-    <div id="recurring-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-6 fade-in">
-            <h3 class="font-bold text-lg text-[#004274] mb-4 border-b pb-2">Gestión de Clases (Matriz Semanal)</h3>
-            <form onsubmit="window.executeRecurringBlock(event)">
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div><label class="block text-xs font-bold text-slate-500 mb-1">Fecha Inicio</label><input type="date" id="rec-start" class="w-full p-2 border rounded text-sm" required></div>
-                    <div><label class="block text-xs font-bold text-slate-500 mb-1">Fecha Fin</label><input type="date" id="rec-end" class="w-full p-2 border rounded text-sm" required></div>
-                </div>
-                <div class="mb-4">
-                    <p class="text-xs font-bold text-slate-500 mb-2">Seleccione los bloques a bloquear (Clic en la tabla)</p>
-                    <div id="matrix-container" class="border rounded p-2 bg-slate-50"></div>
-                </div>
-                <div class="mb-6">
-                    <label class="block text-xs font-bold text-slate-500 mb-1">Acción</label>
-                    <select id="rec-action" class="w-full p-2 border rounded text-sm font-bold">
-                        <option value="block">Bloquear (Clase)</option>
-                        <option value="unblock">Desbloquear (Liberar)</option>
-                    </select>
-                </div>
-                <div class="flex justify-end gap-2">
-                    <button type="button" onclick="document.getElementById('recurring-modal').classList.add('hidden')" class="px-4 py-2 text-slate-500 hover:bg-slate-100 rounded">Cancelar</button>
-                    <button type="submit" class="px-4 py-2 bg-[#004274] text-white rounded font-bold hover:bg-[#003366]">Ejecutar</button>
-                </div>
-            </form>
-        </div>
-    </div>
+    <div id="recurring-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-6 fade-in"><h3 class="font-bold text-lg text-[#004274] mb-4 border-b pb-2">Gestión de Clases</h3><form onsubmit="window.executeRecurringBlock(event)"> <div class="grid grid-cols-2 gap-4 mb-4"><div><label class="block text-xs font-bold text-slate-500 mb-1">Inicio</label><input type="date" id="rec-start" class="w-full p-2 border rounded" required></div><div><label class="block text-xs font-bold text-slate-500 mb-1">Fin</label><input type="date" id="rec-end" class="w-full p-2 border rounded" required></div></div><div class="mb-4"><p class="text-xs font-bold text-slate-500 mb-2">Seleccione bloques:</p><div id="matrix-container" class="border rounded p-2 bg-slate-50"></div></div><div class="mb-6"><label class="block text-xs font-bold text-slate-500 mb-1">Acción</label><select id="rec-action" class="w-full p-2 border rounded font-bold"><option value="block">Bloquear</option><option value="unblock">Desbloquear</option></select></div><div class="flex justify-end gap-2"><button type="button" onclick="document.getElementById('recurring-modal').classList.add('hidden')" class="px-4 py-2 text-slate-500 hover:bg-slate-100 rounded">Cancelar</button><button type="submit" class="px-4 py-2 bg-[#004274] text-white rounded font-bold">Ejecutar</button></div></form></div></div>
+    
+    <div id="attendance-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-xl flex flex-col max-h-[90vh] fade-in overflow-hidden border border-slate-200"><div class="uce-header text-white p-5 flex justify-between items-center shadow-md"><div><h3 class="font-bold text-lg">Control de Asistencia</h3><p id="att-title" class="text-xs text-blue-200 font-details mt-1"></p></div><button onclick="document.getElementById('attendance-modal').classList.add('hidden')" class="text-white/70 hover:text-white text-xl"><i class="fas fa-times"></i></button></div><div id="att-list" class="p-5 overflow-y-auto flex-1 bg-white space-y-4"></div></div></div>
+
+    <div id="modal-course" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6"><h3 class="font-bold text-xl text-[#004274] mb-4">Nuevo Curso</h3><form onsubmit="window.createCourse(event)" class="space-y-3"><input type="text" id="c-subject" placeholder="Materia (ej: Redes I)" class="w-full p-2 border rounded" required><input type="text" id="c-career" placeholder="Carrera (ej: Computación)" class="w-full p-2 border rounded" required><div class="grid grid-cols-2 gap-3"><input type="text" id="c-parallel" placeholder="Paralelo (ej: P1)" class="w-full p-2 border rounded" required><input type="number" id="c-limit" placeholder="Horas Semanales" value="4" class="w-full p-2 border rounded" required></div><select id="c-professor" class="w-full p-2 border rounded bg-white" required><option value="">Seleccione Profesor...</option></select><div class="flex justify-end gap-2 mt-4"><button type="button" onclick="document.getElementById('modal-course').classList.add('hidden')" class="px-4 py-2 text-slate-500">Cancelar</button><button type="submit" class="bg-[#004274] text-white px-4 py-2 rounded font-bold">Crear Curso</button></div></form></div></div>
+
+    <div id="modal-group-manage" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="bg-white rounded-lg shadow-xl w-full max-w-3xl p-6 h-[80vh] flex flex-col"><div class="flex justify-between items-center mb-4 border-b pb-2"><h3 class="font-bold text-xl text-[#004274]">Gestión de Grupos</h3><button onclick="document.getElementById('modal-group-manage').classList.add('hidden')" class="text-slate-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button></div><div class="grid grid-cols-4 gap-2 mb-4 bg-slate-50 p-3 rounded border"><input type="text" id="new-group-name" placeholder="G1" class="p-2 border rounded col-span-1"><input type="email" id="new-group-leader" placeholder="Email Líder" class="p-2 border rounded col-span-3"><input type="text" id="new-group-cedula" placeholder="Cédula Líder" class="p-2 border rounded col-span-1"><input type="text" id="new-group-fullname" placeholder="Nombre Completo Líder" class="p-2 border rounded col-span-2"><button onclick="window.addGroup()" class="bg-green-600 text-white px-2 py-2 rounded font-bold hover:bg-green-700 col-span-1">Agregar</button></div><div class="overflow-y-auto flex-1 border rounded p-4"><table class="w-full text-sm text-left"><thead class="text-slate-500 font-bold border-b"><tr><th class="pb-2">Grupo</th><th class="pb-2">Líder</th><th class="pb-2 text-center">Integrantes</th><th class="pb-2 text-right">Acción</th></tr></thead><tbody id="groups-table-body"></tbody></table></div></div></div>
 
     <div id="student-dashboard" class="hidden min-h-screen flex flex-col">
-        <header class="uce-header text-white p-4 shadow-lg sticky top-0 z-30">
-            <div class="max-w-7xl mx-auto flex justify-between items-center">
-                <div class="flex items-center gap-4">
-                    <div class="bg-white rounded-full p-1 shadow-sm"><img src="https://redi.cedia.edu.ec/members/UCE.png" class="h-10 object-contain"></div>
-                    <div><h1 class="font-bold text-lg leading-tight brand-font">LABORATORIO DE REDES</h1><span class="text-xs text-blue-200 font-mono">Facultad de Ingeniería</span></div>
-                </div>
-                <div class="flex items-center gap-4">
-                    <div id="student-header-user-info" class="hidden md:flex items-center bg-white/10 px-4 py-2 rounded-lg backdrop-blur-sm border border-white/10 text-sm"></div>
-                    <button onclick="window.openChangePasswordModal()" class="text-xs text-blue-200 hover:text-white underline font-medium mr-2">Cambiar Clave</button>
-                    <button onclick="window.handleLogout()" class="text-xs bg-[#e1ad01] text-[#003366] font-bold hover:bg-yellow-400 px-4 py-2 rounded-full transition shadow-md">Salir</button>
-                </div>
-            </div>
-        </header>
+        <header class="uce-header text-white p-4 shadow-lg sticky top-0 z-30"><div class="max-w-7xl mx-auto flex justify-between items-center"><div class="flex items-center gap-4"><div class="bg-white rounded-full p-1 shadow-sm"><img src="https://redi.cedia.edu.ec/members/UCE.png" class="h-10 object-contain"></div><div><h1 class="font-bold text-lg leading-tight brand-font">LABORATORIO DE REDES</h1><span class="text-Base text-blue-200 font-details">Facultad de Ingeniería y Ciencias Aplicadas</span></div></div><div class="flex items-center gap-4"><div id="student-header-user-info" class="hidden md:flex items-center bg-white/10 px-4 py-2 rounded-lg backdrop-blur-sm text-base"></div><button onclick="window.openChangePasswordModal()" class="text-xs text-blue-200 hover:text-white underline mr-2">Clave</button><button onclick="window.handleLogout()" class="text-xs bg-[#e1ad01] text-[#003366] font-bold hover:bg-yellow-400 px-4 py-2 rounded-full shadow-md">Salir</button></div></div></header>
         <main class="flex-1 max-w-7xl mx-auto w-full p-4 lg:p-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
-            <div class="lg:col-span-3">
-                <div class="calendar-wrapper">
-                    <div class="p-4 bg-white border-b border-slate-100 flex justify-between items-center">
-                        <button id="student-prev-week" class="text-slate-500 hover:bg-slate-50 px-3 py-2 rounded-lg transition"><i class="fas fa-chevron-left"></i></button>
-                        <h2 id="student-week-title" class="font-bold text-lg text-slate-700 tracking-tight"></h2>
-                        <button id="student-next-week" class="text-slate-500 hover:bg-slate-50 px-3 py-2 rounded-lg transition"><i class="fas fa-chevron-right"></i></button>
-                    </div>
-                    <table class="calendar-table"><thead id="student-calendar-head"></thead><tbody id="student-calendar-body"></tbody></table>
-                </div>
-            </div>
-            <div class="lg:col-span-1 space-y-6">
-                <div id="student-request-box" class="bg-blue-600 text-white p-5 rounded-xl shadow-lg hidden fade-in relative overflow-hidden">
-                    <div class="absolute -right-4 -top-4 w-20 h-20 bg-white/10 rounded-full"></div>
-                    <p class="text-sm text-blue-100 mb-1">Resumen de solicitud</p>
-                    <p id="student-request-count" class="font-bold text-xl mb-4"></p>
-                    <button id="submit-request-btn" class="w-full bg-white text-blue-700 py-2 rounded-lg font-bold hover:bg-blue-50 transition shadow-md">Confirmar Solicitud</button>
-                </div>
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 text-sm">
-                    <h3 class="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-3 text-xs uppercase tracking-wider">Estado de Turnos</h3>
-                    <div class="space-y-3">
-                        <div class="flex items-center"><div class="w-3 h-3 rounded-full bg-white border border-slate-300 mr-3"></div> <span class="text-slate-600">Disponible</span></div>
-                        <div class="flex items-center"><div class="w-3 h-3 rounded-full bg-blue-50 border border-blue-200 mr-3"></div> <span class="text-slate-600">Parcialmente Ocupado</span></div>
-                        <div class="flex items-center"><div class="w-3 h-3 rounded-full bg-blue-600 mr-3 shadow-sm shadow-blue-200"></div> <span class="font-medium text-slate-800">Tu Selección</span></div>
-                        <div class="flex items-center"><div class="w-3 h-3 rounded-full bg-green-500 mr-3 shadow-sm shadow-green-200"></div> <span class="font-medium text-slate-800">Turno Agendado</span></div>
-                        <div class="flex items-center"><div class="w-3 h-3 rounded-full bg-slate-100 border border-slate-200 mr-3"></div> <span class="text-slate-400">No Disponible / Pasado</span></div>
-                    </div>
-                </div>
-            </div>
+            <div class="lg:col-span-3"><div class="calendar-wrapper"><div class="p-4 bg-white border-b flex justify-between items-center"><button id="student-prev-week" class="text-slate-500 px-3 py-2"><i class="fas fa-chevron-left"></i></button><h2 id="student-week-title" class="font-bold text-lg text-slate-700"></h2><button id="student-next-week" class="text-slate-500 px-3 py-2"><i class="fas fa-chevron-right"></i></button></div><table class="calendar-table"><thead id="student-calendar-head"></thead><tbody id="student-calendar-body"></tbody></table></div></div>
+            <div class="lg:col-span-1 space-y-6"><div id="student-request-box" class="bg-blue-600 text-white p-5 rounded-xl shadow-lg hidden fade-in relative overflow-hidden"><div class="absolute -right-4 -top-4 w-20 h-20 bg-white/10 rounded-full"></div><p class="text-sm text-blue-100 mb-1">Resumen</p><p id="student-request-count" class="font-bold text-xl mb-4"></p><button id="submit-request-btn" class="w-full bg-white text-blue-700 py-2 rounded-lg font-bold hover:bg-blue-50 shadow-md">Confirmar</button></div><div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 text-sm"><h3 class="font-bold text-slate-800 border-b pb-3 mb-3 text-xs uppercase">Estado</h3><div class="space-y-3"><div class="flex items-center"><div class="w-3 h-3 rounded-full bg-white border border-slate-300 mr-3"></div> <span class="text-slate-600">Disponible</span></div><div class="flex items-center"><div class="w-3 h-3 rounded-full bg-blue-50 border border-blue-200 mr-3"></div> <span class="text-slate-600">Parcial</span></div><div class="flex items-center"><div class="w-3 h-3 rounded-full bg-blue-600 mr-3 shadow-sm"></div> <span class="font-medium text-slate-800">Selección</span></div><div class="flex items-center"><div class="w-3 h-3 rounded-full bg-green-500 mr-3 shadow-sm"></div> <span class="font-medium text-slate-800">Agendado</span></div><div class="flex items-center"><div class="w-3 h-3 rounded-full bg-slate-100 border border-slate-200 mr-3"></div> <span class="text-slate-400">No Disp.</span></div></div></div></div>
         </main>
+        <div class="watermark text-slate-400 font-bold text-xs text-slate-300" style="position: fixed; bottom: 1rem; left: 1rem;">RedLab Team</div>
     </div>
 
-    <div id="attendance-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-xl flex flex-col max-h-[90vh] fade-in overflow-hidden border border-slate-200">
-            <div class="uce-header text-white p-5 flex justify-between items-center shadow-md">
-                <div><h3 class="font-bold text-lg">Control de Asistencia</h3><p id="att-title" class="text-xs text-blue-200 font-mono mt-1"></p></div>
-                <button onclick="document.getElementById('attendance-modal').classList.add('hidden')" class="text-white/70 hover:text-white transition text-xl"><i class="fas fa-times"></i></button>
+<div id="success-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 fade-in text-center relative overflow-hidden"><div class="absolute top-0 left-0 w-full h-2 bg-green-500"></div><div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4"><i class="fas fa-check text-2xl text-green-600"></i></div><h3 class="text-xl font-bold text-slate-800 mb-2">¡Solicitud Enviada!</h3><p class="text-sm text-slate-600 mb-6 leading-relaxed">Tu solicitud ha sido registrada correctamente. <br><br><span class="font-bold text-[#004274] bg-blue-50 p-1 rounded">El turno será confirmado cuando un encargado del laboratorio acepte dicha solicitud.</span></p><button onclick="document.getElementById('success-modal').classList.add('hidden')" class="w-full bg-[#004274] text-white py-2.5 rounded-lg font-bold hover:bg-[#003366] transition shadow-md uppercase text-xs tracking-wider">Entendido</button></div></div>
+
+<div id="modal-group-details" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col fade-in overflow-hidden">
+        
+        <div class="bg-[#004274] text-white p-4 flex justify-between items-center shadow-md shrink-0">
+            <div>
+                <h3 class="font-bold text-lg"><i class="fas fa-users-cog mr-2"></i>Edición de Grupo</h3>
+                <p class="text-xs text-blue-200 font-details">Modifique datos del líder e integrantes</p>
             </div>
-            <div class="p-4 bg-blue-50 border-b border-blue-100 text-xs text-blue-800 flex items-start">
-                <i class="fas fa-info-circle mt-0.5 mr-3 text-blue-600 text-lg"></i>
-                <p>Seleccione <strong>Presente</strong> o <strong>Ausente</strong> para cada estudiante. <br>El cambio se guarda automáticamente y se sincroniza para todo el día.</p>
+            <button onclick="document.getElementById('modal-group-details').classList.add('hidden')" class="text-white/70 hover:text-white text-xl transition">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-6">
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="md:col-span-1 space-y-2">
+                    <label class="block text-xs font-bold text-slate-500 uppercase">Identificador Grupo</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="edit-group-name" class="w-full p-2 border border-slate-300 rounded font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ej: G1">
+                        <button onclick="window.saveGroupBasicInfo()" class="bg-blue-600 text-white px-3 rounded hover:bg-blue-700 transition" title="Guardar Nombre"><i class="fas fa-save"></i></button>
+                    </div>
+                    <p class="text-[10px] text-slate-400">Este nombre aparece en el calendario.</p>
+                </div>
+
+                <div class="md:col-span-2 bg-slate-50 p-4 rounded-lg border border-slate-200">
+                    <h4 class="font-bold text-[#004274] text-sm mb-3 border-b pb-1">Datos del Jefe de Grupo (Cuenta de Acceso)</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[15px] font-bold text-slate-500">Email (ID)</label>
+                            <input type="text" id="edit-leader-email" class="w-full p-1.5 border rounded bg-slate-200 text-slate-500 cursor-not-allowed text-sm" readonly title="El email es el ID, no se puede editar directamente.">
+                        </div>
+                        <div>
+                            <label class="block text-[15px] font-bold text-slate-500">Cédula</label>
+                            <input type="text" id="edit-leader-cedula" class="w-full p-1.5 border rounded text-sm focus:border-blue-500 outline-none">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-[15px] font-bold text-slate-500">Nombres Completos</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="edit-leader-name" class="w-full p-1.5 border rounded text-sm focus:border-blue-500 outline-none">
+                                <button onclick="window.saveLeaderInfo()" class="bg-[#004274] text-white px-4 text-xs font-bold rounded hover:bg-[#003366] transition">Actualizar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div id="att-list" class="p-5 overflow-y-auto flex-1 bg-white space-y-4"></div>
-            <div class="p-4 bg-slate-50 border-t border-slate-200 text-right">
-                <button onclick="document.getElementById('attendance-modal').classList.add('hidden')" class="bg-slate-800 text-white px-6 py-2 rounded-lg font-medium hover:bg-slate-900 transition shadow">Cerrar Panel</button>
+
+            <div>
+                <div class="flex justify-between items-end mb-2">
+                    <h4 class="font-bold text-slate-700"><i class="fas fa-list-ul mr-2"></i>Lista de Integrantes</h4>
+                    <span class="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded border">Total: <span id="members-count-badge" class="font-bold text-slate-700">0</span></span>
+                </div>
+                
+                <div class="border border-slate-200 rounded-lg overflow-hidden">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-slate-100 text-slate-600 font-bold text-xs uppercase">
+                            <tr>
+                                <th class="px-4 py-3">Cédula</th>
+                                <th class="px-4 py-3">Nombre Completo</th>
+                                <th class="px-4 py-3">Rol</th>
+                                <th class="px-4 py-3 text-right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="edit-members-tbody" class="divide-y divide-slate-100">
+                            </tbody>
+                        <tfoot class="bg-blue-50">
+                            <tr>
+                                <td class="p-2"><input type="text" id="add-mem-cedula" placeholder="Cédula" class="w-full p-1.5 border rounded text-xm"></td>
+                                <td class="p-2"><input type="text" id="add-mem-name" placeholder="Nombre Completo" class="w-full p-1.5 border rounded text-xs"></td>
+                                <td class="p-2 text-xs text-slate-500 text-center">Estudiante</td>
+                                <td class="p-2 text-right">
+                                    <button onclick="window.addNewMember()" class="bg-green-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-green-700 shadow-sm"><i class="fas fa-plus mr-1"></i> Agregar</button>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
+</div>
 
-    <div id="loading-view" class="hidden min-h-screen flex flex-col items-center justify-center bg-slate-50">
-        <div class="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
-        <p class="text-slate-500 font-medium">Cargando sistema...</p>
+<div id="modal-edit-course" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 fade-in">
+        <h3 class="font-bold text-xl text-[#004274] mb-4"><i class="fas fa-edit mr-2"></i>Editar Curso</h3>
+        
+        <input type="hidden" id="edit-course-id">
+
+        <form onsubmit="window.saveCourseChanges(event)" class="space-y-3">
+            <div>
+                <label class="block text-xs font-bold text-slate-500 mb-1">Materia</label>
+                <input type="text" id="e-subject" class="w-full p-2 border rounded text-slate-700" required>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">Paralelo</label>
+                    <input type="text" id="e-parallel" class="w-full p-2 border rounded text-slate-700" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">Horas/Semana</label>
+                    <input type="number" id="e-limit" class="w-full p-2 border rounded text-slate-700" min="1" required>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-500 mb-1">Docente Encargado</label>
+                <select id="e-professor" class="w-full p-2 border rounded bg-white text-slate-700" required>
+                    <option value="">Cargando lista...</option>
+                </select>
+            </div>
+
+            <div class="flex justify-end gap-2 mt-4 pt-2 border-t">
+                <button type="button" onclick="document.getElementById('modal-edit-course').classList.add('hidden')" class="px-4 py-2 text-slate-500 hover:bg-slate-50 rounded">Cancelar</button>
+                <button type="submit" class="bg-[#004274] text-white px-4 py-2 rounded font-bold hover:bg-[#003366] transition">Guardar Cambios</button>
+            </div>
+        </form>
     </div>
-
+</div>
+<div id="modal-report" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 fade-in border border-slate-200">
+        <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
+            <h3 class="font-bold text-lg text-[#004274]"><i class="fas fa-file-excel text-green-600 mr-2"></i>Exportar Reporte</h3>
+            <button onclick="document.getElementById('modal-report').classList.add('hidden')" class="text-slate-400 hover:text-red-500 transition-colors">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <form onsubmit="window.executeReport(event)" class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Fecha Inicio</label>
+                    <input type="date" id="rep-start" class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none text-sm text-slate-700" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Fecha Fin</label>
+                    <input type="date" id="rep-end" class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none text-sm text-slate-700" required>
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Seleccionar Cursos</label>
+                <div id="rep-courses-list" class="max-h-48 overflow-y-auto border border-slate-200 rounded p-2 bg-slate-50 space-y-1 text-sm custom-scrollbar">
+                    </div>
+            </div>
+            <div class="flex justify-end pt-3 mt-4 border-t border-slate-100">
+                <button type="button" onclick="document.getElementById('modal-report').classList.add('hidden')" class="px-4 py-2 text-slate-500 hover:bg-slate-100 rounded mr-2 font-medium text-sm transition-colors">Cancelar</button>
+                <button type="submit" class="bg-green-600 text-white px-5 py-2 rounded font-bold hover:bg-green-700 transition-all active:scale-95 shadow-md flex items-center gap-2 text-sm">
+                    Descargar <i class="fas fa-download"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 </body>
 </html>
