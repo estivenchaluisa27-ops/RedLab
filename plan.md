@@ -509,19 +509,19 @@ document.addEventListener('click', (e) => {
 **Objetivo**: Funciones sin dependencias. Tests validan pipeline Vitest.
 
 **Tareas**:
-- [ ] Crear `src/utils/escape.js` con `escapeHtml` (líneas 136-144) + nuevo `escapeAttr()` — escapa `'`, `"`, `` ` ``, `$`, `<`, `>`, `&`
-- [ ] Crear `src/utils/dates.js` con `getWeekDays`, `formatDateYYYYMMDD`, `isPastDate` (líneas 698-700)
-- [ ] Crear `src/courses/course-utils.js` con `buildCourseId(subject, parallel)` (extraído de 437-446)
-- [ ] Escribir `tests/utils/escape.test.js` — incluir casos XSS: comillas, backticks, `<script>`, null, objetos
-- [ ] Escribir `tests/utils/dates.test.js` — cruce de semana, formato, isPastDate con timezone
-- [ ] Escribir `tests/courses/course-utils.test.js` — espacios, mayúsculas, símbolos, caracteres especiales
-- [ ] En `index.html`, reemplazar funciones inline por `import` desde módulos nuevos (importación condicional segura)
-- [ ] Ejecutar `npm test` — debe pasar
+- [x] Crear `src/utils/escape.js` con `escapeHtml` (L136-144) + `escapeAttr()` — escapa `'`, `"`, `` ` ``, `$`, `<`, `>`, `&`
+- [x] Crear `src/utils/dates.js` con `getWeekDays`, `formatDateYYYYMMDD`, `isPastDate` (L698-700)
+- [x] Crear `src/courses/course-utils.js` con `buildCourseId(subject, parallel)` (extraído de 437-446)
+- [x] Escribir `tests/utils/escape.test.js` — 15 tests: comillas, backticks, `<script>`, null, objetos
+- [x] Escribir `tests/utils/dates.test.js` — 13 tests: cruce de semana, formato, isPastDate con timezone
+- [x] Escribir `tests/courses/course-utils.test.js` — 7 tests: espacios, mayúsculas, símbolos, caracteres especiales
+- [x] En `index.html`, reemplazar funciones inline por `import` desde módulos nuevos + `window.escapeAttr` para onclick
+- [x] Ejecutar `npm test` — 35/35 pasan ✅
 
 > [!WARNING]
 > **Atomic commit**: NO — toca `index.html` (importa los módulos). El cambio es pequeño y reversible (quitar 3 funciones y añadir imports). Verificar que la app funciona antes de commitear.
 
-**Estado**: `⬜ Pendiente`
+**Estado**: `✅ Completada`
 
 ---
 
@@ -809,6 +809,12 @@ npm test  # → exit code 0
 - **`master` intacto** — sin cambios, CI no se dispara
 - **`git status` limpio** — solo `plan.md` pendiente de commitear
 - **Nota**: `firestore.rules` NO se corrigió en esta sesión (riesgo #10 pendiente, deferido a Fase 4-5)
+
+### Sesión 4 — Ejecución Fase 1 (09 jul 2026)
+- **Archivos creados**: `src/utils/escape.js`, `src/utils/dates.js`, `src/courses/course-utils.js`, `tests/utils/escape.test.js`, `tests/utils/dates.test.js`, `tests/courses/course-utils.test.js`
+- **`index.html` modificado**: imports añadidos (L123-125), `window.escapeAttr` (L127), funciones inline eliminadas (escapeHtml, getWeekDays, formatDateYYYYMMDD, isPastDate, buildCourseId)
+- **Tests**: 35/35 pasan (15 escape + 13 dates + 7 course-utils)
+- **Nota**: `buildCourseId` inline en `createCourse` reemplazado por llamada a función importada
 
 ---
 

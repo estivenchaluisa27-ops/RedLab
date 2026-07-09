@@ -120,6 +120,11 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail, updatePassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, where, onSnapshot, updateDoc, doc, deleteDoc, serverTimestamp, writeBatch, getDocs, getDoc, setDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { escapeHtml, escapeAttr } from "./src/utils/escape.js";
+        import { getWeekDays, formatDateYYYYMMDD, isPastDate } from "./src/utils/dates.js";
+        import { buildCourseId } from "./src/courses/course-utils.js";
+
+        window.escapeAttr = escapeAttr;
 
         const firebaseConfig = { apiKey: "AIzaSyCR4Kk7kIBpSW3cF02b8zUHegvV4WQNuyI", authDomain: "lab-redes-turnos.firebaseapp.com", projectId: "lab-redes-turnos", storageBucket: "lab-redes-turnos.firebasestorage.app", messagingSenderId: "592544790067", appId: "1:592544790067:web:00bde37b50d3edf9f59546" };
 
@@ -133,15 +138,6 @@
         let unsubscribeReservations = null; 
         let unsubscribePending = null;
 
-            function escapeHtml(str) {
-            if (str == null) return '';
-            return String(str)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
-        }
 
         // MAGIA: Sobrescribir alert() nativo por SweetAlert2
         window.alert = function(message) {
@@ -434,16 +430,7 @@
             const professor = document.getElementById('c-professor').value;
 
             // 2. CONSTRUCCIÓN DEL ID (Materia + Paralelo)
-            const cleanSubject = subject.toUpperCase()
-                .replace(/\s+/g, '_')           
-                .replace(/[^A-Z0-9_]/g, '');    
-
-            const cleanParallel = parallel.toUpperCase()
-                .replace(/\s+/g, '')            
-                .replace(/[^A-Z0-9]/g, '');     
-
-            // ID FINAL
-            const customId = `${cleanSubject}_${cleanParallel}`;
+            const customId = buildCourseId(subject, parallel);
 
             // DIAGNÓSTICO 2: ALERTA DE SEGURIDAD
             // Si ves esta alerta, el código está funcionando bien.
@@ -695,9 +682,7 @@
             }
         };
 
-        function getWeekDays(offset = 0) { const now = new Date(); now.setHours(12, 0, 0, 0); now.setDate(now.getDate() + (offset * 7)); const d = (now.getDay() === 0) ? -6 : 1 - now.getDay(); const mon = new Date(now.setDate(now.getDate() + d)); const w = []; for(let i=0;i<5;i++){ const x = new Date(mon); x.setDate(x.getDate()+i); w.push(x); } return w; }
-        function formatDateYYYYMMDD(d) { const year = d.getFullYear(); const month = String(d.getMonth() + 1).padStart(2, '0'); const day = String(d.getDate()).padStart(2, '0'); return `${year}-${month}-${day}`; }
-        function isPastDate(dStr, h) { const now = new Date(); const [y, m, d] = dStr.split('-').map(Number); const slot = new Date(y, m-1, d, h+1); return slot < now; }
+
         function renderCalendarHeader(weekDays, headId) { const thead = document.getElementById(headId); if(!thead) return; thead.innerHTML = ''; const hr = document.createElement('tr'); const thHora = document.createElement('th'); thHora.innerHTML = '<i class="far fa-clock text-slate-400 mr-2"></i>HORARIO'; thHora.className = 'text-center bg-slate-100 w-24'; hr.appendChild(thHora); weekDays.forEach(d => { const th = document.createElement('th'); th.innerHTML = `<div class="flex flex-col leading-tight"><span class="text-lg font-bold text-slate-700">${d.toLocaleDateString('es-ES', {weekday:'long'})} ${d.getDate()}</span><span class="text-xs text-slate-500 font-medium uppercase mt-1">${d.toLocaleDateString('es-ES', {month:'long'})}</span></div>`; hr.appendChild(th); }); thead.appendChild(hr); }
 
         function handleAdminClick(e, btn) {
