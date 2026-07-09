@@ -553,14 +553,18 @@ document.addEventListener('click', (e) => {
 **Objetivo**: Auth aislado + primera migración onclick→delegation.
 
 **Tareas**:
-- [ ] Crear `src/auth/auth.js` — `initAuthListener` (L174-202), `setupSession` (L204-239). Añadir unsubscribe del `onAuthStateChanged` (L174 no tiene unsubscribe actualmente — guardar la referencia)
-- [ ] Crear `src/auth/auth-ui.js` — `handleLogin` (L382-395), `handleLogout` (L396), `togglePassword` (L397), modales reset/change password (L398-403)
-- [ ] Crear `src/views/login-view.js` — bind formulario login onsubmit, botón togglePassword, openResetModal, sendResetLink, closeResetModal
-- [ ] **Añadir `id="login-form"` al `<form>`** del HTML login (L1451) si no existe
-- [ ] Migrar onclicks de login/reset/change-password (líneas 1451, 1456, 1457, 1466, 1467) a event listeners (no window.*)
-- [ ] Verificar flujo: login → dashboard → logout → login
+- [x] Crear `src/auth/auth.js` — `initAuthListener` (L174-202), `setupSession` (L204-239). Añadir unsubscribe del `onAuthStateChanged` (L174 no tiene unsubscribe actualmente — guardar la referencia)
+- [x] Crear `src/auth/auth-ui.js` — `handleLogin` (L382-395), `handleLogout` (L396), `togglePassword` (L397), modales reset/change password (L398-403)
+- [x] Crear `src/views/login-view.js` — bind formulario login onsubmit, botón togglePassword, openResetModal, sendResetLink, closeResetModal
+- [x] **Añadir `id="login-form"` al `<form>`** del HTML login (L1451)
+- [x] Migrar onclicks de login/reset/change-password a event delegation con data-action (handle-logout, open-change-password-modal, close-change-password-modal, open-reset-modal, close-reset-modal)
+- [x] Añadir data-action delegation en `main.js` + bind change-password-form
+- [x] Eliminar funciones inline de auth del script (handleLogin, handleLogout, togglePassword, openResetModal, closeResetModal, sendResetLink, openChangePasswordModal, closeChangePasswordModal, handleChangePassword)
 
-**Estado**: `⬜ Pendiente`
+> [!NOTE]
+> `initAuthListener` y `setupSession` permanecen en el inline script (llaman a `loadAdminDashboard` y `setupStudentView` que aún no están extraídas). Se extraerán en Fase 4-5.
+
+**Estado**: `✅ Completada`
 
 ---
 
@@ -822,6 +826,14 @@ npm test  # → exit code 0
 - **`index.html` modificado**: `<script type="module" src="/src/main.js"></script>` añadido antes del script inline; utility imports y alert override eliminados del script inline
 - **Script inline restante**: mantiene Firebase imports, config, state local, DOMContentLoaded init, clearListeners, initAuthListener — las funciones inline las necesitan como variables locales
 - **main.js expone globals**: `escapeHtml`, `escapeAttr`, `getWeekDays`, `formatDateYYYYMMDD`, `isPastDate`, `buildCourseId`, `showView`, `el`, `showHide`, `toggleHidden`, `RESERVATIONS_COLLECTION`, `_appState`, `_resetState`, `_clearListeners`
+- **Tests**: 35/35 pasan
+
+### Sesión 6 — Ejecución Fase 3 (09 jul 2026)
+- **Archivos creados**: `src/auth/auth.js`, `src/auth/auth-ui.js`, `src/views/login-view.js`
+- **`main.js` modificado**: importa auth/auth-ui/login-view, expone globals, añade delegation listeners para data-action
+- **`index.html` modificado**: `id="login-form"` añadido, onclick→data-action en login/reset/change-password modals y headers (admin+student), funciones inline de auth eliminadas
+- **Auth functions migradas**: handleLogin, handleLogout, togglePassword, openResetModal, closeResetModal, sendResetLink, openChangePasswordModal, closeChangePasswordModal, handleChangePassword
+- **Auth functions NO migradas** (permanecen en inline): `initAuthListener`, `setupSession` — dependen de `loadAdminDashboard` y `setupStudentView` (Fase 4-5)
 - **Tests**: 35/35 pasan
 
 ---
