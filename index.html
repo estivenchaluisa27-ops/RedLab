@@ -116,15 +116,11 @@
         
     </style>
 
+    <script type="module" src="/src/main.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail, updatePassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, where, onSnapshot, updateDoc, doc, deleteDoc, serverTimestamp, writeBatch, getDocs, getDoc, setDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { escapeHtml, escapeAttr } from "./src/utils/escape.js";
-        import { getWeekDays, formatDateYYYYMMDD, isPastDate } from "./src/utils/dates.js";
-        import { buildCourseId } from "./src/courses/course-utils.js";
-
-        window.escapeAttr = escapeAttr;
 
         const firebaseConfig = { apiKey: "AIzaSyCR4Kk7kIBpSW3cF02b8zUHegvV4WQNuyI", authDomain: "lab-redes-turnos.firebaseapp.com", projectId: "lab-redes-turnos", storageBucket: "lab-redes-turnos.firebasestorage.app", messagingSenderId: "592544790067", appId: "1:592544790067:web:00bde37b50d3edf9f59546" };
 
@@ -137,23 +133,6 @@
         };
         let unsubscribeReservations = null; 
         let unsubscribePending = null;
-
-
-        // MAGIA: Sobrescribir alert() nativo por SweetAlert2
-        window.alert = function(message) {
-            // Si el mensaje contiene la palabra "error" o "lleno", muestra icono rojo
-            const isError = message.toLowerCase().includes("error") || message.toLowerCase().includes("lleno") || message.toLowerCase().includes("bloqueado");
-            
-            Swal.fire({
-                text: message,
-                icon: isError ? 'error' : 'info',
-                confirmButtonColor: '#004274', // Color azul UCE
-                confirmButtonText: 'Aceptar',
-                customClass: {
-                    popup: 'rounded-xl shadow-2xl border-t-4 border-[#004274]'
-                }
-            });
-        };
 
         window.addEventListener('DOMContentLoaded', () => {
             const app = initializeApp(firebaseConfig);

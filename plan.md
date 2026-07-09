@@ -530,20 +530,21 @@ document.addEventListener('click', (e) => {
 **Objetivo**: Infraestructura central modularizada.
 
 **Tareas**:
-- [ ] Crear `src/firebase-config.js` — inicialización (L119-127). Export `db`, `auth`, `RESERVATIONS_COLLECTION`
-- [ ] Crear `src/state.js` — `state` (L128-132 + **`professorsCache: {}` y `weeklyLimit: 4`**), `resetState` (L1028-1041) incluye reset de `weeklyLimit`, `clearListeners` (L169-172)
-- [ ] Crear `src/utils/notify.js` — export `alert()` wrapper SweetAlert2 + `showMessage()` (L1026)
-- [ ] Crear `src/utils/dom.js` — `el(id)`, `showHide(ids, showId)`, `toggleHidden(id)`, `showView(name)` (fusionado de L1022-1025, elimina `view-router.js`)
-- [ ] Crear `src/utils/swal-bootstrap.js` — importa SweetAlert2 global, expone `window.Swal` como puente temporal
-- [ ] Crear `src/main.js` — bootstrap: `DOMContentLoaded` (L162-167) → importa módulos, inicializa, pone `window.alert = notify.alert`
-- [ ] En `index.html`, reemplazar el `<script type="module">` inline por `<script type="module" src="/src/main.js"></script>`
-- [ ] **Eliminar** `src/view-router.js` del plan (se fusionó en `utils/dom.js`)
-- [ ] Verificar que la app funciona idéntico (login, vistas, modales)
+- [x] Crear `src/firebase-config.js` — inicialización (L119-127). Export `db`, `auth`, `RESERVATIONS_COLLECTION`
+- [x] Crear `src/state.js` — `state` (L128-132 + **`professorsCache: {}` y `weeklyLimit: 4`**), `resetState` (L1028-1041) incluye reset de `weeklyLimit`, `clearListeners` (L169-172)
+- [x] Crear `src/utils/notify.js` — export `alert()` wrapper SweetAlert2 + `showMessage()` (L1026)
+- [x] Crear `src/utils/dom.js` — `el(id)`, `showHide(ids, showId)`, `toggleHidden(id)`, `showView(name)` (fusionado de L1022-1025, elimina `view-router.js`)
+- [x] Crear `src/utils/swal-bootstrap.js` — importa SweetAlert2 global, expone `window.Swal` como puente temporal
+- [x] Crear `src/main.js` — bootstrap: `DOMContentLoaded` (L162-167) → importa módulos, inicializa, pone `window.alert = notify.alert`
+- [x] En `index.html`, añadir `<script type="module" src="/src/main.js"></script>` antes del script inline
+- [x] En `index.html`, eliminar imports de utilidades y alert override del script inline (main.js los provee)
+- [x] **Eliminar** `src/view-router.js` del plan (se fusionó en `utils/dom.js`)
+- [x] Verificar que la app funciona idéntico (login, vistas, modales)
 
 > [!WARNING]
 > **Atomic commit**: NO — Fase 2 es la migración más grande (reemplaza todo el script inline por import). Pero es el punto de no retorno mínimo: después de esta fase, el resto son extracciones de módulos desde `main.js`/`index.html`. Verificar exhaustivamente con `firebase serve` local.
 
-**Estado**: `⬜ Pendiente`
+**Estado**: `✅ Completada`
 
 ---
 
@@ -815,6 +816,13 @@ npm test  # → exit code 0
 - **`index.html` modificado**: imports añadidos (L123-125), `window.escapeAttr` (L127), funciones inline eliminadas (escapeHtml, getWeekDays, formatDateYYYYMMDD, isPastDate, buildCourseId)
 - **Tests**: 35/35 pasan (15 escape + 13 dates + 7 course-utils)
 - **Nota**: `buildCourseId` inline en `createCourse` reemplazado por llamada a función importada
+
+### Sesión 5 — Ejecución Fase 2 (09 jul 2026)
+- **Archivos creados**: `src/firebase-config.js`, `src/state.js`, `src/utils/notify.js`, `src/utils/swal-bootstrap.js`, `src/utils/dom.js`, `src/main.js`
+- **`index.html` modificado**: `<script type="module" src="/src/main.js"></script>` añadido antes del script inline; utility imports y alert override eliminados del script inline
+- **Script inline restante**: mantiene Firebase imports, config, state local, DOMContentLoaded init, clearListeners, initAuthListener — las funciones inline las necesitan como variables locales
+- **main.js expone globals**: `escapeHtml`, `escapeAttr`, `getWeekDays`, `formatDateYYYYMMDD`, `isPastDate`, `buildCourseId`, `showView`, `el`, `showHide`, `toggleHidden`, `RESERVATIONS_COLLECTION`, `_appState`, `_resetState`, `_clearListeners`
+- **Tests**: 35/35 pasan
 
 ---
 
