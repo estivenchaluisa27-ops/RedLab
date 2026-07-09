@@ -4,6 +4,7 @@
 import { collection, query, where, onSnapshot, getDocs, doc, updateDoc, deleteDoc, writeBatch, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { escapeHtml } from '../utils/escape.js';
 import { lookupMembersByGroupName } from '../groups/group-utils.js';
+import { updateAdminActionBox, updateStudentUI } from '../calendar/calendar.js';
 
 let _db = null;
 let _state = null;
@@ -26,7 +27,7 @@ export async function batchBlockAction(action) {
   });
   await batch.commit();
   _state.selectedSlots = [];
-  if (typeof window._updateAdminActionBox === 'function') window._updateAdminActionBox();
+  updateAdminActionBox();
 }
 
 export async function submitReservation() {
@@ -93,7 +94,7 @@ export async function submitReservation() {
 
     await batch.commit();
     _state.selectedSlots = [];
-    if (typeof window._updateStudentUI === 'function') window._updateStudentUI();
+    updateStudentUI();
 
     Swal.fire({
       icon: 'success',

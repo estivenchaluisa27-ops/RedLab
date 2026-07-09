@@ -118,11 +118,14 @@ service cloud.firestore {
     // ==============================
     match /reservations/{reservationId} {
 
-      // LECTURA: Admins todo, profesores de sus cursos, estudiantes todo (calendario)
+      // LECTURA: Admins todo, profesores de sus cursos, estudiantes solo su grupo + bloqueos
       allow read: if isSignedIn() && (
         isAdmin()
         || isProfessor()
-        || isStudent()
+        || (isStudent() && (
+          resource.data.status == 'blocked'
+          || resource.data.groupName == get(/databases/$(database)/documents/student_directory/$(request.auth.token.email)).data.groupName
+        ))
       );
 
       // CREACIÓN: Estudiantes autenticados con validación estricta (pending)

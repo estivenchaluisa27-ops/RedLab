@@ -74,7 +74,7 @@ function handleAdminClick(e, btn) {
   updateAdminActionBox();
 }
 
-function updateAdminActionBox() {
+export function updateAdminActionBox() {
   const box = document.getElementById('admin-action-box');
   const count = document.getElementById('admin-selection-count');
   if (state.selectedSlots.length > 0) {
@@ -295,7 +295,7 @@ function handleStudentClick(btn) {
   updateStudentUI();
 }
 
-function updateStudentUI() {
+export function updateStudentUI() {
   const b = document.getElementById('student-request-box');
   const txt = document.getElementById('student-request-count');
   const btn = document.getElementById('submit-request-btn');

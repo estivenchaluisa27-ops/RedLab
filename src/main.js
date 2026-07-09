@@ -42,7 +42,6 @@ window._clearListeners = clearListeners;
 window._setUnsubscribers = setUnsubscribers;
 
 window.handleLogout = () => handleLogout(() => { clearListeners(); clearCalendarListeners(); }, window._auth);
-window.togglePassword = togglePassword;
 window.openResetModal = openResetModal;
 window.closeResetModal = closeResetModal;
 window.sendResetLink = (e) => sendResetLink(e, window._auth);
