@@ -5,6 +5,7 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:ci": "vitest run --reporter=verbose",
     "build:css": "tailwindcss -i src/styles/tailwind-input.css -o styles.css --minify",
     "precommit": "npm run build:css && git add styles.css"
   },

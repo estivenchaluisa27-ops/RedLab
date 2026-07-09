@@ -125,11 +125,17 @@ service cloud.firestore {
         || isStudent()
       );
 
-      // CREACIÓN: Solo estudiantes autenticados con validación estricta
+      // CREACIÓN: Estudiantes autenticados con validación estricta (pending)
       allow create: if isSignedIn()
           && isStudent()
           && isValidReservationCreate()
           && request.resource.data.status == 'pending';
+
+      // CREACIÓN: Admin puede crear bloqueos manuales/recurrentes
+      allow create: if isAdmin()
+          && request.resource.data.keys().hasAll(['status','createdAt','date','hour'])
+          && request.resource.data.status == 'blocked'
+          && request.resource.data.userId == 'ADMIN';
 
       // ACTUALIZACIÓN: Solo admin/profesor puede cambiar status/attendanceDetail
       allow update: if isSignedIn() && (

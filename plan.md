@@ -1,8 +1,8 @@
 # RedLab — Plan de Refactorización: Monolito → Modular
 
 > **Documento vivo** — Actualizar después de cada sesión de trabajo.
-> Última actualización: **2026-07-09** (Fase 6 completada)
-> Estado global: **🟡 Phases 0-6 completadas, Phase 7 pendiente**
+> Última actualización: **2026-07-09** (Fase 7 completada)
+> Estado global: **✅ Fases 0-7 completadas — refactor monolito→modular finalizado**
 
 ---
 
@@ -868,6 +868,14 @@ npm test  # → exit code 0
   - Tailwind CDN eliminado ✅
   - `styles.css` reconstruido (317ms) ✅
   - `innerHTML` no sanitizado: 0 matches (todos usan escapeHtml/escapeAttr o datos seguros) ✅
+
+### Sesión 10 — Ejecución Fase 7 (ciérre del refactor) (09 jul 2026)
+- **firestore.rules corregidas**: Añadida regla `allow create: if isAdmin() && status=='blocked' && userId=='ADMIN'` para bloqueos manuales/recurrentes (PRERREQUISITO BLOQUEANTE de Fase 0)
+- **CI workflow creado**: `.github/workflows/firebase-hosting-github.yml` con setup-node v20, `npm ci && npm test`, `npm run build:css && git diff --exit-code styles.css`, deploy condicional con `if: success()`
+- **package.json**: Añadido script `test:ci` (`vitest run --reporter=verbose`)
+- **Merge**: `refactor/modular` → `master` completado (fast-forward, 6 commits)
+- **Tests finales**: **58/58 pasan** ✅
+- **Estado**: **Fase 7 completa — refactor monolito→modular finalizado** 🟢
 
 ---
 
