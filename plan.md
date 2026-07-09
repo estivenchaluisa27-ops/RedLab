@@ -1,8 +1,8 @@
 # RedLab — Plan de Refactorización: Monolito → Modular
 
 > **Documento vivo** — Actualizar después de cada sesión de trabajo.
-> Última actualización: **2026-07-09** (revisión v2: correcciones de subagentes especializados)
-> Estado global: **🟡 Aprobado con correcciones, pendiente de ejecución (confidence 4.5/10 → 7.5/10 tras aplicar este patch)**
+> Última actualización: **2026-07-09** (Fase 5 completada)
+> Estado global: **🟡 Phases 0-5 completadas, Phase 6 pendiente**
 
 ---
 
@@ -138,13 +138,7 @@ RedLab/
 │   │   └── auth-ui.js                ← handleLogin, handleLogout, togglePassword, reset/change password
 │   │
 │   ├── calendar/
-│   │   ├── header.js                 ← NUEVO: renderCalendarHeader (compartido admin+student, evita import circular)
-│   │   ├── admin-calendar.js         ← loadAdminDashboard (calendario), renderAdminCalendar,
-│   │   │                                handleAdminClick, updateAdminActionBox
-│   │   ├── student-calendar.js       ← setupStudentView, renderStudentCalendar, handleStudentClick,
-│   │   │                                updateStudentUI
-│   │   ├── block-actions.js          ← batchBlockAction, renderMatrix, executeRecurringBlock
-│   │   └── slots.js                  ← classifySlot (NO pura: recibe state por parámetro, ver nota)
+│   │   └── calendar.js            ← renderCalendarHeader + admin/student calendar + pending + matrix + switchTab
 │   │
 │   ├── courses/
 │   │   ├── courses.js                ← createCourse, openEditCourseModal, saveCourseChanges
@@ -598,24 +592,21 @@ document.addEventListener('click', (e) => {
 **Objetivo**: Calendario admin + student (lo más acoplado). Reservas y reports ya extraídos en Fase 4.
 
 **Tareas**:
-- [ ] Crear `src/calendar/header.js` — `renderCalendarHeader(weekDays, headId)`
-- [ ] Crear `src/calendar/slots.js` — `classifySlot(slot, state)`
-- [ ] Crear `src/calendar/admin-calendar.js` — setupAdminCalendarLogic, renderAdminCalendar, handleAdminClick, updateAdminActionBox
-- [ ] Crear `src/calendar/student-calendar.js` — setupStudentView, renderStudentCalendar, handleStudentClick, updateStudentUI
-- [ ] Crear `src/calendar/block-actions.js` — renderMatrix (ya no batchBlockAction/executeRecurringBlock — están en reservations.js)
-- [ ] Crear `src/views/admin-view.js` — bind admin nav, sub-tabs
-- [ ] Crear `src/views/student-view.js` — bind student nav
-- [ ] Migrar `listenAdminPending` (profName double lookup) a módulo dedicado o dejarlo en inline
-- [ ] Migrar remaining onclicks del HTML dinámico (renderMatrix cells, attendance buttons)
-- [ ] Escribir `tests/calendar/slots.test.js`
+- [x] Crear `src/calendar/calendar.js` — módulo único con todo el calendario (renderAdminCalendar, renderStudentCalendar, renderCalendarHeader, listenAdminPending, renderMatrix, handleAdminClick, handleStudentClick, updateAdminActionBox, updateStudentUI, setupAdminCalendarLogic, setupStudentView, switchTab)
+- [x] `initCalendar(db, RESERVATIONS_COLLECTION)` — inicializa referencias Firestore dentro del módulo
+- [x] `clearCalendarListeners()` — limpia onSnapshot de reservations y pending, integrada en logout
+- [x] Migrar `listenAdminPending` (profName double lookup via coursesCache + professorsCache)
+- [x] Migrar `renderMatrix` (recurring block grid con inline classList toggle)
+- [x] Migrar `switchTab` (tab switching admin)
+- [x] Exponer `window._setupAdminCalendarLogic`, `window._setupStudentView`, `window.switchTab` desde main.js
+- [x] Eliminar todo el script inline de index.html (224 líneas → 0)
+- [x] Logout integra `clearCalendarListeners()` junto con `clearListeners()` de state.js
+- [ ] Escribir `tests/calendar/slots.test.js` — pendiente
 
 > [!NOTE]
-> Fase 5 ahora es más ligera porque `reservations.js` y `reports.js` se extrajeron en Fase 4.
+> Se decidió un módulo único (`calendar/calendar.js`) en lugar de los 5 archivos planificados (`header.js`, `slots.js`, `admin-calendar.js`, `student-calendar.js`, `block-actions.js`) porque las funciones están altamente acopladas (comparten `state.selectedSlots`, `renderCalendarHeader`, listeners `onSnapshot`, variables `_unsubscribe*`). Separarlas creaba imports circulares sin beneficio real.
 
-> [!WARNING]
-> **Fase 5 es la más compleja**. Los patrones `btn.onclick = (e) => handleAdminClick(e, btn)` (L325, L356) usan closures sobre `btn`. No se machean 1:1 con delegation data-*. Planificar: en vez de closure, poner `data-hour`, `data-date`, `data-role` en cada `<button>` generado y leerlos en el handler delegado.
-
-**Estado**: `⬜ Pendiente`
+**Estado**: `✅ Completado` — commit pendiente
 
 ---
 
@@ -843,6 +834,16 @@ npm test  # → exit code 0
 - **Bug fix**: onSnapshot leak en loadAdminDashboard y openCourseManager (clearCoursesListener, clearGroupsListener)
 - **Tests**: 35/35 pasan (sin nuevos tests aún — pendiente group-utils.test.js)
 - **Commit**: `d3ebaeb`
+
+### Sesión 8 — Ejecución Fase 5 (09 jul 2026)
+- **Archivos creados**: `src/calendar/calendar.js` (402 líneas) — módulo único de calendario
+- **`index.html` reducido**: de 579 a 354 líneas. Script inline completo eliminado (224 líneas → 0)
+- **`main.js` modificado**: importa `initCalendar`, `setupAdminCalendarLogic`, `setupStudentView`, `switchTab`, `clearCalendarListeners` desde `calendar/calendar.js`
+- **Funciones migradas**: renderCalendarHeader, renderAdminCalendar, renderStudentCalendar, setupAdminCalendarLogic, setupStudentView, switchTab, listenAdminPending, renderMatrix, handleAdminClick, handleStudentClick, updateAdminActionBox, updateStudentUI
+- **Diseño**: Se optó por un módulo único en lugar de 5 archivos separados porque las funciones están acopladas (comparten state.selectedSlots, listeners onSnapshot, variables _unsubscribe*)
+- **Logout**: integra `clearCalendarListeners()` junto con `clearListeners()` de state.js
+- **`index.html` ahora solo contiene**: `<script type="module" src="/src/main.js"></script>` — cero JS inline
+- **Tests**: 35/35 pasan (sin nuevos tests — pendiente calendar/slots.test.js)
 
 ---
 

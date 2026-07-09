@@ -19,6 +19,7 @@ import { initGroups, openCourseManager, addGroup, deleteGroup } from './groups/g
 import { initGroupDetails, openGroupDetails, saveGroupBasicInfo, saveLeaderInfo, enableMemberEdit, cancelMemberEdit, saveMemberChange, deleteMember, addNewMember } from './groups/group-details.js';
 import { initReservations, batchBlockAction, submitReservation, admAct, rejectReq, deleteReservation, openAttendanceModal, setAttendance, executeRecurringBlock } from './reservations/reservations.js';
 import { initReports, openReportModal, executeReport } from './reports/reports.js';
+import { initCalendar, setupAdminCalendarLogic, setupStudentView, switchTab, clearCalendarListeners } from './calendar/calendar.js';
 
 window._nativeAlert = window.alert;
 window.alert = notifyAlert;
@@ -40,7 +41,7 @@ window._resetState = resetState;
 window._clearListeners = clearListeners;
 window._setUnsubscribers = setUnsubscribers;
 
-window.handleLogout = () => handleLogout(clearListeners, window._auth);
+window.handleLogout = () => handleLogout(() => { clearListeners(); clearCalendarListeners(); }, window._auth);
 window.togglePassword = togglePassword;
 window.openResetModal = openResetModal;
 window.closeResetModal = closeResetModal;
@@ -79,6 +80,10 @@ window.executeRecurringBlock = executeRecurringBlock;
 window.openReportModal = openReportModal;
 window.executeReport = executeReport;
 
+window.switchTab = switchTab;
+window._setupAdminCalendarLogic = setupAdminCalendarLogic;
+window._setupStudentView = setupStudentView;
+
 document.addEventListener('DOMContentLoaded', () => {
   const { db, auth } = initFirebase();
   window._db = db;
@@ -90,6 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initGroupDetails(db, state);
   initReservations(db, state, RESERVATIONS_COLLECTION);
   initReports(db, state);
+  initCalendar(db, RESERVATIONS_COLLECTION);
 
   bindLoginView(auth);
 
