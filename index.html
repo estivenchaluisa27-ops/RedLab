@@ -118,156 +118,19 @@
 
     <script type="module" src="/src/main.js"></script>
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail, updatePassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, where, onSnapshot, updateDoc, doc, deleteDoc, serverTimestamp, writeBatch, getDocs, getDoc, setDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { collection, query, where, onSnapshot, getDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { state, clearListeners as _clearListeners } from '/src/state.js';
 
-        const firebaseConfig = { apiKey: "AIzaSyCR4Kk7kIBpSW3cF02b8zUHegvV4WQNuyI", authDomain: "lab-redes-turnos.firebaseapp.com", projectId: "lab-redes-turnos", storageBucket: "lab-redes-turnos.firebasestorage.app", messagingSenderId: "592544790067", appId: "1:592544790067:web:00bde37b50d3edf9f59546" };
-
-        const RESERVATIONS_COLLECTION = "reservations";
-        let db, auth;
-        let state = {
-            user: null, role: null, courseId: null, groupId: null, groupName: null, 
-            currentViewCourse: null, weekOffset: 0, selectedSlots: [], 
-            coursesCache: {} // Caché para evitar lecturas repetidas de nombres de cursos/profes
-        };
-        let unsubscribeReservations = null; 
+        let unsubscribeReservations = null;
         let unsubscribePending = null;
 
-        window.addEventListener('DOMContentLoaded', () => {
-            const app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
-            initAuthListener();
-        });
-
         function clearListeners() {
+            _clearListeners();
             if (unsubscribeReservations) { unsubscribeReservations(); unsubscribeReservations = null; }
             if (unsubscribePending) { unsubscribePending(); unsubscribePending = null; }
         }
 
-       function initAuthListener() {
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    state.user = user;
-                    try {
-                        // OPTIMIZACIÓN 1: Buscar en las 3 colecciones de roles AL MISMO TIEMPO
-                        const [adminSnap, profSnap, studentSnap] = await Promise.all([
-                            getDoc(doc(db, "admins", user.email)),
-                            getDoc(doc(db, "professors", user.email)),
-                            getDoc(doc(db, "student_directory", user.email))
-                        ]);
-
-                        if (adminSnap.exists()) { setupSession('admin', adminSnap.data(), null); return; }
-                        if (profSnap.exists()) { setupSession('professor', profSnap.data(), null); return; }
-                        if (studentSnap.exists()) { setupSession('student', null, studentSnap.data()); return; }
-                        
-                        alert("Usuario no registrado."); await signOut(auth);
-                    } catch (error) {
-                        console.error(error);
-                        alert("Error de conexión al verificar tu perfil.");
-                        await signOut(auth);
-                    }
-                } else {
-                    resetState(); showView('login');
-                    const btn = document.getElementById('login-submit-btn');
-                    if(btn) { btn.disabled = false; btn.innerHTML = 'INGRESAR'; }
-                }
-            });
-        }
-
-        async function setupSession(role, userData, studentData) {
-            state.role = role;
-            const headerEl = role === 'student' ? 'student-header-user-info' : 'admin-header-user-info';
-            const nameEl = document.getElementById(headerEl);
-
-            if (role === 'admin' || role === 'professor') {
-                showView('admin');
-                if (nameEl) nameEl.innerHTML = `<span class="font-bold">${escapeHtml(userData.name)}</span><span class="ml-2 text-xs bg-yellow-500 text-black px-2 rounded">${role.toUpperCase()}</span>`;
-                loadAdminDashboard();
-            } else if (role === 'student') {
-                state.courseId = studentData.courseId;
-                state.groupId = studentData.groupId;
-                
-                try {
-                    // OPTIMIZACIÓN 2: Buscar Curso y Grupo AL MISMO TIEMPO
-                    const [courseDoc, groupDoc] = await Promise.all([
-                        getDoc(doc(db, "courses", state.courseId)),
-                        getDoc(doc(db, "courses", state.courseId, "groups", state.groupId))
-                    ]);
-                    
-                    if (courseDoc.exists() && groupDoc.exists()) {
-                        const cData = courseDoc.data();
-                        const gData = groupDoc.data();
-                        
-                        state.groupName = gData.name;
-                        state.weeklyLimit = cData.weeklyLimit || 4; 
-                        
-                        if (nameEl) nameEl.innerHTML = `<div class="text-right leading-tight"><div class="font-bold text-white text-sm">${escapeHtml(gData.name)}</div><div class="text-xs text-blue-200">${escapeHtml(state.user.email)}</div><span class="course-badge mt-1">${escapeHtml(cData.subject)} (${escapeHtml(cData.parallel)})</span></div><div class="ml-3 bg-white/10 p-2 rounded-full"><i class="fas fa-user text-white"></i></div>`;
-                        showView('student');
-                        setupStudentView();
-                    } 
-                } catch(error) {
-                    console.error("Error cargando perfil:", error);
-                }
-            }  
-        }
-
-
-        function loadAdminDashboard() {
-            window.switchTab('calendar');
-            const q = state.role === 'admin' ? query(collection(db, "courses")) : query(collection(db, "courses"), where("professorEmail", "==", state.user.email));
-            
-            onSnapshot(q, (snap) => {
-                const grid = document.getElementById('courses-grid');
-                grid.innerHTML = '';
-                snap.forEach(d => {
-                    const c = d.data();
-                    state.coursesCache[d.id] = c; 
-                    
-                    // CAMBIO AQUÍ: Agregamos c.weeklyLimit al onclick
-                    grid.innerHTML += `
-                        <div class="bg-white p-5 rounded-lg shadow border-l-4 border-[#004274] hover:shadow-lg transition relative group">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <h3 class="font-bold text-lg text-slate-800">${escapeHtml(c.subject)}</h3>
-                                    <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded font-bold">${escapeHtml(c.parallel)}</span>
-                                </div>
-                                <button onclick="window.openEditCourseModal('${d.id}')" class="text-slate-400 hover:text-blue-600 p-1 bg-slate-50 rounded border border-transparent hover:border-blue-200 transition" title="Editar Curso Completo">
-                                    <i class="fas fa-pencil-alt"></i>
-                                </button>
-                            </div>
-                            <p class="text-sm text-slate-500 mt-1">${escapeHtml(c.career)}</p>
-                            <div class="mt-3 flex justify-between items-center text-xs text-slate-400 border-t pt-2">
-                                <span><i class="fas fa-user mr-1"></i>${escapeHtml(c.professorEmail)}</span>
-                                <span class="font-bold text-slate-600"><i class="fas fa-clock mr-1"></i>${c.weeklyLimit}h/sem</span>
-                            </div>
-                            <div class="mt-2 text-center">
-                                <button onclick="window.openCourseManager('${d.id}')" class="text-[#004274] font-bold hover:underline text-xs w-full py-1 bg-slate-50 rounded">Gestionar Grupos <i class="fas fa-arrow-right ml-1"></i></button>
-                            </div>
-                        </div>`;
-                });
-            });
-
-            if (state.role === 'admin') {
-                getDocs(collection(db, "professors")).then(snap => {
-                    const sel = document.getElementById('c-professor');
-                    sel.innerHTML = '<option value="">Seleccione Profesor...</option>';
-                    snap.forEach(d => { sel.innerHTML += `<option value="${d.id}">${escapeHtml(d.data().name)}</option>`; });
-                });
-            }
-            setupAdminCalendarLogic();
-        }
-
-        function setupAdminCalendarLogic() {
-            clearListeners();
-            const update = () => { const w = getWeekDays(state.weekOffset); renderAdminCalendar(w); };
-            document.getElementById('admin-prev-week').onclick = () => { state.weekOffset--; state.selectedSlots=[]; update(); updateAdminActionBox(); };
-            document.getElementById('admin-next-week').onclick = () => { state.weekOffset++; state.selectedSlots=[]; update(); updateAdminActionBox(); };
-            document.getElementById('admin-block-btn').onclick = () => batchBlockAction('block');
-            document.getElementById('admin-unblock-btn').onclick = () => batchBlockAction('unblock');
-            renderMatrix(); update(); listenAdminPending();
-        }
+        function renderCalendarHeader(weekDays, headId) { const thead = document.getElementById(headId); if(!thead) return; thead.innerHTML = ''; const hr = document.createElement('tr'); const thHora = document.createElement('th'); thHora.innerHTML = '<i class="far fa-clock text-slate-400 mr-2"></i>HORARIO'; thHora.className = 'text-center bg-slate-100 w-24'; hr.appendChild(thHora); weekDays.forEach(d => { const th = document.createElement('th'); th.innerHTML = `<div class="flex flex-col leading-tight"><span class="text-lg font-bold text-slate-700">${d.toLocaleDateString('es-ES', {weekday:'long'})} ${d.getDate()}</span><span class="text-xs text-slate-500 font-medium uppercase mt-1">${d.toLocaleDateString('es-ES', {month:'long'})}</span></div>`; hr.appendChild(th); }); thead.appendChild(hr); }
 
         function renderAdminCalendar(weekDays) {
             renderCalendarHeader(weekDays, 'admin-calendar-head');
@@ -281,7 +144,7 @@
                 }); tbody.appendChild(tr);
             }
             if(unsubscribeReservations) unsubscribeReservations();
-            unsubscribeReservations = onSnapshot(query(collection(db, RESERVATIONS_COLLECTION), where("date",">=",formatDateYYYYMMDD(weekDays[0])), where("date","<=",formatDateYYYYMMDD(weekDays[4]))), (s)=>{
+            unsubscribeReservations = onSnapshot(query(collection(window._db, RESERVATIONS_COLLECTION), where("date",">=",formatDateYYYYMMDD(weekDays[0])), where("date","<=",formatDateYYYYMMDD(weekDays[4]))), (s)=>{
                 slotMap.forEach((b, k) => {
                     const [dStr, hStr] = k.split('_'); b.disabled=false; const container=b.parentElement; const oldInfo=container.querySelector('.info-btn'); if(oldInfo) oldInfo.remove();
                     if (isPastDate(dStr, parseInt(hStr))) { b.className = 'slot slot-past opacity-60'; b.innerHTML = '<span class="text-xs">Cerrado</span>'; b.dataset.status='past'; } 
@@ -296,7 +159,6 @@
 
                     if (approved > 0 || pending > 0 || (blocked && arr.length > 1)) {
                         const infoBtn = document.createElement('div'); infoBtn.className = 'info-btn'; infoBtn.innerHTML = '<i class="fas fa-eye"></i>';
-                        // PASAMOS courseId para poder recuperar los miembros en el modal
                         infoBtn.onclick = (e) => { e.stopPropagation(); window.openAttendanceModal(k.split('_')[0], k.split('_')[1], arr); }; 
                         container.appendChild(infoBtn);
                     }
@@ -311,6 +173,16 @@
                 });
             });
         }
+
+        window._setupAdminCalendarLogic = function() {
+            clearListeners();
+            const update = () => { const w = getWeekDays(state.weekOffset); renderAdminCalendar(w); };
+            document.getElementById('admin-prev-week').onclick = () => { state.weekOffset--; state.selectedSlots=[]; update(); updateAdminActionBox(); };
+            document.getElementById('admin-next-week').onclick = () => { state.weekOffset++; state.selectedSlots=[]; update(); updateAdminActionBox(); };
+            document.getElementById('admin-block-btn').onclick = () => window.batchBlockAction('block');
+            document.getElementById('admin-unblock-btn').onclick = () => window.batchBlockAction('unblock');
+            renderMatrix(); update(); listenAdminPending();
+        };
 
         function setupStudentView() {
             clearListeners();
@@ -332,7 +204,7 @@
                 }); tbody.appendChild(tr);
             }
             if(unsubscribeReservations) unsubscribeReservations();
-            unsubscribeReservations = onSnapshot(query(collection(db,RESERVATIONS_COLLECTION), where("date",">=",formatDateYYYYMMDD(weekDays[0])), where("date","<=",formatDateYYYYMMDD(weekDays[4]))), (s)=>{
+            unsubscribeReservations = onSnapshot(query(collection(window._db,RESERVATIONS_COLLECTION), where("date",">=",formatDateYYYYMMDD(weekDays[0])), where("date","<=",formatDateYYYYMMDD(weekDays[4]))), (s)=>{
                 map.forEach((b, k) => {
                     const [dStr, hStr] = k.split('_');
                     if (isPastDate(dStr, parseInt(hStr))) { b.className = 'slot slot-past opacity-50'; b.innerHTML = '<span class="text-xs">No Disp.</span>'; b.dataset.status = 'past'; b.disabled = true; }
@@ -353,294 +225,6 @@
                 updateStudentUI();
             });
         }
-
-
-        window.switchTab = (tab) => {
-            document.getElementById('tab-calendar').classList.add('hidden');
-            document.getElementById('tab-courses').classList.add('hidden');
-            document.getElementById('tab-btn-cal').classList.remove('border-[#004274]', 'text-[#004274]');
-            document.getElementById('tab-btn-cou').classList.remove('border-[#004274]', 'text-[#004274]');
-            document.getElementById(`tab-${tab}`).classList.remove('hidden');
-            const btn = tab === 'calendar' ? 'tab-btn-cal' : 'tab-btn-cou';
-            document.getElementById(btn).classList.add('border-[#004274]', 'text-[#004274]');
-        };
-
-        window.openCreateCourseModal = () => document.getElementById('modal-course').classList.remove('hidden');
-
-        // REEMPLAZA TU FUNCIÓN createCourse POR ESTA COMPLETA
-        window.createCourse = async (e) => {
-            e.preventDefault();
-            
-            // 1. Obtener valores
-            const subjectVal = document.getElementById('c-subject').value;
-            const parallelVal = document.getElementById('c-parallel').value;
-            
-            // DIAGNÓSTICO 1: Verificar que el paralelo no esté vacío
-            if (!subjectVal || !parallelVal) {
-                return alert("Error: La Materia o el Paralelo están vacíos.");
-            }
-
-            const subject = subjectVal.trim();
-            const career = document.getElementById('c-career').value.trim();
-            const parallel = parallelVal.trim();
-            const limit = parseInt(document.getElementById('c-limit').value);
-            const professor = document.getElementById('c-professor').value;
-
-            // 2. CONSTRUCCIÓN DEL ID (Materia + Paralelo)
-            const customId = buildCourseId(subject, parallel);
-
-            // DIAGNÓSTICO 2: ALERTA DE SEGURIDAD
-            // Si ves esta alerta, el código está funcionando bien.
-            if(!confirm(`¿Confirmar creación?\n\nEl ID en base de datos será: "${customId}"`)) {
-                return; // Cancelar si el usuario dice que no
-            }
-
-            try {
-                // 3. ERROR COMÚN AQUÍ:
-                // NO USAR: await addDoc(collection(db, "courses"), ...)  <-- ESTO GENERA IDs ALEATORIOS
-                // USAR ESTO:
-                await setDoc(doc(db, "courses", customId), {
-                    subject: subject,
-                    career: career,
-                    parallel: parallel,
-                    weeklyLimit: limit,
-                    professorEmail: professor,
-                    createdAt: serverTimestamp()
-                });
-
-                alert(`¡Éxito! Curso creado: ${customId}`);
-                document.getElementById('modal-course').classList.add('hidden');
-                e.target.reset();
-            } catch(err) { 
-                console.error(err);
-                alert("Error crítico: " + err.message); 
-            }
-        };
-
-
-        // 1. ABRIR MODAL Y CARGAR DATOS
-        window.openEditCourseModal = async (courseId) => {
-            try {
-                // Guardar ID para saber qué editamos
-                document.getElementById('edit-course-id').value = courseId;
-
-                // Buscar datos (Caché o DB)
-                let courseData = state.coursesCache[courseId];
-                if (!courseData) {
-                    const docSnap = await getDoc(doc(db, "courses", courseId));
-                    if (!docSnap.exists()) return alert("El curso no existe.");
-                    courseData = docSnap.data();
-                }
-
-                // Llenar Inputs
-                document.getElementById('e-subject').value = courseData.subject;
-                document.getElementById('e-parallel').value = courseData.parallel;
-                document.getElementById('e-limit').value = courseData.weeklyLimit || 4;
-
-                // Cargar Profesores y seleccionar el actual
-                const profSelect = document.getElementById('e-professor');
-                profSelect.innerHTML = '<option value="">Cargando...</option>';
-                const profSnaps = await getDocs(collection(db, "professors"));
-                profSelect.innerHTML = ''; 
-                
-                profSnaps.forEach(p => {
-                    const pData = p.data();
-                    const isSelected = p.id === courseData.professorEmail ? 'selected' : '';
-                    profSelect.innerHTML += `<option value="${p.id}" ${isSelected}>${escapeHtml(pData.name)}</option>`;
-                });
-
-                document.getElementById('modal-edit-course').classList.remove('hidden');
-
-            } catch (e) { console.error(e); alert("Error: " + e.message); }
-        };
-
-        // 2. GUARDAR LOS CAMBIOS
-        window.saveCourseChanges = async (e) => {
-            e.preventDefault();
-            const courseId = document.getElementById('edit-course-id').value;
-            const newSubject = document.getElementById('e-subject').value;
-            const newParallel = document.getElementById('e-parallel').value;
-            const newLimit = parseInt(document.getElementById('e-limit').value);
-            const newProfEmail = document.getElementById('e-professor').value;
-
-            try {
-                await updateDoc(doc(db, "courses", courseId), {
-                    subject: newSubject,
-                    parallel: newParallel,
-                    weeklyLimit: newLimit,
-                    professorEmail: newProfEmail
-                });
-                
-                alert("Curso actualizado.");
-                document.getElementById('modal-edit-course').classList.add('hidden');
-                
-                // Actualizar caché visual
-                if(state.coursesCache[courseId]) {
-                    Object.assign(state.coursesCache[courseId], { subject: newSubject, parallel: newParallel, weeklyLimit: newLimit, professorEmail: newProfEmail });
-                }
-            } catch (err) { alert("Error al guardar: " + err.message); }
-        };
-
-        window.openCourseManager = (courseId) => {
-            state.currentViewCourse = courseId;
-            document.getElementById('modal-group-manage').classList.remove('hidden');
-            
-            // Listener en tiempo real
-            onSnapshot(collection(db, "courses", courseId, "groups"), (snap) => {
-                const tbody = document.getElementById('groups-table-body'); 
-                tbody.innerHTML = '';
-
-                // 1. Extraer los datos a un arreglo preservando la estructura exacta de Firebase
-                let groupsArray = [];
-                snap.forEach(d => {
-                    groupsArray.push({ id: d.id, data: d.data() });
-                });
-
-                // 2. Ordenar alfanuméricamente por el nombre del grupo (G1, G2, G10)
-                groupsArray.sort((a, b) => {
-                    const nameA = a.data.name || '';
-                    const nameB = b.data.name || '';
-                    return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' });
-                });
-                
-                // 3. Iterar sobre el arreglo ordenado sin tocar tu estructura HTML original
-                groupsArray.forEach(item => {
-                    const d = { id: item.id }; // Simulamos 'd.id' para no tocar el HTML
-                    const g = item.data;       // 'g' sigue siendo exactamente d.data()
-                    const membersCount = g.members ? g.members.length : 0;
-                    
-                    tbody.innerHTML += `
-                    <tr class="border-b last:border-0 hover:bg-slate-50 transition">
-                    
-                        <td class="py-3 pl-3">
-                            <button onclick="window.openGroupDetails('${d.id}')" class="font-bold text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-2 transition-colors">
-                                <span class="text-sm">${escapeHtml(g.name)}</span>
-                                <i class="fas fa-external-link-alt text-[11px] text-blue-400"></i>
-                            </button>
-                        </td>                    
-                        <td class="py-3 text-xs text-slate-600 font-medium">${escapeHtml(g.leader.email)}</td>
-                        <td class="py-3 text-sm text-slate-700 font-bold text-center">
-                            ${membersCount}
-                        </td>
-                        <td class="py-3 text-right pr-3 flex justify-end gap-2">
-                            <button onclick="window.deleteGroup('${d.id}')" class="text-red-400 hover:text-red-600 p-1 transition" title="Eliminar Grupo"><i class="fas fa-trash"></i></button>
-                        </td>
-                    </tr>`;
-                });
-            });
-        };
-
-        // IMPLEMENTACIÓN PUNTO 1: AGREGAR MIEMBROS ADICIONALES
-        window.addMemberToGroup = async (groupId) => {
-            const cedula = prompt("Ingrese Cédula del estudiante:");
-            if(!cedula) return;
-            const nombre = prompt("Ingrese Nombres Completos:");
-            if(!nombre) return;
-
-            try {
-                const groupRef = doc(db, "courses", state.currentViewCourse, "groups", groupId);
-                await updateDoc(groupRef, {
-                    members: arrayUnion({
-                        cedula: cedula,
-                        nombre: nombre,
-                        isLeader: false
-                    })
-                });
-                alert("Miembro agregado correctamente.");
-            } catch(e) { alert("Error: " + e.message); }
-        };
-
-        window.addGroup = async () => {
-            // 1. Obtener valores y limpiar espacios
-            const name = document.getElementById('new-group-name').value.trim();
-            const emailRaw = document.getElementById('new-group-leader').value;
-            const cedula = document.getElementById('new-group-cedula').value.trim();
-            const fullName = document.getElementById('new-group-fullname').value.trim();
-
-            if(!name || !emailRaw || !cedula || !fullName) {
-                return Swal.fire({ icon: 'warning', text: 'Complete todos los campos.', confirmButtonColor: '#004274' });
-            }
-
-            // 2. REGLA DE ORO PARA EL LOGIN: Forzar minúsculas y quitar espacios
-            const email = emailRaw.toLowerCase().trim();
-
-            try {
-                const batch = writeBatch(db);
-
-                // A. Crear el Grupo en la subcolección del curso
-                const gRef = doc(db, "courses", state.currentViewCourse, "groups", email);
-                batch.set(gRef, { 
-                    name: name, 
-                    leader: { email, cedula, fullName }, 
-                    members: [{ cedula, nombre: fullName, isLeader: true }] 
-                });
-
-                // B. Crear el Pasaporte en el Directorio (Idéntico a tu captura de BD)
-                // Usamos el caché para obtener el nombre real de la materia
-                const courseName = state.coursesCache[state.currentViewCourse] ? state.coursesCache[state.currentViewCourse].subject : state.currentViewCourse;
-                
-                const dRef = doc(db, "student_directory", email);
-                batch.set(dRef, { 
-                    courseId: state.currentViewCourse, 
-                    courseName: courseName, // Campo extraído de tu imagen
-                    email: email,           // Campo extraído de tu imagen
-                    groupId: email,
-                    role: "student" 
-                });
-
-                // 3. Ejecutar todo
-                await batch.commit();
-
-                // 4. Limpiar Formulario
-                document.getElementById('new-group-name').value = ''; 
-                document.getElementById('new-group-leader').value = '';
-                document.getElementById('new-group-cedula').value = ''; 
-                document.getElementById('new-group-fullname').value = '';
-
-                // 5. Alerta de Éxito
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Grupo Creado',
-                    text: `El líder ${email} ya está registrado y puede ingresar al sistema.`,
-                    timer: 3000,
-                    showConfirmButton: false
-                });
-
-            } catch (error) {
-                Swal.fire({ icon: 'error', title: 'Error', text: error.message, confirmButtonColor: '#004274' });
-            }
-        };
-
-        window.deleteGroup = async (groupId) => {
-            const result = await Swal.fire({
-                title: '¿Estás seguro?',
-                text: "Se eliminará el grupo y el estudiante perderá el acceso al sistema.",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#dc2626', // Rojo Tailwind
-                cancelButtonColor: '#64748b', // Gris Tailwind
-                confirmButtonText: '<i class="fas fa-trash mr-2"></i> Eliminar',
-                cancelButtonText: 'Cancelar'
-            });
-
-            if (result.isConfirmed) {
-                try {
-                    await deleteDoc(doc(db, "courses", state.currentViewCourse, "groups", groupId));
-                    await deleteDoc(doc(db, "student_directory", groupId));
-                    Swal.fire({
-                        title: '¡Eliminado!',
-                        text: 'El grupo ha sido borrado correctamente.',
-                        icon: 'success',
-                        confirmButtonColor: '#004274'
-                    });
-                } catch(e) {
-                    alert("Error al eliminar: " + e.message);
-                }
-            }
-        };
-
-
-        function renderCalendarHeader(weekDays, headId) { const thead = document.getElementById(headId); if(!thead) return; thead.innerHTML = ''; const hr = document.createElement('tr'); const thHora = document.createElement('th'); thHora.innerHTML = '<i class="far fa-clock text-slate-400 mr-2"></i>HORARIO'; thHora.className = 'text-center bg-slate-100 w-24'; hr.appendChild(thHora); weekDays.forEach(d => { const th = document.createElement('th'); th.innerHTML = `<div class="flex flex-col leading-tight"><span class="text-lg font-bold text-slate-700">${d.toLocaleDateString('es-ES', {weekday:'long'})} ${d.getDate()}</span><span class="text-xs text-slate-500 font-medium uppercase mt-1">${d.toLocaleDateString('es-ES', {month:'long'})}</span></div>`; hr.appendChild(th); }); thead.appendChild(hr); }
 
         function handleAdminClick(e, btn) {
             if(state.selectedSlots.includes(btn.id)){ state.selectedSlots = state.selectedSlots.filter(x => x !== btn.id); btn.classList.remove('slot-selected'); } else { state.selectedSlots.push(btn.id); btn.classList.add('slot-selected'); }
@@ -670,129 +254,20 @@
         function updateAdminActionBox() { const box = document.getElementById('admin-action-box'); const count = document.getElementById('admin-selection-count'); if(state.selectedSlots.length > 0) { box.classList.remove('hidden'); count.innerText = `${state.selectedSlots.length} seleccionados`; } else { box.classList.add('hidden'); } }
         function updateStudentUI(){ const b=document.getElementById('student-request-box'); const txt=document.getElementById('student-request-count'); const btn=document.getElementById('submit-request-btn'); if (b && txt && btn) { if(state.selectedSlots.length > 0){ b.classList.remove('hidden'); txt.innerText = `${state.selectedSlots.length} hora(s)`; btn.disabled = false; } else { b.classList.add('hidden'); btn.disabled = true; } } }
 
-        window.batchBlockAction = async (action) => {
-            const batch = writeBatch(db);
-            state.selectedSlots.forEach(id => {
-                const [d, h] = id.split('_'); const blockId = `BLOCK_${d}_${h}`; const ref = doc(db, RESERVATIONS_COLLECTION, blockId);
-                if (action === 'block') batch.set(ref, { date: d, hour: parseInt(h), status: 'blocked', userId: 'ADMIN', createdAt: serverTimestamp() }); else batch.delete(ref);
-            });
-            await batch.commit(); state.selectedSlots = []; updateAdminActionBox();
+        window.switchTab = (tab) => {
+            document.getElementById('tab-calendar').classList.add('hidden');
+            document.getElementById('tab-courses').classList.add('hidden');
+            document.getElementById('tab-btn-cal').classList.remove('border-[#004274]', 'text-[#004274]');
+            document.getElementById('tab-btn-cou').classList.remove('border-[#004274]', 'text-[#004274]');
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            const btn = tab === 'calendar' ? 'tab-btn-cal' : 'tab-btn-cou';
+            document.getElementById(btn).classList.add('border-[#004274]', 'text-[#004274]');
         };
-
-        //ENVÍO CON VALIDACIÓN DE LÍMITE SEMANAL
-        window.submitReservation = async () => {
-            const btn = document.getElementById('submit-request-btn');
-            
-            // 1. VALIDACIÓN BÁSICA
-            if (state.selectedSlots.length === 0) return alert("Selecciona al menos una hora.");
-            
-            btn.disabled = true; 
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
-
-            try {
-                // 2. OBTENER LÍMITE DEL CURSO
-                const limit = state.weeklyLimit || 4; // Si falla, usa 4 por seguridad
-                const newSlotsCount = state.selectedSlots.length;
-
-                // 3. CALCULAR RANGO DE FECHAS DE LA SEMANA SELECCIONADA
-                // Tomamos la fecha del primer slot seleccionado para saber "en qué semana estamos"
-                const firstSlotDate = state.selectedSlots[0].split('_')[0]; // "2026-01-27"
-                const dateObj = new Date(firstSlotDate + "T12:00:00");
-                
-                // Calcular Lunes y Viernes de esa semana
-                const day = dateObj.getDay(); // 0 (Dom) - 6 (Sab)
-                const diffToMon = dateObj.getDate() - day + (day === 0 ? -6 : 1); // Ajuste al Lunes
-                const monday = new Date(dateObj.setDate(diffToMon));
-                const friday = new Date(dateObj.setDate(diffToMon + 4));
-                
-                const startStr = formatDateYYYYMMDD(monday);
-                const endStr = formatDateYYYYMMDD(friday);
-
-                // 4. CONTAR RESERVAS YA EXISTENTES EN ESA SEMANA (Pending + Approved)
-                const q = query(
-                    collection(db, RESERVATIONS_COLLECTION),
-                    where("courseId", "==", state.courseId),
-                    where("groupName", "==", state.groupName), // Busca solo para MI grupo
-                    where("date", ">=", startStr),
-                    where("date", "<=", endStr)
-                );
-
-                const snap = await getDocs(q);
-                let existingCount = 0;
-                
-                snap.forEach(doc => {
-                    const st = doc.data().status;
-                    // Contamos las aprobadas y las pendientes (ignora las rechazadas/bloqueadas)
-                    if (st === 'approved' || st === 'pending') {
-                        existingCount++;
-                    }
-                });
-
-                // 5. VERIFICACIÓN MATEMÁTICA
-                const total = existingCount + newSlotsCount;
-
-                if (total > limit) {
-                    const remaining = Math.max(0, limit - existingCount);
-                    alert(` LÍMITE EXCEDIDO\n\nEste curso permite máximo ${limit} horas por semana.\nYa tienes: ${existingCount} horas (agendadas o pendientes).\nIntentas pedir: ${newSlotsCount} horas.\n\nSolo puedes pedir: ${remaining} horas más esta semana.`);
-                    btn.disabled = false;
-                    btn.innerText = "Confirmar";
-                    return; // 🛑 AQUÍ DETENEMOS EL PROCESO
-                }
-
-                // 6. SI PASA LA VALIDACIÓN, GUARDAMOS
-                const batch = writeBatch(db);
-                state.selectedSlots.forEach(id => { 
-                    const [d,h] = id.split('_'); 
-                    const ref = doc(collection(db, RESERVATIONS_COLLECTION));
-                    batch.set(ref, {
-                        date: d, hour: parseInt(h), status: 'pending', userId: state.user.uid, 
-                        groupName: state.groupName, 
-                        courseId: state.courseId,   
-                        createdAt: serverTimestamp()
-                    }); 
-                });
-
-                await batch.commit(); 
-                state.selectedSlots = []; 
-                updateStudentUI(); 
-                
-                // NUEVO MODAL DE ÉXITO CON SWEETALERT (Limpio y sin fondo azul)
-                Swal.fire({
-                    icon: 'success',
-                    title: '¡Solicitud Enviada!',
-                    html: `
-                        <p class="text-sm text-slate-600 mb-4">Tu solicitud ha sido registrada correctamente.</p>
-                        <p class="text-sm font-bold text-slate-700">
-                            El turno será confirmado cuando un encargado del laboratorio acepte dicha solicitud.
-                        </p>
-                    `,
-                    confirmButtonColor: '#004274',
-                    confirmButtonText: 'ENTENDIDO',
-                    customClass: {
-                        popup: 'rounded-2xl shadow-2xl',
-                        confirmButton: 'w-full py-3 rounded-lg font-bold tracking-wider text-xs uppercase'
-                    }
-                });
-
-            } catch (error) { 
-                console.error(error); 
-                alert("Error al procesar solicitud: " + error.message); 
-            } finally { 
-                btn.disabled = false; 
-                btn.innerText = "Confirmar"; 
-            }
-        };
-        
-        document.getElementById('submit-request-btn').onclick = window.submitReservation;
-
-        // NOTIFICACIONES CON NOMBRE DE DOCENTE (DOBLE LOOKUP)        
-        // Inicializar caché de profesores en el estado si no existe
-        state.professorsCache = state.professorsCache || {};
 
         function listenAdminPending(){ 
             if(unsubscribePending) unsubscribePending();
             
-            unsubscribePending = onSnapshot(query(collection(db,RESERVATIONS_COLLECTION), where("status","==","pending")), async (s)=>{
+            unsubscribePending = onSnapshot(query(collection(window._db,RESERVATIONS_COLLECTION), where("status","==","pending")), async (s)=>{
                 const c = document.getElementById('admin-requests-list'); if(!c) return; c.innerHTML='';
                 
                 if(s.empty) { 
@@ -804,57 +279,42 @@
                 s.forEach(d => reqs.push({id: d.id, ...d.data()}));
                 reqs.sort((a,b) => (a.createdAt?.toMillis() || 0) - (b.createdAt?.toMillis() || 0));
 
-                // Procesar cada solicitud (Usamos for...of para poder usar await)
                 for(const r of reqs) {
                     let profName = "Cargando...";
                     let profEmail = null;
 
-                    // PASO 1: OBTENER EMAIL DEL PROFESOR (Del Curso)
                     if(r.courseId) {
-                         // A. Buscar curso en caché
                          if(state.coursesCache[r.courseId]) {
                              profEmail = state.coursesCache[r.courseId].professorEmail;
                          } else {
-                             // B. Buscar curso en DB si no está en caché
                              try {
-                                // ... dentro del try { ...
-
-                            const cSnap = await getDoc(doc(db, "courses", r.courseId));
-
+                            const cSnap = await getDoc(doc(window._db, "courses", r.courseId));
                             if(cSnap.exists()) {
-                                // CASO NORMAL: El curso existe
                                 state.coursesCache[r.courseId] = cSnap.data();
                                 profEmail = cSnap.data().professorEmail;
                             } else {
-                                // ✅ CORRECCIÓN: Si el curso G3 fue borrado, avisamos para quitar el "Cargando..."
                                 profName = "Curso Eliminado / Datos Antiguos";
                             }
-                            // ... fin del try
                              } catch(e) { console.error("Error curso", e); }
                          }
                     }
 
-                    // PASO 2: OBTENER NOMBRE REAL (Del Profesor)
                     if (profEmail) {
-                        // A. Buscar nombre en caché de profesores
                         if (state.professorsCache[profEmail]) {
                             profName = state.professorsCache[profEmail];
                         } else {
-                            // B. Buscar nombre en DB
                             try {
-                                const pSnap = await getDoc(doc(db, "professors", profEmail));
+                                const pSnap = await getDoc(doc(window._db, "professors", profEmail));
                                 if (pSnap.exists()) {
-                                    profName = pSnap.data().name; // ¡AQUÍ ESTÁ EL NOMBRE REAL!
+                                    profName = pSnap.data().name;
                                 } else {
-                                    profName = profEmail; // Si no existe el perfil, mostramos el email
+                                    profName = profEmail;
                                 }
-                                // Guardar en caché para la próxima
                                 state.professorsCache[profEmail] = profName;
                             } catch (e) { console.error("Error profe", e); }
                         }
                     }
 
-                    // RENDERIZAR LA TARJETA
                     const el=document.createElement('div'); 
                     el.className='bg-white p-3 rounded-lg shadow-sm border border-slate-200 mb-2 flex justify-between items-center fade-in';
                     el.innerHTML=`
@@ -866,518 +326,21 @@
                         </div>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="window.admAct('${r.id}',true,'${escapeHtml(r.date)}',${r.hour},'${r.groupName}')" class="w-8 h-8 flex items-center justify-center rounded-full bg-green-50 text-green-600 hover:bg-green-100 border border-green-200 transition"><i class="fas fa-check"></i></button>
-                        <button onclick="window.rejectReq('${r.id}')" class="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 transition"><i class="fas fa-times"></i></button>
+                        <button data-action="adm-act" data-id="${r.id}" data-app="true" data-date="${escapeAttr(r.date)}" data-hour="${r.hour}" data-group="${escapeAttr(r.groupName)}" class="w-8 h-8 flex items-center justify-center rounded-full bg-green-50 text-green-600 hover:bg-green-100 border border-green-200 transition"><i class="fas fa-check"></i></button>
+                        <button data-action="reject-req" data-id="${r.id}" class="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 transition"><i class="fas fa-times"></i></button>
                     </div>`;
                     c.appendChild(el);
                 }
             }); 
         }
 
-        window.admAct = async(id,app,d,h,gn) => {
-            const s = await getDocs(query(collection(db,RESERVATIONS_COLLECTION),where("date","==",d),where("hour","==",h),where("status","in",["approved","blocked"])));
-            if(s.docs.find(x=>x.data().status==='blocked')) return alert("Horario bloqueado.");
-            const uniqueApproved = new Set(s.docs.filter(doc => doc.data().status === 'approved').map(doc => doc.data().groupName)).size;
-            if(uniqueApproved >= 4) return alert("Horario lleno.");
-            updateDoc(doc(db,RESERVATIONS_COLLECTION,id),{status:'approved'});
-        };
-
-        window.rejectReq = async(id) => { 
-            const result = await Swal.fire({
-                title: '¿Rechazar solicitud?',
-                text: "El grupo perderá este turno y se liberará el horario.",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#dc2626',
-                cancelButtonColor: '#64748b',
-                confirmButtonText: '<i class="fas fa-times mr-1"></i> Sí, rechazar',
-                cancelButtonText: 'Cancelar'
-            });
-            if (result.isConfirmed) {
-                await deleteDoc(doc(db, RESERVATIONS_COLLECTION, id));
-            }
-        };
-        window.deleteReservation = async (id) => { try { await deleteDoc(doc(db, RESERVATIONS_COLLECTION, id)); document.getElementById('attendance-modal').classList.add('hidden'); } catch (e) { alert("Error eliminando"); } };
-
-        // IMPLEMENTACIÓN PUNTO 1 (ASISTENCIA): RECUPERAR MIEMBROS REALES
-        window.openAttendanceModal = async (date, hour, reservations) => {
-            const modal = document.getElementById('attendance-modal'); 
-            document.getElementById('att-title').innerText = `Gestión: ${date} - ${hour}:00`;
-            const list = document.getElementById('att-list'); 
-            list.innerHTML = '<div class="p-8 text-center text-slate-500"><i class="fas fa-spinner fa-spin text-3xl mb-2"></i><br>Cargando integrantes...</div>';
-            modal.classList.remove('hidden');
-            
-            const approved = reservations.filter(r => r.status === 'approved');
-            // Agrupar por nombre de grupo para no duplicar cabeceras
-            const grouped = {}; 
-            approved.forEach(r => { if(!grouped[r.groupName]) grouped[r.groupName] = r; });
-            
-            list.innerHTML = ''; 
-            for (const groupName in grouped) {
-                const res = grouped[groupName]; 
-                
-                // LÓGICA CRÍTICA: Buscar miembros en la DB usando courseId
-                let students = [];
-                if(res.courseId) {
-                    try {
-                        // Buscar el grupo dentro del curso específico
-                        const qGroup = query(collection(db, "courses", res.courseId, "groups"), where("name", "==", groupName));
-                        const gSnap = await getDocs(qGroup);
-                        if(!gSnap.empty) {
-                            students = gSnap.docs[0].data().members || [];
-                        }
-                    } catch(e) { console.error("Error fetching members", e); }
-                }
-
-                const groupDiv = document.createElement('div'); groupDiv.className = 'border border-slate-200 rounded-lg mb-4 bg-white overflow-hidden shadow-sm';
-                let html = `<div class="bg-slate-50 p-3 flex justify-between items-center border-b border-slate-200"><span class="font-bold text-slate-700 text-sm"><i class="fas fa-users mr-2 text-blue-500"></i>${escapeHtml(res.groupName)}</span><button onclick="window.deleteReservation('${res.id}')" class="text-red-500 text-xs font-medium border border-red-200 bg-white px-2 py-1 rounded">Derrogar</button></div><div class="p-0">`;
-                
-                if(students.length === 0) {
-                    html += '<p class="text-sm text-gray-400 italic p-4 text-center">No se encontraron integrantes (Reserva antigua o grupo borrado).</p>';
-                } else {
-                    const att = res.attendanceDetail || {};
-                    students.forEach((st) => {
-                        const isPresent = att[st.cedula] === true; const isAbsent = att[st.cedula] === false;
-                        const badge = st.isLeader ? '<span class="badge-jf">JF</span>' : '';
-                        html += `<div class="flex justify-between items-center p-3 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition">
-                            <div>
-                                <div class="text-sm font-medium text-slate-700 flex items-center">${escapeHtml(st.nombre)} ${badge}</div>
-                                <div class="text-sm text-slate-500 font-medium">${escapeHtml(st.cedula)}</div>
-                            </div>
-                            <div class="flex gap-2">
-                                <div onclick="window.setAttendance('${res.groupName}','${escapeHtml(res.date)}','${st.cedula}', false, this)" class="att-btn absent ${isAbsent ? 'active' : ''}"><div class="att-circle"></div> Ausente</div>
-                                <div onclick="window.setAttendance('${res.groupName}','${escapeHtml(res.date)}','${st.cedula}', true, this)" class="att-btn present ${isPresent ? 'active' : ''}"><div class="att-circle"></div> Presente</div>
-                            </div>
-                        </div>`;
-                    });
-                }
-                html += '</div>'; groupDiv.innerHTML = html; list.appendChild(groupDiv);
-            }
-        };
-
-        window.setAttendance = async (gn, d, ced, isPresent, btnElement) => {
-            const parent = btnElement.parentElement; parent.querySelectorAll('.att-btn').forEach(b => b.classList.remove('active')); btnElement.classList.add('active');
-            const s = await getDocs(query(collection(db, RESERVATIONS_COLLECTION), where("date","==",d), where("groupName","==",gn), where("status","==","approved")));
-            const b = writeBatch(db); s.forEach(docSnap => { b.set(docSnap.ref, { attendanceDetail: { [ced]: isPresent } }, { merge: true }); }); await b.commit();
-        };
-
-        function showView(name) {
-            ['login-view','admin-dashboard','student-dashboard'].forEach(v => document.getElementById(v).classList.add('hidden'));
-            document.getElementById(name==='login'?'login-view':name==='admin'?'admin-dashboard':'student-dashboard').classList.remove('hidden');
-        }
-        function showMessage(type, text) { const m = document.getElementById('message-box'); if(m) { m.innerHTML = text; m.classList.remove('hidden'); } else alert(text); }
-
-        function resetState() { 
-    state = { 
-        user: null, 
-        role: null, 
-        courseId: null, 
-        groupId: null, 
-        groupName: null,
-        currentViewCourse: null, 
-        weekOffset: 0, 
-        selectedSlots: [],
-        coursesCache: {},      
-        professorsCache: {}    
-    }; 
-}
-
         function renderMatrix() {
             const container = document.getElementById('matrix-container'); if(!container) return;
             container.innerHTML = `<div class="grid-matrix mb-4"><div></div><div class="matrix-header">Lun</div><div class="matrix-header">Mar</div><div class="matrix-header">Mié</div><div class="matrix-header">Jue</div><div class="matrix-header">Vie</div>${[7,8,9,10,11,12,13,14,15,16,17,18,19].map(h => `<div class="matrix-time">${h}:00</div>${[1,2,3,4,5].map(d => `<div class="matrix-cell" data-day="${d}" data-hour="${h}" onclick="this.classList.toggle('selected')"></div>`).join('')}`).join('')}</div>`;
         }
-        window.executeRecurringBlock = async (e) => {
-            e.preventDefault();
-            const startStr = document.getElementById('rec-start').value; const endStr = document.getElementById('rec-end').value; const action = document.getElementById('rec-action').value;
-            const selectedCells = document.querySelectorAll('.matrix-cell.selected'); if(selectedCells.length === 0) return alert("Seleccione bloques.");
-            const blocks = []; selectedCells.forEach(c => blocks.push({ d: parseInt(c.dataset.day), h: parseInt(c.dataset.hour) }));
-            const batch = writeBatch(db); let count = 0;
-            const startDate = new Date(startStr + 'T00:00:00'); const endDate = new Date(endStr + 'T00:00:00');
-            for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-                const dayOfWeek = d.getDay(); const blocksForDay = blocks.filter(b => b.d === dayOfWeek);
-                if (blocksForDay.length > 0) {
-                    const y = d.getFullYear(); const m = String(d.getMonth() + 1).padStart(2, '0'); const da = String(d.getDate()).padStart(2, '0'); const dateStr = `${y}-${m}-${da}`;
-                    blocksForDay.forEach(b => {
-                        const ref = doc(db, RESERVATIONS_COLLECTION, `BLOCK_${dateStr}_${b.h}`);
-                        if (action === 'block') batch.set(ref, { date: dateStr, hour: b.h, status: 'blocked', userId: 'ADMIN', type: 'recurring', createdAt: serverTimestamp() }); else batch.delete(ref);
-                        count++;
-                    });
-                }
-            }
-            if(count > 490) return alert("Rango muy grande.");
-            await batch.commit(); alert(`Listo. ${count} bloques.`); document.getElementById('recurring-modal').classList.add('hidden');
-        };
 
-        // =============================================================================
-        // 🛠️ MÓDULO DE EDICIÓN PROFUNDA DE GRUPOS
-        // =============================================================================
-        
-        let editingGroupData = null; // Cache temporal para edición
-        let editingGroupId = null;
-        let editingMemberIndex = -1; // -1 significa que nadie se está editando
-
-        // 1. ABRIR MODAL Y CARGAR DATOS
-        window.openGroupDetails = async (groupId) => {
-            editingGroupId = groupId;
-            editingMemberIndex = -1; // Reset
-            
-            // Fetch de datos actuales
-            try {
-                const docSnap = await getDoc(doc(db, "courses", state.currentViewCourse, "groups", groupId));
-                if (!docSnap.exists()) return alert("El grupo ya no existe.");
-                
-                editingGroupData = docSnap.data();
-                
-                // Llenar Formulario Cabecera
-                document.getElementById('edit-group-name').value = editingGroupData.name;
-                document.getElementById('edit-leader-email').value = editingGroupData.leader.email;
-                document.getElementById('edit-leader-cedula').value = editingGroupData.leader.cedula;
-                document.getElementById('edit-leader-name').value = editingGroupData.leader.fullName;
-
-                // Renderizar Tabla Integrantes
-                renderMembersTable();
-
-                // Mostrar Modal
-                document.getElementById('modal-group-details').classList.remove('hidden');
-                
-            } catch (e) {
-                console.error(e);
-                alert("Error cargando grupo: " + e.message);
-            }
-        };
-
-        // 2. RENDERIZADOR REACTIVO DE LA TABLA
-        function renderMembersTable() {
-            const tbody = document.getElementById('edit-members-tbody');
-            const members = editingGroupData.members || [];
-            document.getElementById('members-count-badge').innerText = members.length;
-            tbody.innerHTML = '';
-
-            members.forEach((mem, index) => {
-                const isEditing = index === editingMemberIndex;
-                const isLeader = mem.isLeader || false; // O usar email comparison
-
-                let rowHtml = '';
-
-                if (isEditing) {
-                    // MODO EDICIÓN (INPUTS)
-                    rowHtml = `
-                    <tr class="bg-yellow-50 border-b border-yellow-200">
-                        <td class="px-4 py-2"><input type="text" id="edit-mem-ced-${index}" value="${escapeHtml(mem.cedula)}" class="w-full p-1 border border-yellow-300 rounded text-xs bg-white"></td>
-                        <td class="px-4 py-2"><input type="text" id="edit-mem-name-${index}" value="${escapeHtml(mem.nombre)}" class="w-full p-1 border border-yellow-300 rounded text-xs bg-white"></td>
-                        <td class="px-4 py-2 text-xs text-slate-500">${isLeader ? '<b>Líder</b>' : 'Estudiante'}</td>
-                        <td class="px-4 py-2 text-right flex justify-end gap-2">
-                            <button onclick="window.saveMemberChange(${index})" class="text-green-600 hover:text-green-800 bg-green-100 px-2 py-1 rounded text-xs font-bold"><i class="fas fa-check mr-1"></i>Guardar</button>
-                            <button onclick="window.cancelMemberEdit()" class="text-slate-500 hover:text-slate-700 text-xs px-2 py-1"><i class="fas fa-times"></i></button>
-                        </td>
-                    </tr>`;
-                } else {
-                    // MODO VISUALIZACIÓN (TEXTO)
-                    rowHtml = `
-                    <tr class="hover:bg-slate-50 transition border-b border-slate-100 last:border-0">
-                        <td class="px-4 py-3 text-sm text-slate-600 font-medium">${escapeHtml(mem.cedula)}</td>
-                        <td class="px-4 py-3 text-sm text-slate-800 font-medium">${escapeHtml(mem.nombre)}</td>
-                        <td class="px-4 py-3 text-xs">
-                            ${isLeader 
-                                ? '<span class="bg-[#004274] text-white px-2 py-0.5 rounded font-bold text-[10px]">LÍDER</span>' 
-                                : '<span class="text-slate-400">Estudiante</span>'}
-                        </td>
-                        <td class="px-4 py-3 text-right flex justify-end gap-2">
-                            <button onclick="window.enableMemberEdit(${index})" class="text-blue-500 hover:text-blue-700 bg-blue-50 p-1.5 rounded transition" title="Editar"><i class="fas fa-pencil-alt"></i></button>
-                            ${!isLeader ? `<button onclick="window.deleteMember(${index})" class="text-red-400 hover:text-red-600 bg-red-50 p-1.5 rounded transition" title="Eliminar"><i class="fas fa-trash"></i></button>` : ''}
-                        </td>
-                    </tr>`;
-                }
-                tbody.innerHTML += rowHtml;
-            });
-        }
-
-        // 3. FUNCIONES DE ACCIÓN (CRUD ARRAY)
-
-        // A. Guardar Nombre Básico del Grupo
-        window.saveGroupBasicInfo = async () => {
-            const newName = document.getElementById('edit-group-name').value;
-            if(!newName) return;
-            try {
-                await updateDoc(doc(db, "courses", state.currentViewCourse, "groups", editingGroupId), { name: newName });
-                editingGroupData.name = newName; // Update local
-                alert("Nombre actualizado.");
-            } catch(e) { alert("Error: " + e.message); }
-        };
-
-        // B. Guardar Info del Líder (Complejo: Actualiza Doc + Array Members)
-        window.saveLeaderInfo = async () => {
-            const newCedula = document.getElementById('edit-leader-cedula').value;
-            const newName = document.getElementById('edit-leader-name').value;
-            
-            // 1. Actualizar objeto leader en root
-            const updatedLeader = { ...editingGroupData.leader, cedula: newCedula, fullName: newName };
-            
-            // 2. Actualizar también su entrada en el array members para consistencia
-            const updatedMembers = editingGroupData.members.map(m => {
-                if(m.isLeader) return { ...m, cedula: newCedula, nombre: newName };
-                return m;
-            });
-
-            try {
-                await updateDoc(doc(db, "courses", state.currentViewCourse, "groups", editingGroupId), {
-                    leader: updatedLeader,
-                    members: updatedMembers
-                });
-                editingGroupData.leader = updatedLeader;
-                editingGroupData.members = updatedMembers;
-                renderMembersTable(); // Refrescar tabla
-                alert("Jefe de grupo actualizado.");
-            } catch(e) { alert("Error: " + e.message); }
-        };
-
-        // C. Habilitar Edición de Miembro
-        window.enableMemberEdit = (index) => {
-            editingMemberIndex = index;
-            renderMembersTable();
-        };
-
-        window.cancelMemberEdit = () => {
-            editingMemberIndex = -1;
-            renderMembersTable();
-        };
-
-        // D. Guardar Cambio de un Miembro (UPDATE ARRAY)
-        window.saveMemberChange = async (index) => {
-            const newCed = document.getElementById(`edit-mem-ced-${index}`).value;
-            const newName = document.getElementById(`edit-mem-name-${index}`).value;
-
-            if(!newCed || !newName) return alert("Datos vacíos");
-
-            // Modificar array localmente
-            const updatedMembers = [...editingGroupData.members];
-            updatedMembers[index].cedula = newCed;
-            updatedMembers[index].nombre = newName;
-
-            try {
-                // Enviar array completo
-                await updateDoc(doc(db, "courses", state.currentViewCourse, "groups", editingGroupId), {
-                    members: updatedMembers
-                });
-                
-                // Actualizar estado local
-                editingGroupData.members = updatedMembers;
-                editingMemberIndex = -1;
-                renderMembersTable();
-            } catch(e) { alert("Error guardando miembro: " + e.message); }
-        };
-
-        // E. Eliminar Miembro (DELETE FROM ARRAY)
-        window.deleteMember = async (index) => {
-            if(!confirm("¿Seguro de eliminar a este integrante?")) return;
-
-            const updatedMembers = editingGroupData.members.filter((_, i) => i !== index);
-
-            try {
-                await updateDoc(doc(db, "courses", state.currentViewCourse, "groups", editingGroupId), {
-                    members: updatedMembers
-                });
-                editingGroupData.members = updatedMembers;
-                renderMembersTable();
-            } catch(e) { alert("Error eliminando: " + e.message); }
-        };
-
-        // F. Agregar Nuevo Miembro (PUSH TO ARRAY)
-        window.addNewMember = async () => {
-            const ced = document.getElementById('add-mem-cedula').value;
-            const name = document.getElementById('add-mem-name').value;
-            
-            if(!ced || !name) return alert("Ingrese Cédula y Nombre");
-
-            const newMember = { cedula: ced, nombre: name, isLeader: false };
-            const updatedMembers = [...editingGroupData.members, newMember];
-
-            try {
-                await updateDoc(doc(db, "courses", state.currentViewCourse, "groups", editingGroupId), {
-                    members: updatedMembers
-                });
-                
-                // Limpiar inputs y refrescar
-                document.getElementById('add-mem-cedula').value = "";
-                document.getElementById('add-mem-name').value = "";
-                editingGroupData.members = updatedMembers;
-                renderMembersTable();
-            } catch(e) { alert("Error agregando: " + e.message); }
-        };
-
-        // GENERACIÓN DE REPORTES EN EXCEL
-        // 1. Abrir Modal y cargar cursos dinámicamente
-        window.openReportModal = () => {
-            const list = document.getElementById('rep-courses-list');
-            list.innerHTML = '';
-            
-            // Botón rápido de "Seleccionar Todos"
-            list.innerHTML += `
-                <label class="flex items-center space-x-2 p-1.5 hover:bg-slate-200 rounded cursor-pointer border-b border-slate-200 mb-1">
-                    <input type="checkbox" onchange="window.toggleAllCourses(this)" class="rounded text-blue-600 w-4 h-4 cursor-pointer">
-                    <span class="font-bold text-[#004274] text-xs uppercase tracking-wide">Seleccionar Todos</span>
-                </label>
-            `;
-
-            // Cargar cursos desde la caché
-            if(Object.keys(state.coursesCache).length === 0) {
-                list.innerHTML += `<p class="text-xs text-slate-500 italic p-2 text-center">No hay cursos registrados.</p>`;
-            } else {
-                for (const [id, course] of Object.entries(state.coursesCache)) {
-                    list.innerHTML += `
-                        <label class="flex items-center space-x-2 p-1.5 hover:bg-white rounded cursor-pointer transition-colors">
-                            <input type="checkbox" value="${id}" class="rep-course-cb rounded text-blue-600 w-4 h-4 cursor-pointer">
-                            <span class="text-slate-700 font-medium">${escapeHtml(course.subject)} (${escapeHtml(course.parallel)})</span>
-                        </label>
-                    `;
-                }
-            }
-            
-            // Setear fechas por defecto (Mes actual)
-            const today = new Date();
-            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-            document.getElementById('rep-start').value = formatDateYYYYMMDD(firstDay);
-            document.getElementById('rep-end').value = formatDateYYYYMMDD(today);
-
-            document.getElementById('modal-report').classList.remove('hidden');
-        };
-
-        // 2. Función auxiliar para marcar/desmarcar todos
-        window.toggleAllCourses = (source) => {
-            const checkboxes = document.querySelectorAll('.rep-course-cb');
-            checkboxes.forEach(cb => cb.checked = source.checked);
-        };
-
-        // 3. Generar y descargar el Excel (VERSIÓN ASISTENCIA DE ESTUDIANTES)
-        window.executeReport = async (e) => {
-            e.preventDefault();
-            
-            const startStr = document.getElementById('rep-start').value;
-            const endStr = document.getElementById('rep-end').value;
-            
-            const checkboxes = document.querySelectorAll('.rep-course-cb:checked');
-            if (checkboxes.length === 0) {
-                return Swal.fire({ icon: 'warning', text: 'Debes seleccionar al menos un curso para el reporte.', confirmButtonColor: '#004274' });
-            }
-            const selectedCourses = Array.from(checkboxes).map(cb => cb.value);
-
-            Swal.fire({
-                title: 'Generando Reporte de Asistencia...',
-                html: 'Recopilando datos de estudiantes...',
-                allowOutsideClick: false,
-                didOpen: () => { Swal.showLoading(); }
-            });
-
-            try {
-                // 1. Consultar reservas aprobadas
-                const q = query(
-                    collection(db, RESERVATIONS_COLLECTION), 
-                    where("date", ">=", startStr),
-                    where("date", "<=", endStr),
-                    where("status", "==", "approved")
-                );
-
-                const snap = await getDocs(q);
-                const reportData = [];
-                
-                // Caché temporal para no consultar el mismo grupo múltiples veces y saturar la base de datos
-                const groupsMembersCache = {}; 
-
-                // Usamos for...of para poder hacer await al buscar los grupos
-                for (const docSnap of snap.docs) {
-                    const r = docSnap.data();
-                    
-                    if (r.courseId && selectedCourses.includes(r.courseId)) {
-                        const course = state.coursesCache[r.courseId] || { subject: 'Desconocido', parallel: '' };
-                        const courseName = `${course.subject} (${course.parallel})`;
-                        
-                        // Llave única para el caché del grupo
-                        const cacheKey = `${r.courseId}_${r.groupName}`;
-
-                        // Si no tenemos los miembros de este grupo en memoria, los buscamos en la BD
-                        if (!groupsMembersCache[cacheKey]) {
-                            const qGroup = query(collection(db, "courses", r.courseId, "groups"), where("name", "==", r.groupName));
-                            const gSnap = await getDocs(qGroup);
-                            if (!gSnap.empty) {
-                                groupsMembersCache[cacheKey] = gSnap.docs[0].data().members || [];
-                            } else {
-                                groupsMembersCache[cacheKey] = []; // Grupo no encontrado o eliminado
-                            }
-                        }
-
-                        const members = groupsMembersCache[cacheKey];
-                        const attendanceDetail = r.attendanceDetail || {}; // Aquí está el registro de asistencia de esa fecha
-
-                        // Si el grupo no tiene miembros, dejamos constancia
-                        if (members.length === 0) {
-                            reportData.push({
-                                "Fecha": r.date,
-                                "Hora": `${r.hour}:00 - ${r.hour + 1}:00`,
-                                "Curso": courseName,
-                                "Grupo": r.groupName,
-                                "Cédula": "-",
-                                "Estudiante": "Sin integrantes en el sistema",
-                                "Estado Asistencia": "-"
-                            });
-                        } else {
-                            // Crear una fila de Excel POR CADA ESTUDIANTE
-                            members.forEach(st => {
-                                let estado = "No Registrada"; // Por si el admin olvidó tomar lista
-                                if (attendanceDetail[st.cedula] === true) estado = "Presente";
-                                else if (attendanceDetail[st.cedula] === false) estado = "Ausente";
-
-                                reportData.push({
-                                    "Fecha": r.date,
-                                    "Hora": `${r.hour}:00 - ${r.hour + 1}:00`,
-                                    "Curso": courseName,
-                                    "Grupo": r.groupName,
-                                    "Cédula": st.cedula,
-                                    "Estudiante": st.nombre,
-                                    "Estado Asistencia": estado
-                                });
-                            });
-                        }
-                    }
-                }
-
-                if (reportData.length === 0) {
-                    return Swal.fire('Sin Datos', 'No hay registros de asistencia para los parámetros seleccionados.', 'info');
-                }
-
-                // 2. ORDENAR LOS DATOS (Primero por Fecha, luego por Grupo, luego por Nombre del alumno)
-                reportData.sort((a, b) => {
-                    if (a.Fecha !== b.Fecha) return a.Fecha.localeCompare(b.Fecha);
-                    if (a.Grupo !== b.Grupo) return a.Grupo.localeCompare(b.Grupo);
-                    return a.Estudiante.localeCompare(b.Estudiante);
-                });
-
-                // 3. Generar Excel
-                const worksheet = XLSX.utils.json_to_sheet(reportData);
-                const workbook = XLSX.utils.book_new();
-                
-                // Ajustar anchos de columna para que se vea bien al abrir
-                worksheet['!cols'] = [
-                    {wch: 12}, // Fecha
-                    {wch: 15}, // Hora
-                    {wch: 25}, // Curso
-                    {wch: 12}, // Grupo
-                    {wch: 12}, // Cedula
-                    {wch: 35}, // Estudiante
-                    {wch: 18}  // Estado Asistencia
-                ];
-
-                XLSX.utils.book_append_sheet(workbook, worksheet, "Asistencia");
-                XLSX.writeFile(workbook, `Asistencia_RedLab_${startStr}_al_${endStr}.xlsx`);
-
-                Swal.close();
-                document.getElementById('modal-report').classList.add('hidden');
-
-            } catch (error) {
-                console.error(error);
-                Swal.fire('Error', 'Hubo un problema procesando los datos: ' + error.message, 'error');
-            }
-        };
-        
+        function setupStudentViewGlobal() { setupStudentView(); }
+        window._setupStudentView = setupStudentViewGlobal;
     </script>
 </head>
 
@@ -1413,17 +376,17 @@
         
         <main class="flex-1 max-w-7xl mx-auto w-full p-4 lg:p-8">
             <div class="flex gap-4 mb-6 border-b border-slate-200 pb-1">
-                <button id="tab-btn-cal" onclick="window.switchTab('calendar')" class="px-4 py-2 font-bold text-[#004274] border-b-2 border-[#004274] hover:bg-slate-100 rounded-t">Calendario</button>
-                <button id="tab-btn-cou" onclick="window.switchTab('courses')" class="px-4 py-2 font-bold text-slate-500 hover:text-[#004274] border-b-2 border-transparent hover:bg-slate-100 rounded-t">Cursos</button>
+                <button id="tab-btn-cal" data-action="switch-tab" data-tab="calendar" class="px-4 py-2 font-bold text-[#004274] border-b-2 border-[#004274] hover:bg-slate-100 rounded-t">Calendario</button>
+                <button id="tab-btn-cou" data-action="switch-tab" data-tab="courses" class="px-4 py-2 font-bold text-slate-500 hover:text-[#004274] border-b-2 border-transparent hover:bg-slate-100 rounded-t">Cursos</button>
             </div>
 
             <div id="tab-calendar" class="fade-in grid grid-cols-1 lg:grid-cols-4 gap-8">
                 <div class="lg:col-span-3"><div class="calendar-wrapper mb-4"><div class="p-4 bg-white border-b flex justify-between items-center"><button id="admin-prev-week" class="text-slate-500 px-3 py-2"><i class="fas fa-chevron-left"></i></button><h2 id="admin-week-title" class="font-bold text-lg text-slate-700"></h2><button id="admin-next-week" class="text-slate-500 px-3 py-2"><i class="fas fa-chevron-right"></i></button></div><table class="calendar-table"><thead id="admin-calendar-head"></thead><tbody id="admin-calendar-body"></tbody></table></div><div id="admin-action-box" class="hidden bg-slate-800 text-white p-4 rounded-xl flex justify-between items-center shadow-xl fade-in border border-slate-700"><span id="admin-selection-count" class="font-bold text-lg"></span><div class="flex gap-3"><button id="admin-block-btn" class="bg-red-500 hover:bg-red-600 px-5 py-2 rounded-lg font-bold">Bloquear</button><button id="admin-unblock-btn" class="bg-emerald-500 hover:bg-emerald-600 px-5 py-2 rounded-lg font-bold">Desbloquear</button></div></div>
                     <div class="mt-4 flex justify-end gap-2">
-                        <button onclick="window.openReportModal()" class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 flex items-center gap-2 font-bold text-sm transition-all active:scale-95">
+                        <button data-action="open-report-modal" class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 flex items-center gap-2 font-bold text-sm transition-all active:scale-95">
                             <i class="fas fa-file-excel"></i> Reportes
                         </button>
-                        <button id="admin-recurring-btn" onclick="document.getElementById('recurring-modal').classList.remove('hidden')" class="bg-[#004274] text-white px-4 py-2 rounded shadow hover:bg-[#003366] flex items-center gap-2 font-bold text-sm transition-all active:scale-95">
+                        <button id="admin-recurring-btn" data-action="open-recurring-modal" class="bg-[#004274] text-white px-4 py-2 rounded shadow hover:bg-[#003366] flex items-center gap-2 font-bold text-sm transition-all active:scale-95">
                             <i class="fas fa-calendar-alt"></i> Gestión Clases
                         </button>
                     </div>     
@@ -1434,20 +397,20 @@
             <div id="tab-courses" class="hidden fade-in">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-xl font-bold text-slate-700">Cursos Activos</h2>
-                    <button onclick="window.openCreateCourseModal()" class="bg-[#004274] text-white px-4 py-2 rounded shadow hover:bg-[#003366] font-bold text-sm"><i class="fas fa-plus mr-2"></i>Nuevo Curso</button>
+                    <button data-action="open-create-course-modal" class="bg-[#004274] text-white px-4 py-2 rounded shadow hover:bg-[#003366] font-bold text-sm"><i class="fas fa-plus mr-2"></i>Nuevo Curso</button>
                 </div>
                 <div id="courses-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
             </div>
         </main>
     </div>
 
-    <div id="recurring-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-6 fade-in"><h3 class="font-bold text-lg text-[#004274] mb-4 border-b pb-2">Gestión de Clases</h3><form onsubmit="window.executeRecurringBlock(event)"> <div class="grid grid-cols-2 gap-4 mb-4"><div><label class="block text-xs font-bold text-slate-500 mb-1">Inicio</label><input type="date" id="rec-start" class="w-full p-2 border rounded" required></div><div><label class="block text-xs font-bold text-slate-500 mb-1">Fin</label><input type="date" id="rec-end" class="w-full p-2 border rounded" required></div></div><div class="mb-4"><p class="text-xs font-bold text-slate-500 mb-2">Seleccione bloques:</p><div id="matrix-container" class="border rounded p-2 bg-slate-50"></div></div><div class="mb-6"><label class="block text-xs font-bold text-slate-500 mb-1">Acción</label><select id="rec-action" class="w-full p-2 border rounded font-bold"><option value="block">Bloquear</option><option value="unblock">Desbloquear</option></select></div><div class="flex justify-end gap-2"><button type="button" onclick="document.getElementById('recurring-modal').classList.add('hidden')" class="px-4 py-2 text-slate-500 hover:bg-slate-100 rounded">Cancelar</button><button type="submit" class="px-4 py-2 bg-[#004274] text-white rounded font-bold">Ejecutar</button></div></form></div></div>
+    <div id="recurring-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-6 fade-in"><h3 class="font-bold text-lg text-[#004274] mb-4 border-b pb-2">Gestión de Clases</h3><form data-action="execute-recurring-block"> <div class="grid grid-cols-2 gap-4 mb-4"><div><label class="block text-xs font-bold text-slate-500 mb-1">Inicio</label><input type="date" id="rec-start" class="w-full p-2 border rounded" required></div><div><label class="block text-xs font-bold text-slate-500 mb-1">Fin</label><input type="date" id="rec-end" class="w-full p-2 border rounded" required></div></div><div class="mb-4"><p class="text-xs font-bold text-slate-500 mb-2">Seleccione bloques:</p><div id="matrix-container" class="border rounded p-2 bg-slate-50"></div></div><div class="mb-6"><label class="block text-xs font-bold text-slate-500 mb-1">Acción</label><select id="rec-action" class="w-full p-2 border rounded font-bold"><option value="block">Bloquear</option><option value="unblock">Desbloquear</option></select></div><div class="flex justify-end gap-2"><button type="button" data-action="close-modal" data-target="recurring-modal" class="px-4 py-2 text-slate-500 hover:bg-slate-100 rounded">Cancelar</button><button type="submit" class="px-4 py-2 bg-[#004274] text-white rounded font-bold">Ejecutar</button></div></form></div></div>
     
-    <div id="attendance-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-xl flex flex-col max-h-[90vh] fade-in overflow-hidden border border-slate-200"><div class="uce-header text-white p-5 flex justify-between items-center shadow-md"><div><h3 class="font-bold text-lg">Control de Asistencia</h3><p id="att-title" class="text-xs text-blue-200 font-details mt-1"></p></div><button onclick="document.getElementById('attendance-modal').classList.add('hidden')" class="text-white/70 hover:text-white text-xl"><i class="fas fa-times"></i></button></div><div id="att-list" class="p-5 overflow-y-auto flex-1 bg-white space-y-4"></div></div></div>
+    <div id="attendance-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-xl flex flex-col max-h-[90vh] fade-in overflow-hidden border border-slate-200"><div class="uce-header text-white p-5 flex justify-between items-center shadow-md"><div><h3 class="font-bold text-lg">Control de Asistencia</h3><p id="att-title" class="text-xs text-blue-200 font-details mt-1"></p></div><button data-action="close-modal" data-target="attendance-modal" class="text-white/70 hover:text-white text-xl"><i class="fas fa-times"></i></button></div><div id="att-list" class="p-5 overflow-y-auto flex-1 bg-white space-y-4"></div></div></div>
 
-    <div id="modal-course" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6"><h3 class="font-bold text-xl text-[#004274] mb-4">Nuevo Curso</h3><form onsubmit="window.createCourse(event)" class="space-y-3"><input type="text" id="c-subject" placeholder="Materia (ej: Redes I)" class="w-full p-2 border rounded" required><input type="text" id="c-career" placeholder="Carrera (ej: Computación)" class="w-full p-2 border rounded" required><div class="grid grid-cols-2 gap-3"><input type="text" id="c-parallel" placeholder="Paralelo (ej: P1)" class="w-full p-2 border rounded" required><input type="number" id="c-limit" placeholder="Horas Semanales" value="4" class="w-full p-2 border rounded" required></div><select id="c-professor" class="w-full p-2 border rounded bg-white" required><option value="">Seleccione Profesor...</option></select><div class="flex justify-end gap-2 mt-4"><button type="button" onclick="document.getElementById('modal-course').classList.add('hidden')" class="px-4 py-2 text-slate-500">Cancelar</button><button type="submit" class="bg-[#004274] text-white px-4 py-2 rounded font-bold">Crear Curso</button></div></form></div></div>
+    <div id="modal-course" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6"><h3 class="font-bold text-xl text-[#004274] mb-4">Nuevo Curso</h3><form data-action="create-course" class="space-y-3"><input type="text" id="c-subject" placeholder="Materia (ej: Redes I)" class="w-full p-2 border rounded" required><input type="text" id="c-career" placeholder="Carrera (ej: Computación)" class="w-full p-2 border rounded" required><div class="grid grid-cols-2 gap-3"><input type="text" id="c-parallel" placeholder="Paralelo (ej: P1)" class="w-full p-2 border rounded" required><input type="number" id="c-limit" placeholder="Horas Semanales" value="4" class="w-full p-2 border rounded" required></div><select id="c-professor" class="w-full p-2 border rounded bg-white" required><option value="">Seleccione Profesor...</option></select><div class="flex justify-end gap-2 mt-4"><button type="button" data-action="close-modal" data-target="modal-course" class="px-4 py-2 text-slate-500">Cancelar</button><button type="submit" class="bg-[#004274] text-white px-4 py-2 rounded font-bold">Crear Curso</button></div></form></div></div>
 
-    <div id="modal-group-manage" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="bg-white rounded-lg shadow-xl w-full max-w-3xl p-6 h-[80vh] flex flex-col"><div class="flex justify-between items-center mb-4 border-b pb-2"><h3 class="font-bold text-xl text-[#004274]">Gestión de Grupos</h3><button onclick="document.getElementById('modal-group-manage').classList.add('hidden')" class="text-slate-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button></div><div class="grid grid-cols-4 gap-2 mb-4 bg-slate-50 p-3 rounded border"><input type="text" id="new-group-name" placeholder="G1" class="p-2 border rounded col-span-1"><input type="email" id="new-group-leader" placeholder="Email Líder" class="p-2 border rounded col-span-3"><input type="text" id="new-group-cedula" placeholder="Cédula Líder" class="p-2 border rounded col-span-1"><input type="text" id="new-group-fullname" placeholder="Nombre Completo Líder" class="p-2 border rounded col-span-2"><button onclick="window.addGroup()" class="bg-green-600 text-white px-2 py-2 rounded font-bold hover:bg-green-700 col-span-1">Agregar</button></div><div class="overflow-y-auto flex-1 border rounded p-4"><table class="w-full text-sm text-left"><thead class="text-slate-500 font-bold border-b"><tr><th class="pb-2">Grupo</th><th class="pb-2">Líder</th><th class="pb-2 text-center">Integrantes</th><th class="pb-2 text-right">Acción</th></tr></thead><tbody id="groups-table-body"></tbody></table></div></div></div>
+    <div id="modal-group-manage" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="bg-white rounded-lg shadow-xl w-full max-w-3xl p-6 h-[80vh] flex flex-col"><div class="flex justify-between items-center mb-4 border-b pb-2"><h3 class="font-bold text-xl text-[#004274]">Gestión de Grupos</h3><button data-action="close-modal" data-target="modal-group-manage" class="text-slate-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button></div><div class="grid grid-cols-4 gap-2 mb-4 bg-slate-50 p-3 rounded border"><input type="text" id="new-group-name" placeholder="G1" class="p-2 border rounded col-span-1"><input type="email" id="new-group-leader" placeholder="Email Líder" class="p-2 border rounded col-span-3"><input type="text" id="new-group-cedula" placeholder="Cédula Líder" class="p-2 border rounded col-span-1"><input type="text" id="new-group-fullname" placeholder="Nombre Completo Líder" class="p-2 border rounded col-span-2"><button data-action="add-group" class="bg-green-600 text-white px-2 py-2 rounded font-bold hover:bg-green-700 col-span-1">Agregar</button></div><div class="overflow-y-auto flex-1 border rounded p-4"><table class="w-full text-sm text-left"><thead class="text-slate-500 font-bold border-b"><tr><th class="pb-2">Grupo</th><th class="pb-2">Líder</th><th class="pb-2 text-center">Integrantes</th><th class="pb-2 text-right">Acción</th></tr></thead><tbody id="groups-table-body"></tbody></table></div></div></div>
 
     <div id="student-dashboard" class="hidden min-h-screen flex flex-col">
         <header class="uce-header text-white p-4 shadow-lg sticky top-0 z-30"><div class="max-w-7xl mx-auto flex justify-between items-center"><div class="flex items-center gap-4"><div class="bg-white rounded-full p-1 shadow-sm"><img src="https://redi.cedia.edu.ec/members/UCE.png" class="h-10 object-contain"></div><div><h1 class="font-bold text-lg leading-tight brand-font">LABORATORIO DE REDES</h1><span class="text-Base text-blue-200 font-details">Facultad de Ingeniería y Ciencias Aplicadas</span></div></div><div class="flex items-center gap-4"><div id="student-header-user-info" class="hidden md:flex items-center bg-white/10 px-4 py-2 rounded-lg backdrop-blur-sm text-base"></div><button data-action="open-change-password-modal" class="text-xs text-blue-200 hover:text-white underline mr-2">Clave</button><button data-action="handle-logout" class="text-xs bg-[#e1ad01] text-[#003366] font-bold hover:bg-yellow-400 px-4 py-2 rounded-full shadow-md">Salir</button></div></div></header>
@@ -1458,7 +421,7 @@
         <div class="watermark text-slate-400 font-bold text-xs text-slate-300" style="position: fixed; bottom: 1rem; left: 1rem;">RedLab Team</div>
     </div>
 
-<div id="success-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 fade-in text-center relative overflow-hidden"><div class="absolute top-0 left-0 w-full h-2 bg-green-500"></div><div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4"><i class="fas fa-check text-2xl text-green-600"></i></div><h3 class="text-xl font-bold text-slate-800 mb-2">¡Solicitud Enviada!</h3><p class="text-sm text-slate-600 mb-6 leading-relaxed">Tu solicitud ha sido registrada correctamente. <br><br><span class="font-bold text-[#004274] bg-blue-50 p-1 rounded">El turno será confirmado cuando un encargado del laboratorio acepte dicha solicitud.</span></p><button onclick="document.getElementById('success-modal').classList.add('hidden')" class="w-full bg-[#004274] text-white py-2.5 rounded-lg font-bold hover:bg-[#003366] transition shadow-md uppercase text-xs tracking-wider">Entendido</button></div></div>
+<div id="success-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 fade-in text-center relative overflow-hidden"><div class="absolute top-0 left-0 w-full h-2 bg-green-500"></div><div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4"><i class="fas fa-check text-2xl text-green-600"></i></div><h3 class="text-xl font-bold text-slate-800 mb-2">¡Solicitud Enviada!</h3><p class="text-sm text-slate-600 mb-6 leading-relaxed">Tu solicitud ha sido registrada correctamente. <br><br><span class="font-bold text-[#004274] bg-blue-50 p-1 rounded">El turno será confirmado cuando un encargado del laboratorio acepte dicha solicitud.</span></p><button data-action="close-modal" data-target="success-modal" class="w-full bg-[#004274] text-white py-2.5 rounded-lg font-bold hover:bg-[#003366] transition shadow-md uppercase text-xs tracking-wider">Entendido</button></div></div>
 
 <div id="modal-group-details" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col fade-in overflow-hidden">
@@ -1468,7 +431,7 @@
                 <h3 class="font-bold text-lg"><i class="fas fa-users-cog mr-2"></i>Edición de Grupo</h3>
                 <p class="text-xs text-blue-200 font-details">Modifique datos del líder e integrantes</p>
             </div>
-            <button onclick="document.getElementById('modal-group-details').classList.add('hidden')" class="text-white/70 hover:text-white text-xl transition">
+            <button data-action="close-modal" data-target="modal-group-details" class="text-white/70 hover:text-white text-xl transition">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -1480,7 +443,7 @@
                     <label class="block text-xs font-bold text-slate-500 uppercase">Identificador Grupo</label>
                     <div class="flex gap-2">
                         <input type="text" id="edit-group-name" class="w-full p-2 border border-slate-300 rounded font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ej: G1">
-                        <button onclick="window.saveGroupBasicInfo()" class="bg-blue-600 text-white px-3 rounded hover:bg-blue-700 transition" title="Guardar Nombre"><i class="fas fa-save"></i></button>
+                        <button data-action="save-group-basic-info" class="bg-blue-600 text-white px-3 rounded hover:bg-blue-700 transition" title="Guardar Nombre"><i class="fas fa-save"></i></button>
                     </div>
                     <p class="text-[10px] text-slate-400">Este nombre aparece en el calendario.</p>
                 </div>
@@ -1500,7 +463,7 @@
                             <label class="block text-[15px] font-bold text-slate-500">Nombres Completos</label>
                             <div class="flex gap-2">
                                 <input type="text" id="edit-leader-name" class="w-full p-1.5 border rounded text-sm focus:border-blue-500 outline-none">
-                                <button onclick="window.saveLeaderInfo()" class="bg-[#004274] text-white px-4 text-xs font-bold rounded hover:bg-[#003366] transition">Actualizar</button>
+                                <button data-action="save-leader-info" class="bg-[#004274] text-white px-4 text-xs font-bold rounded hover:bg-[#003366] transition">Actualizar</button>
                             </div>
                         </div>
                     </div>
@@ -1531,7 +494,7 @@
                                 <td class="p-2"><input type="text" id="add-mem-name" placeholder="Nombre Completo" class="w-full p-1.5 border rounded text-xs"></td>
                                 <td class="p-2 text-xs text-slate-500 text-center">Estudiante</td>
                                 <td class="p-2 text-right">
-                                    <button onclick="window.addNewMember()" class="bg-green-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-green-700 shadow-sm"><i class="fas fa-plus mr-1"></i> Agregar</button>
+                                    <button data-action="add-new-member" class="bg-green-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-green-700 shadow-sm"><i class="fas fa-plus mr-1"></i> Agregar</button>
                                 </td>
                             </tr>
                         </tfoot>
@@ -1548,7 +511,7 @@
         
         <input type="hidden" id="edit-course-id">
 
-        <form onsubmit="window.saveCourseChanges(event)" class="space-y-3">
+        <form data-action="save-course-changes" class="space-y-3">
             <div>
                 <label class="block text-xs font-bold text-slate-500 mb-1">Materia</label>
                 <input type="text" id="e-subject" class="w-full p-2 border rounded text-slate-700" required>
@@ -1573,7 +536,7 @@
             </div>
 
             <div class="flex justify-end gap-2 mt-4 pt-2 border-t">
-                <button type="button" onclick="document.getElementById('modal-edit-course').classList.add('hidden')" class="px-4 py-2 text-slate-500 hover:bg-slate-50 rounded">Cancelar</button>
+                <button type="button" data-action="close-modal" data-target="modal-edit-course" class="px-4 py-2 text-slate-500 hover:bg-slate-50 rounded">Cancelar</button>
                 <button type="submit" class="bg-[#004274] text-white px-4 py-2 rounded font-bold hover:bg-[#003366] transition">Guardar Cambios</button>
             </div>
         </form>
@@ -1583,11 +546,11 @@
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 fade-in border border-slate-200">
         <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
             <h3 class="font-bold text-lg text-[#004274]"><i class="fas fa-file-excel text-green-600 mr-2"></i>Exportar Reporte</h3>
-            <button onclick="document.getElementById('modal-report').classList.add('hidden')" class="text-slate-400 hover:text-red-500 transition-colors">
+            <button data-action="close-modal" data-target="modal-report" class="text-slate-400 hover:text-red-500 transition-colors">
                 <i class="fas fa-times text-xl"></i>
             </button>
         </div>
-        <form onsubmit="window.executeReport(event)" class="space-y-4">
+        <form data-action="execute-report" class="space-y-4">
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Fecha Inicio</label>
@@ -1604,7 +567,7 @@
                     </div>
             </div>
             <div class="flex justify-end pt-3 mt-4 border-t border-slate-100">
-                <button type="button" onclick="document.getElementById('modal-report').classList.add('hidden')" class="px-4 py-2 text-slate-500 hover:bg-slate-100 rounded mr-2 font-medium text-sm transition-colors">Cancelar</button>
+                <button type="button" data-action="close-modal" data-target="modal-report" class="px-4 py-2 text-slate-500 hover:bg-slate-100 rounded mr-2 font-medium text-sm transition-colors">Cancelar</button>
                 <button type="submit" class="bg-green-600 text-white px-5 py-2 rounded font-bold hover:bg-green-700 transition-all active:scale-95 shadow-md flex items-center gap-2 text-sm">
                     Descargar <i class="fas fa-download"></i>
                 </button>
