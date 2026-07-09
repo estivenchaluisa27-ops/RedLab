@@ -568,47 +568,49 @@ document.addEventListener('click', (e) => {
 
 ---
 
-### Fase 4 — Extracción de cursos y grupos
+### Fase 4 — Extracción de cursos, grupos, reportes y reservas
 
-**Objetivo**: Módulos de cursos y grupos + event delegation + **corregir listenesr huérfanos**.
+**Objetivo**: Módulos de cursos, grupos, reportes y reservas + event delegation + **corregir listeners huérfanos**.
 
 **Tareas**:
-- [ ] Crear `src/courses/courses-list.js` — grid de cursos + select profesores (L242-285). **Incluir `unsubscribeCursos`** en `clearListeners()` (L246 no tiene unsubscribe actualmente)
-- [ ] Crear `src/courses/courses.js` — `createCourse` (L418-538), `openEditCourseModal`, `saveCourseChanges`, `openCreateCourseModal`. Convertir `confirm()` diagnóstico (L450) a SweetAlert2 confirm. También convertir `confirm()` de `deleteMember` (L1230)
-- [ ] Crear `src/groups/groups.js` — `openCourseManager` (L540-587), `addGroup` (L609+), `deleteGroup`
-  - **CORREGIR** el listener `onSnapshot` huérfano en L545: guardar unsubscribe y llamarlo al cerrar el modal
-  - **Eliminar código muerto `addMemberToGroup`** (L590-607)
-- [ ] Crear `src/groups/group-details.js` — bloque L1073-1264. Variables `editingGroupData`/`editingGroupId`/`editingMemberIndex` → módulo-privadas
-- [ ] Crear `src/groups/group-utils.js` — `lookupMembersByGroupName(db, courseId, groupName)` (extraído de L982-987 y L1357-1364)
-- [ ] Migrar onclicks: L261, L271, L572, L582, L1541, L1561, L1592, L1128-1129, L1144-1145 a delegation con data-*
-- [ ] Migrar onsubmits: createCourse (L1506), saveCourseChanges (L1609)
-- [ ] Escribir `tests/courses/course-utils.test.js` (si no se hizo en fase 1)
-- [ ] Escribir `tests/groups/group-utils.test.js` — caché hit/miss
+- [x] Crear `src/courses/courses-list.js` — grid de cursos + select profesores + clearCoursesListener
+- [x] Crear `src/courses/courses.js` — createCourse, openEditCourseModal, saveCourseChanges, openCreateCourseModal
+- [x] Crear `src/groups/groups.js` — openCourseManager, addGroup, deleteGroup + clearGroupsListener
+- [x] Crear `src/groups/group-details.js` — edición profunda de grupos (miembros, líder, nombre)
+- [x] Crear `src/groups/group-utils.js` — lookupMembersByGroupName helper
+- [x] Crear `src/reports/reports.js` — openReportModal, toggleAllCourses, executeReport
+- [x] Crear `src/reservations/reservations.js` — batchBlockAction, submitReservation, admAct, rejectReq, deleteReservation, openAttendanceModal, setAttendance, executeRecurringBlock
+- [x] Migrar onclicks → data-action (tabs, modals, grupos, reportes, asistencia)
+- [x] Migrar onsubmits → data-action (createCourse, saveCourseChanges, executeRecurringBlock, executeReport)
+- [x] Strip inline script: eliminadas ~1100 líneas, quedan solo funciones de rendering calendario
+- [x] Event delegation centralizado en main.js (click + submit)
+- [x] Eliminar doble init Firebase (CDN + npm simultáneos)
+- [ ] `tests/groups/group-utils.test.js` — pendiente
 
-> [!WARNING]
-> **Fase 4 corrige 2 bugs reales**: el memory leak de `loadAdminDashboard` (L246) y el de `openCourseManager` (L545). No son regresiones — son bugs preexistentes que el plan v1 acertadamente documentó como deuda (#1) pero que deben corregirse aquí, no postergarse. Cambio: pasar de "documentado como deuda" a "corregido en Fase 4".
+> **Nota**: Fase 4 absorbió partes de Fase 5 (reservations) y Fase 6 (reports) porque los módulos estaban acoplados.
 
-**Estado**: `⬜ Pendiente`
+**Estado**: `✅ Completado` — commit `d3ebaeb`
 
 ---
 
-### Fase 5 — Extracción de calendario y reservas
+### Fase 5 — Extracción de calendario
 
-**Objetivo**: Lo más acoplado — calendario, reservas, asistencia.
+**Objetivo**: Calendario admin + student (lo más acoplado). Reservas y reports ya extraídos en Fase 4.
 
 **Tareas**:
-- [ ] Crear `src/calendar/header.js` — `renderCalendarHeader(weekDays, headId)` (extraído de L701). **NUEVO** módulo compartido que evita import circular admin↔student
-- [ ] Crear `src/calendar/slots.js` — `classifySlot(slot, { weekOffset, userEmail, reservations })` (extraído de L319-335 y L369-376). **NO puro** — recibe `state` como parámetro inyectado
-- [ ] Crear `src/calendar/admin-calendar.js` — `setupAdminCalendarLogic`, `renderAdminCalendar`, `handleAdminClick`, `updateAdminActionBox`
-- [ ] Crear `src/calendar/student-calendar.js` — `setupStudentView`, `renderStudentCalendar`, `handleStudentClick`, `updateStudentUI`
-- [ ] Crear `src/calendar/block-actions.js` — `batchBlockAction`, `renderMatrix`, `executeRecurringBlock`
-- [ ] Crear `src/reservations/reservations.js` — `submitReservation`, `listenAdminPending`, `admAct`, `rejectReq`, `deleteReservation`
-- [ ] Crear `src/reservations/attendance.js` — `openAttendanceModal`, `setAttendance`
-- [ ] Crear `src/views/admin-view.js` — bind admin-prev-week, admin-next-week, admin-block-btn, admin-unblock-btn, sub-tabs, openReportModal, recurring-modal. **Migrar los `btn.onclick = () => ...` closures** (L290-293, L305) a `document.getElementById`
-- [ ] Crear `src/views/student-view.js` — bind student-prev-week, student-next-week, submit-request-btn. **Migrar closures** (L343-344, L356, L844) a `document.getElementById`
-- [ ] Migrar onclicks: L927, L928 (admAct, rejectReq), L991 (deleteReservation), L1006-L1007 (setAttendance) a delegation con data-* + `escapeAttr()`
-- [ ] **Migrar closures sobre `btn`** (L325, L356) a dataset: `btn.dataset.hour`, `btn.dataset.date`, etc. en vez de closure capturada
-- [ ] Escribir `tests/calendar/slots.test.js` — classifySlot: past, blocked, partial 2/4, full 4/4, mine pending/approved, con state inyectado
+- [ ] Crear `src/calendar/header.js` — `renderCalendarHeader(weekDays, headId)`
+- [ ] Crear `src/calendar/slots.js` — `classifySlot(slot, state)`
+- [ ] Crear `src/calendar/admin-calendar.js` — setupAdminCalendarLogic, renderAdminCalendar, handleAdminClick, updateAdminActionBox
+- [ ] Crear `src/calendar/student-calendar.js` — setupStudentView, renderStudentCalendar, handleStudentClick, updateStudentUI
+- [ ] Crear `src/calendar/block-actions.js` — renderMatrix (ya no batchBlockAction/executeRecurringBlock — están en reservations.js)
+- [ ] Crear `src/views/admin-view.js` — bind admin nav, sub-tabs
+- [ ] Crear `src/views/student-view.js` — bind student nav
+- [ ] Migrar `listenAdminPending` (profName double lookup) a módulo dedicado o dejarlo en inline
+- [ ] Migrar remaining onclicks del HTML dinámico (renderMatrix cells, attendance buttons)
+- [ ] Escribir `tests/calendar/slots.test.js`
+
+> [!NOTE]
+> Fase 5 ahora es más ligera porque `reservations.js` y `reports.js` se extrajeron en Fase 4.
 
 > [!WARNING]
 > **Fase 5 es la más compleja**. Los patrones `btn.onclick = (e) => handleAdminClick(e, btn)` (L325, L356) usan closures sobre `btn`. No se machean 1:1 con delegation data-*. Planificar: en vez de closure, poner `data-hour`, `data-date`, `data-role` en cada `<button>` generado y leerlos en el handler delegado.
@@ -617,26 +619,21 @@ document.addEventListener('click', (e) => {
 
 ---
 
-### Fase 6 — Extracción de reportes + cleanup final
+### Fase 6 — Cleanup final + tests
 
-**Objetivo**: Últimos módulos + limpieza total del HTML.
+**Objetivo**: Tests faltantes + limpieza total del HTML.
 
 **Tareas**:
-- [ ] Crear `src/reports/reports.js` — `openReportModal`, `toggleAllCourses`, `executeReport`. Usar `group-utils.lookupMembersByGroupName` (refactor de cache duplicado L1342-1364)
-- [ ] Crear `src/modals/modal-utils.js` — `openModal(id)` / `closeModal(id)` + listener delegado `[data-close-modal]`
+- [x] Crear `src/reports/reports.js` — ya creado en Fase 4
+- [x] Crear `src/reservations/reservations.js` — ya creado en Fase 4
+- [ ] Escribir `tests/groups/group-utils.test.js` — caché hit/miss
+- [ ] Escribir `tests/reports/reports.test.js` — sorting, buildRow
 - [ ] Cleanup `index.html`:
-  - [ ] Quitar todo `onclick="..."` restante del HTML (reemplazar por `data-close-modal` o IDs con addEventListener)
-  - [ ] Quitar todo `onsubmit="..."` (IDs a formularios, bind en views/*.js)
   - [ ] Quitar `<style>` embebido → `<link rel="stylesheet" href="/styles.css">`
-  - [ ] Quitar `<script src="https://cdn.tailwindcss.com">` (reemplazado por styles.css compilado)
-  - [ ] Mantener CDNs de: SweetAlert2 (puente vía swal-bootstrap.js), SheetJS, Google Fonts, FontAwesome
-  - [ ] Firebase SDK: imports dentro de `firebase-config.js` (ya es module)
-  - [ ] Verificar que todos los 7 onsubmit tienen IDs y están bindeados en las views
-  - [ ] Verificar que todos los onclick inline classList (11) se reemplazaron por `data-close-modal`
-- [ ] Quitar `window.alert = notify.alert` puente temporal de `main.js` (solo si todos los módulos migrados usan `notify.alert`)
-- [ ] `grep -n "window\.\w+\s*=" src/` debe dar 0 matches (ver criterios de validación depurados)
-- [ ] `grep -rnE 'innerHTML|insertAdjacentHTML|outerHTML' src/ | grep -v 'escapeHtml\|escapeAttr'` → revisar manualmente
-- [ ] Escribir `tests/reports/reports.test.js` — sorting (L1406-1410), buildRow (L1387-1395)
+  - [ ] Quitar `<script src="https://cdn.tailwindcss.com">` (reemplazado por styles.css)
+  - [ ] Mantener CDNs de: SweetAlert2, SheetJS, Google Fonts, FontAwesome
+- [ ] `grep -rnE 'onclick|onsubmit' index.html` → 0 matches
+- [ ] Quitar `window.alert = notify.alert` puente temporal (solo si todos los módulos migrados usan `notify.alert`)
 
 **Estado**: `⬜ Pendiente`
 
@@ -835,6 +832,17 @@ npm test  # → exit code 0
 - **Auth functions migradas**: handleLogin, handleLogout, togglePassword, openResetModal, closeResetModal, sendResetLink, openChangePasswordModal, closeChangePasswordModal, handleChangePassword
 - **Auth functions NO migradas** (permanecen en inline): `initAuthListener`, `setupSession` — dependen de `loadAdminDashboard` y `setupStudentView` (Fase 4-5)
 - **Tests**: 35/35 pasan
+
+### Sesión 7 — Ejecución Fase 4 (09 jul 2026)
+- **Archivos creados** (7): `src/courses/courses-list.js`, `src/courses/courses.js`, `src/groups/groups.js`, `src/groups/group-details.js`, `src/groups/group-utils.js`, `src/reports/reports.js`, `src/reservations/reservations.js`
+- **`index.html` reducido**: de ~1616 a ~513 líneas (script inline). Se eliminaron ~1100 líneas de funciones CRUD que ahora viven en módulos
+- **Inline script**: quedan solo funciones de rendering calendario (renderAdminCalendar, renderStudentCalendar, renderCalendarHeader, listenAdminPending, renderMatrix, handleAdminClick/StudentClick, updateAdminActionBox/UI, switchTab, setupAdminCalendarLogic, setupStudentView)
+- **Doble init Firebase eliminado**: el inline script creaba su propia instancia CDN; main.js creaba otra npm. Ahora solo existe la de main.js
+- **onclick→data-action migrados**: tabs (switch-tab), modals (close-modal, open-create-course-modal, open-report-modal, open-recurring-modal), grupos (add-group, save-group-basic-info, save-leader-info, add-new-member), formularios (create-course, save-course-changes, execute-recurring-block, execute-report), pending requests (adm-act, reject-req)
+- **Event delegation**: main.js maneja click (data-action) + submit (data-action) de forma centralizada
+- **Bug fix**: onSnapshot leak en loadAdminDashboard y openCourseManager (clearCoursesListener, clearGroupsListener)
+- **Tests**: 35/35 pasan (sin nuevos tests aún — pendiente group-utils.test.js)
+- **Commit**: `d3ebaeb`
 
 ---
 
