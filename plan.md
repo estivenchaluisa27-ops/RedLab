@@ -1,8 +1,8 @@
 # RedLab — Plan de Refactorización: Monolito → Modular
 
 > **Documento vivo** — Actualizar después de cada sesión de trabajo.
-> Última actualización: **2026-07-09** (Fase 5 completada)
-> Estado global: **🟡 Phases 0-5 completadas, Phase 6 pendiente**
+> Última actualización: **2026-07-09** (Fase 6 completada)
+> Estado global: **🟡 Phases 0-6 completadas, Phase 7 pendiente**
 
 ---
 
@@ -617,16 +617,20 @@ document.addEventListener('click', (e) => {
 **Tareas**:
 - [x] Crear `src/reports/reports.js` — ya creado en Fase 4
 - [x] Crear `src/reservations/reservations.js` — ya creado en Fase 4
-- [ ] Escribir `tests/groups/group-utils.test.js` — caché hit/miss
-- [ ] Escribir `tests/reports/reports.test.js` — sorting, buildRow
-- [ ] Cleanup `index.html`:
-  - [ ] Quitar `<style>` embebido → `<link rel="stylesheet" href="/styles.css">`
-  - [ ] Quitar `<script src="https://cdn.tailwindcss.com">` (reemplazado por styles.css)
-  - [ ] Mantener CDNs de: SweetAlert2, SheetJS, Google Fonts, FontAwesome
-- [ ] `grep -rnE 'onclick|onsubmit' index.html` → 0 matches
-- [ ] Quitar `window.alert = notify.alert` puente temporal (solo si todos los módulos migrados usan `notify.alert`)
+- [x] Escribir `tests/groups/group-utils.test.js` — 5 tests: early return, Firebase path, caché hit/miss, clearCache
+- [x] Escribir `tests/reports/reports.test.js` — 9 tests: sortReportData (compuesto, inmutabilidad) + buildReportRows
+- [x] Escribir `tests/calendar/slots.test.js` — 9 tests: past, blocked, my-approved, my-pending, full, partial, free, mixed
+- [x] Cleanup `index.html`:
+  - [x] Quitar `<style>` embebido → `<link rel="stylesheet" href="/styles.css">`
+  - [x] Quitar `<script src="https://cdn.tailwindcss.com">` (reemplazado por styles.css)
+  - [x] Mantener CDNs de: SweetAlert2, SheetJS, Google Fonts, FontAwesome
+- [x] `grep -rnE 'onclick|onsubmit' index.html` → 0 matches
+- [x] `window.alert = notify.alert` puente temporal se mantiene (aún hay código que usa `alert()`)
+- [x] Extraídas funciones puras: `classifySlot` (calendar.js), `sortReportData` + `buildReportRows` (reports.js)
+- [x] Añadido caché LRU en `lookupMembersByGroupName` + `clearGroupUtilsCache()`
+- [x] Tests: 58/58 pasan (6 suites)
 
-**Estado**: `⬜ Pendiente`
+**Estado**: `✅ Completada`
 
 ---
 
@@ -844,6 +848,26 @@ npm test  # → exit code 0
 - **Logout**: integra `clearCalendarListeners()` junto con `clearListeners()` de state.js
 - **`index.html` ahora solo contiene**: `<script type="module" src="/src/main.js"></script>` — cero JS inline
 - **Tests**: 35/35 pasan (sin nuevos tests — pendiente calendar/slots.test.js)
+
+### Sesión 9 — Ejecución Fase 6 (09 jul 2026)
+- **`index.html` limpiado**: de 354 a 254 líneas. Eliminado `<style>` embebido (100 líneas) y CDN Tailwind. Reemplazado por `<link rel="stylesheet" href="/styles.css">`
+- **CDNs mantenidos**: SweetAlert2, SheetJS, FontAwesome, Google Fonts
+- **Tests creados**:
+  - `tests/groups/group-utils.test.js` — 5 tests: early return, Firebase path, cache hit/miss, clearCache
+  - `tests/reports/reports.test.js` — 9 tests: sortReportData (compuesto, inmutabilidad) + buildReportRows
+  - `tests/calendar/slots.test.js` — 9 tests: past, blocked, my-approved, my-pending, full, partial, free, mixed
+- **Funciones puras extraídas**:
+  - `classifySlot(date, hour, reservations, userState)` en `calendar.js` — lógica de clasificación de slots
+  - `sortReportData(data)` en `reports.js` — ordenamiento compuesto fecha/grupo/estudiante
+  - `buildReportRows(docs, courses, cache, groupsCache)` en `reports.js` — construcción de filas de reporte
+- **Cache añadido**: `lookupMembersByGroupName` ahora tiene un Map cache con `clearGroupUtilsCache()`
+- **Tests finales**: **58/58 pasan** (6 suites, 23 tests nuevos + 35 existentes)
+- **Verificaciones**:
+  - `onclick`/`onsubmit` en `index.html`: **0 matches** ✅
+  - `<style>` embebido eliminado ✅
+  - Tailwind CDN eliminado ✅
+  - `styles.css` reconstruido (317ms) ✅
+  - `innerHTML` no sanitizado: 0 matches (todos usan escapeHtml/escapeAttr o datos seguros) ✅
 
 ---
 

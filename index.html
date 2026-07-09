@@ -8,113 +8,11 @@
 
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 512'%3E%3Cpath fill='%23004274' d='M0 336c0 79.5 64.5 144 144 144h368c70.7 0 128-57.3 128-128 0-61.9-44-113.6-102.4-125.4C514.3 81.3 425 0 320 0 217.6 0 130.7 77.8 120 177.3 51.6 188.4 0 249.6 0 320zm144 96c-53 0-96-43-96-96s43-96 96-96h32c13.3 0 24-10.7 24-24V80c0-26.5 21.5-48 48-48h128c26.5 0 48 21.5 48 48v16c0 13.3 10.7 24 24 24h32c53 0 96 43 96 96s-43 96-96 96H144z'/%3E%3C/svg%3E">
 
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-    <style>
-        body { font-family: 'Roboto', sans-serif; background-color: #f0f2f5; background-image: radial-gradient(#bdc3c7 1px, transparent 1px); background-size: 20px 20px; }
-        h1, h2, h3, .brand-font { font-weight: 800; }
-        .font-details { font-weight: 500; letter-spacing: 0.3px; }
-        .fade-in { animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        .uce-header { background-color: #004274 !important; border-bottom: 4px solid #e1ad01; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2); }
-        #login-view { background-image: linear-gradient(rgba(0, 66, 116, 0.85), rgba(0, 51, 102, 0.95)), url('https://ecuadoruniversitario.com/wp-content/uploads/2015/03/uce.jpg'); background-size: cover; background-position: center; background-attachment: fixed; }
-
-        .badge-jf { background-color: #004274; color: white; font-size: 0.65rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-left: 8px; display: inline-flex; align-items: center; border: 1px solid #003366; }
-        .course-badge { font-size: 0.75rem; font-weight: 900; padding: 2px 6px; border-radius: 4px; margin-right: 6px; border: 1px solid rgba(0,0,0,0.1); display: inline-block; background-color: #f3f4f6; color: #4b5563; }
-        
-        /* --- MEJORA VISUAL TABLA (PUNTO 2) --- */
-        .calendar-wrapper { background: white; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); overflow: hidden; border: 1px solid #cbd5e1; }
-        .calendar-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        .calendar-table th, .calendar-table td { border: 1px solid #cbd5e1; padding: 0; vertical-align: top; height: 85px; } /* Bordes más oscuros */
-        .calendar-table th { background-color: #f8fafc; color: #334155; padding: 0.8rem; text-transform: capitalize; border-bottom: 2px solid #94a3b8; }
-        
-        .time-cell-content { background-color: #f1f5f9; color: #475569; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; height: 100%; width: 100%; text-align: center; }
-        .slot-container { width: 100%; height: 100%; padding: 3px; position: relative; }
-        .slot { width: 100%; height: 100%; border-radius: 6px; border: 1px solid transparent; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-size: 0.75rem; font-weight: 600; line-height: 1.2; overflow: hidden; }
-        .occupancy-badge { font-size: 0.65rem; margin-top: 3px; padding: 2px 8px; border-radius: 12px; background-color: rgba(255,255,255,0.95); color: #1e293b; font-weight: 800; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-        .info-btn { position: absolute; top: 4px; right: 4px; background: white; border-radius: 50%; width: 22px; height: 22px; font-size: 11px; display: flex; align-items: center; justify-content: center; color: #3b82f6; z-index: 10; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.2); transition: transform 0.2s; border: 1px solid #bfdbfe; }
-        .info-btn:hover { transform: scale(1.15); color: #1d4ed8; background-color: #eff6ff; }
-
-        .slot-free { background-color: #ffffff; border-color: #e2e8f0; color: #64748b; }
-        .slot-free:hover { background-color: #f8fafc; border-color: #cbd5e1; color: #3b82f6; }
-        .slot-blocked, .slot-past { background-color: #f1f5f9 !important; color: #cbd5e1 !important; border-color: #e2e8f0 !important; cursor: not-allowed; background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, #e2e8f0 5px, #e2e8f0 10px); }
-        .slot-partial { background-color: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
-        .slot-full { background-color: #fef2f2; border-color: #fecaca; color: #991b1b; cursor: not-allowed; }
-        .slot-selected { background-color: #3b82f6 !important; color: white !important; border-color: #1d4ed8 !important; box-shadow: inset 0 0 0 2px white, 0 4px 6px rgba(59, 130, 246, 0.3); }
-        .slot-pending { background-color: #fffbeb; border-color: #fde68a; color: #b45309; }
-        .slot-approved-self { background-color: #22c55e; border-color: #16a34a; color: white; box-shadow: 0 2px 4px rgba(34, 197, 94, 0.2); }
-        .slot-admin-has-data { border-width: 2px; }
-        
-        .modal-backdrop { background-color: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); z-index: 50; }
-        .att-btn { display: flex; align-items: center; justify-content: center; padding: 6px 12px; border-radius: 8px; border: 1px solid #cbd5e1; background-color: white; cursor: pointer; transition: all 0.2s ease; color: #64748b; font-size: 0.75rem; font-weight: 600; width: 100px; }
-        .att-circle { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #cbd5e1; margin-right: 8px; background-color: white; transition: all 0.2s; }
-        .att-btn.present.active { background-color: #dcfce7; border-color: #22c55e; color: #15803d; }
-        .att-btn.present.active .att-circle { background-color: #22c55e; border-color: #22c55e; box-shadow: 0 0 0 2px white inset; }
-        .att-btn.absent.active { background-color: #fee2e2; border-color: #ef4444; color: #b91c1c; }
-        .att-btn.absent.active .att-circle { background-color: #ef4444; border-color: #ef4444; box-shadow: 0 0 0 2px white inset; }
-        .att-btn:hover:not(.active) { background-color: #f8fafc; }
-
-        .password-container { position: relative; }
-        .toggle-password { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #64748b; }
-        .grid-matrix { display: grid; grid-template-columns: 40px repeat(5, 1fr); gap: 2px; font-size: 0.75rem; }
-        .matrix-header { font-weight: bold; text-align: center; color: #64748b; padding-bottom: 4px; }
-        .matrix-cell { background-color: #f1f5f9; border: 1px solid #e2e8f0; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 4px; transition: all 0.1s; }
-        .matrix-cell:hover { background-color: #e2e8f0; }
-        .matrix-cell.selected { background-color: #004274; color: white; border-color: #003366; }
-        .matrix-time { font-weight: bold; color: #475569; display: flex; align-items: center; justify-content: flex-end; padding-right: 6px; }
-        
-        .watermark { position: fixed; bottom: 1rem; left: 1rem; font-size: 0.7rem; font-weight: 700; font-family: 'Montserrat', monospace; pointer-events: none; user-select: none; z-index: 100; color: rgba(100, 116, 139, 0.5); }
-        #login-view .watermark { color: rgba(255,255,255,0.4); }
-
-        /* Estilo EXCLUSIVO para correos en Gestión de Grupos */
-        /* Estilo EXCLUSIVO para correos en Gestión de Grupos */
-        #groups-table-body td:nth-child(2) {
-            font-size: 14.5px;
-            font-weight: 500;
-            color: #334155;
-        }
-
-    /* MICRO-INTERACCIONES (Botones que "viven") */
-        
-        /* 1. Transición suave para TODOS los botones */
-        button, a, .item {
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        }
-        
-        /* 2. Efecto de "Hundimiento" al hacer clic (Táctil) */
-        button:active:not(:disabled) {
-            transform: scale(0.95) !important;
-        }
-
-        /* 3. Efecto de "Elevación" y Sombra al pasar el mouse 
-              (Solo aplica a botones que tengan un color de fondo) */
-        button[class*="bg-"]:hover:not(:disabled):not(.matrix-cell) {
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.12) !important;
-            transform: translateY(-1.5px);
-        }
-        
-        /* 4. Los botones deshabilitados se vuelven opacos y pierden efectos */
-        button:disabled {
-            opacity: 0.5 !important;
-            cursor: not-allowed !important;
-            transform: none !important;
-            box-shadow: none !important;
-        }
-
-        /* 5. Excepciones: Evitar que las pestañas (Tabs) o celdas salten feo */
-        #tab-btn-cal:hover, #tab-btn-cou:hover,
-        #tab-btn-cal:active, #tab-btn-cou:active,
-        .slot, .matrix-cell {
-            transform: none !important;
-            box-shadow: none !important;
-        }
-        
-    </style>
 
     <script type="module" src="/src/main.js"></script>
 </head>

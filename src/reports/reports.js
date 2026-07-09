@@ -1,6 +1,3 @@
-/**
- * src/reports/reports.js — Generación de reportes Excel
- */
 import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { escapeHtml } from '../utils/escape.js';
 import { formatDateYYYYMMDD } from '../utils/dates.js';
@@ -12,6 +9,59 @@ let _state = null;
 export function initReports(db, state) {
   _db = db;
   _state = state;
+}
+
+export function sortReportData(data) {
+  return [...data].sort((a, b) => {
+    if (a.Fecha !== b.Fecha) return a.Fecha.localeCompare(b.Fecha);
+    if (a.Grupo !== b.Grupo) return a.Grupo.localeCompare(b.Grupo);
+    return a.Estudiante.localeCompare(b.Estudiante);
+  });
+}
+
+export function buildReportRows(reservationsDocs, selectedCourses, coursesCache, groupsMembersCache) {
+  const rows = [];
+
+  for (const docSnap of reservationsDocs) {
+    const r = docSnap.data();
+
+    if (r.courseId && selectedCourses.includes(r.courseId)) {
+      const course = coursesCache[r.courseId] || { subject: 'Desconocido', parallel: '' };
+      const courseName = `${course.subject} (${course.parallel})`;
+      const members = groupsMembersCache[r.groupName] || [];
+      const attendanceDetail = r.attendanceDetail || {};
+
+      if (members.length === 0) {
+        rows.push({
+          "Fecha": r.date,
+          "Hora": `${r.hour}:00 - ${r.hour + 1}:00`,
+          "Curso": courseName,
+          "Grupo": r.groupName,
+          "Cédula": "-",
+          "Estudiante": "Sin integrantes en el sistema",
+          "Estado Asistencia": "-"
+        });
+      } else {
+        members.forEach(st => {
+          let estado = "No Registrada";
+          if (attendanceDetail[st.cedula] === true) estado = "Presente";
+          else if (attendanceDetail[st.cedula] === false) estado = "Ausente";
+
+          rows.push({
+            "Fecha": r.date,
+            "Hora": `${r.hour}:00 - ${r.hour + 1}:00`,
+            "Curso": courseName,
+            "Grupo": r.groupName,
+            "Cédula": st.cedula,
+            "Estudiante": st.nombre,
+            "Estado Asistencia": estado
+          });
+        });
+      }
+    }
+  }
+
+  return rows;
 }
 
 export function openReportModal() {
@@ -79,64 +129,25 @@ export async function executeReport(e) {
     );
 
     const snap = await getDocs(q);
-    const reportData = [];
     const groupsMembersCache = {};
 
     for (const docSnap of snap.docs) {
       const r = docSnap.data();
-
       if (r.courseId && selectedCourses.includes(r.courseId)) {
-        const course = _state.coursesCache[r.courseId] || { subject: 'Desconocido', parallel: '' };
-        const courseName = `${course.subject} (${course.parallel})`;
-
         const cacheKey = `${r.courseId}_${r.groupName}`;
-
         if (!groupsMembersCache[cacheKey]) {
           groupsMembersCache[cacheKey] = await lookupMembersByGroupName(_db, r.courseId, r.groupName);
-        }
-
-        const members = groupsMembersCache[cacheKey];
-        const attendanceDetail = r.attendanceDetail || {};
-
-        if (members.length === 0) {
-          reportData.push({
-            "Fecha": r.date,
-            "Hora": `${r.hour}:00 - ${r.hour + 1}:00`,
-            "Curso": courseName,
-            "Grupo": r.groupName,
-            "Cédula": "-",
-            "Estudiante": "Sin integrantes en el sistema",
-            "Estado Asistencia": "-"
-          });
-        } else {
-          members.forEach(st => {
-            let estado = "No Registrada";
-            if (attendanceDetail[st.cedula] === true) estado = "Presente";
-            else if (attendanceDetail[st.cedula] === false) estado = "Ausente";
-
-            reportData.push({
-              "Fecha": r.date,
-              "Hora": `${r.hour}:00 - ${r.hour + 1}:00`,
-              "Curso": courseName,
-              "Grupo": r.groupName,
-              "Cédula": st.cedula,
-              "Estudiante": st.nombre,
-              "Estado Asistencia": estado
-            });
-          });
         }
       }
     }
 
+    const reportData = sortReportData(
+      buildReportRows(snap.docs, selectedCourses, _state.coursesCache, groupsMembersCache)
+    );
+
     if (reportData.length === 0) {
       return Swal.fire('Sin Datos', 'No hay registros de asistencia para los parámetros seleccionados.', 'info');
     }
-
-    reportData.sort((a, b) => {
-      if (a.Fecha !== b.Fecha) return a.Fecha.localeCompare(b.Fecha);
-      if (a.Grupo !== b.Grupo) return a.Grupo.localeCompare(b.Grupo);
-      return a.Estudiante.localeCompare(b.Estudiante);
-    });
 
     const worksheet = XLSX.utils.json_to_sheet(reportData);
     const workbook = XLSX.utils.book_new();

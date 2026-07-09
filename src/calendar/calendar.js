@@ -1,7 +1,3 @@
-/**
- * src/calendar/calendar.js — Calendario admin + student + pending + matrix
- * Extraido del inline script de index.html.
- */
 import { collection, query, where, onSnapshot, getDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { state } from '../state.js';
 import { escapeHtml, escapeAttr } from '../utils/escape.js';
@@ -20,6 +16,34 @@ export function initCalendar(db, RESERVATIONS_COLLECTION) {
 export function clearCalendarListeners() {
   if (_unsubscribeReservations) { _unsubscribeReservations(); _unsubscribeReservations = null; }
   if (_unsubscribePending) { _unsubscribePending(); _unsubscribePending = null; }
+}
+
+export function classifySlot(dateStr, hourStr, reservations, userState) {
+  const past = isPastDate(dateStr, parseInt(hourStr));
+  if (past) return { type: 'past', className: 'slot-past', label: 'Cerrado', disabled: true };
+
+  const blocked = reservations.find(x => x.status === 'blocked');
+  if (blocked) return { type: 'blocked', className: 'slot-blocked', label: 'Bloqueado', disabled: true };
+
+  if (userState) {
+    const mine = reservations.find(x => x.groupName === userState.groupName && x.status !== 'blocked');
+    if (mine) {
+      const isApproved = mine.status === 'approved';
+      return {
+        type: isApproved ? 'my-approved' : 'my-pending',
+        className: isApproved ? 'slot-approved-self' : 'slot-pending',
+        label: isApproved ? 'Agendado' : 'Pendiente',
+        disabled: false,
+        docId: mine.id
+      };
+    }
+  }
+
+  const uniqueApproved = new Set(reservations.filter(x => x.status === 'approved').map(x => x.groupName)).size;
+  if (uniqueApproved >= 4) return { type: 'full', className: 'slot-full', label: 'Lleno', disabled: true };
+  if (uniqueApproved > 0) return { type: 'partial', className: 'slot-partial', label: 'Disp.', disabled: false, occupancy: uniqueApproved };
+
+  return { type: 'free', className: 'slot-free', label: 'Disponible', disabled: false };
 }
 
 function renderCalendarHeader(weekDays, headId) {
@@ -230,8 +254,6 @@ function listenAdminPending() {
   );
 }
 
-// --- Admin calendar setup ---
-
 export function setupAdminCalendarLogic() {
   clearCalendarListeners();
   const update = () => { const w = getWeekDays(state.weekOffset); renderAdminCalendar(w); };
@@ -243,8 +265,6 @@ export function setupAdminCalendarLogic() {
   update();
   listenAdminPending();
 }
-
-// --- Student calendar ---
 
 function handleStudentClick(btn) {
   if (btn.disabled) return;
@@ -343,28 +363,26 @@ function renderStudentCalendar(weekDays) {
       groups.forEach((arr, k) => {
         const b = map.get(k);
         if (!b || b.dataset.status === 'past') return;
-        const blocked = arr.find(x => x.status === 'blocked');
-        const mine = arr.find(x => x.groupName === state.groupName && x.status !== 'blocked');
-        const uniqueApproved = new Set(arr.filter(x => x.status === 'approved').map(x => x.groupName)).size;
-
-        if (blocked) {
+        const [dStr, hStr] = k.split('_');
+        const result = classifySlot(dStr, hStr, arr, state);
+        if (result.type === 'blocked') {
           b.className = 'slot slot-blocked';
           b.innerHTML = '<span>No disp.</span>';
           b.dataset.status = 'blocked';
           b.disabled = true;
-        } else if (mine) {
-          b.className = `slot ${mine.status === 'approved' ? 'slot-approved-self' : 'slot-pending'}`;
-          b.innerHTML = `<span>${mine.status === 'approved' ? 'Agendado' : 'Pendiente'}</span>`;
-          b.dataset.status = `my-${mine.status}`;
-          b.dataset.docId = mine.id;
-        } else if (uniqueApproved >= 4) {
+        } else if (result.type === 'my-approved' || result.type === 'my-pending') {
+          b.className = `slot ${result.className}`;
+          b.innerHTML = `<span>${result.label}</span>`;
+          b.dataset.status = `my-${mineStatus(result.type)}`;
+          b.dataset.docId = result.docId;
+        } else if (result.type === 'full') {
           b.className = 'slot slot-full';
           b.innerHTML = '<span>Lleno</span>';
           b.dataset.status = 'full';
           b.disabled = true;
-        } else if (uniqueApproved > 0) {
+        } else if (result.type === 'partial') {
           b.className = 'slot slot-partial';
-          b.innerHTML = `<span>Disp.</span><div class="occupancy-badge">${uniqueApproved}/4</div>`;
+          b.innerHTML = `<span>Disp.</span><div class="occupancy-badge">${result.occupancy}/4</div>`;
           b.dataset.status = 'partial';
         }
       });
@@ -381,6 +399,10 @@ function renderStudentCalendar(weekDays) {
   );
 }
 
+function mineStatus(type) {
+  return type === 'my-approved' ? 'approved' : 'pending';
+}
+
 export function setupStudentView() {
   clearCalendarListeners();
   const update = () => { const w = getWeekDays(state.weekOffset); renderStudentCalendar(w); };
@@ -388,8 +410,6 @@ export function setupStudentView() {
   document.getElementById('student-next-week').onclick = () => { state.weekOffset++; state.selectedSlots = []; update(); };
   update();
 }
-
-// --- Tab switching ---
 
 export function switchTab(tab) {
   document.getElementById('tab-calendar').classList.add('hidden');
