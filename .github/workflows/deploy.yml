@@ -29,7 +29,7 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - uses: w9jds/firebase-action@v13
+      - uses: w9jds/firebase-action@v15.22.4
         with:
           args: deploy --only hosting,firestore:rules
         env:
