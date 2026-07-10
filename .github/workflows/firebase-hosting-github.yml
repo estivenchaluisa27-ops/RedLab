@@ -1,0 +1,39 @@
+name: Deploy to Firebase Hosting on Push
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Tests
+        run: npm test
+
+      - name: Verify Tailwind CSS is fresh
+        run: npm run build:css && git diff --exit-code styles.css
+
+      - name: Deploy to Firebase
+        if: success()
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_LAB_REDES_TURNOS }}'
+          publicDirectory: .
+          projectId: lab-redes-turnos
+          channelId: live
