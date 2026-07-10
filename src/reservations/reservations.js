@@ -2,7 +2,7 @@
  * src/reservations/reservations.js — Reservas, asistencia, bloqueos
  */
 import { collection, query, where, onSnapshot, getDocs, doc, updateDoc, deleteDoc, writeBatch, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-import { escapeHtml } from '../utils/escape.js';
+import { escapeHtml, escapeAttr } from '../utils/escape.js';
 import { lookupMembersByGroupName } from '../groups/group-utils.js';
 import { updateAdminActionBox, updateStudentUI } from '../calendar/calendar.js';
 
@@ -176,7 +176,7 @@ export async function openAttendanceModal(date, hour, reservations) {
 
     const groupDiv = document.createElement('div');
     groupDiv.className = 'border border-slate-200 rounded-lg mb-4 bg-white overflow-hidden shadow-sm';
-    let html = `<div class="bg-slate-50 p-3 flex justify-between items-center border-b border-slate-200"><span class="font-bold text-slate-700 text-sm"><i class="fas fa-users mr-2 text-blue-500"></i>${escapeHtml(res.groupName)}</span><button onclick="window.deleteReservation('${res.id}')" class="text-red-500 text-xs font-medium border border-red-200 bg-white px-2 py-1 rounded">Derrogar</button></div><div class="p-0">`;
+    let html = `<div class="bg-slate-50 p-3 flex justify-between items-center border-b border-slate-200"><span class="font-bold text-slate-700 text-sm"><i class="fas fa-users mr-2 text-blue-500"></i>${escapeHtml(res.groupName)}</span><button data-action="delete-reservation" data-id="${escapeAttr(res.id)}" class="text-red-500 text-xs font-medium border border-red-200 bg-white px-2 py-1 rounded">Derrogar</button></div><div class="p-0">`;
 
     if (students.length === 0) {
       html += '<p class="text-sm text-gray-400 italic p-4 text-center">No se encontraron integrantes (Reserva antigua o grupo borrado).</p>';
@@ -192,8 +192,8 @@ export async function openAttendanceModal(date, hour, reservations) {
             <div class="text-sm text-slate-500 font-medium">${escapeHtml(st.cedula)}</div>
           </div>
           <div class="flex gap-2">
-            <div onclick="window.setAttendance('${res.groupName}','${escapeHtml(res.date)}','${st.cedula}', false, this)" class="att-btn absent ${isAbsent ? 'active' : ''}"><div class="att-circle"></div> Ausente</div>
-            <div onclick="window.setAttendance('${res.groupName}','${escapeHtml(res.date)}','${st.cedula}', true, this)" class="att-btn present ${isPresent ? 'active' : ''}"><div class="att-circle"></div> Presente</div>
+            <div data-action="set-attendance" data-group="${escapeAttr(res.groupName)}" data-date="${escapeAttr(res.date)}" data-cedula="${escapeAttr(st.cedula)}" data-present="false" class="att-btn absent ${isAbsent ? 'active' : ''}"><div class="att-circle"></div> Ausente</div>
+            <div data-action="set-attendance" data-group="${escapeAttr(res.groupName)}" data-date="${escapeAttr(res.date)}" data-cedula="${escapeAttr(st.cedula)}" data-present="true" class="att-btn present ${isPresent ? 'active' : ''}"><div class="att-circle"></div> Presente</div>
           </div>
         </div>`;
       });

@@ -62,8 +62,8 @@ export function renderMembersTable() {
           <td class="px-4 py-2"><input id="edit-mem-name-${index}" value="${escapeHtml(mem.nombre)}" class="w-full p-1 border rounded text-sm"></td>
           <td class="px-4 py-3 text-xs">${isLeader ? '<span class="bg-[#004274] text-white px-2 py-0.5 rounded font-bold text-[10px]">LÍDER</span>' : '<span class="text-slate-400">Estudiante</span>'}</td>
           <td class="px-4 py-3 text-right flex justify-end gap-2">
-            <button onclick="window.saveMemberChange(${index})" class="text-green-600 hover:text-green-800 bg-green-100 px-2 py-1 rounded text-xs font-bold"><i class="fas fa-check mr-1"></i>Guardar</button>
-            <button onclick="window.cancelMemberEdit()" class="text-slate-500 hover:text-slate-700 text-xs px-2 py-1"><i class="fas fa-times"></i></button>
+            <button data-action="save-member-change" data-index="${index}" class="text-green-600 hover:text-green-800 bg-green-100 px-2 py-1 rounded text-xs font-bold"><i class="fas fa-check mr-1"></i>Guardar</button>
+            <button data-action="cancel-member-edit" class="text-slate-500 hover:text-slate-700 text-xs px-2 py-1"><i class="fas fa-times"></i></button>
           </td>
         </tr>`;
     } else {
@@ -77,8 +77,8 @@ export function renderMembersTable() {
               : '<span class="text-slate-400">Estudiante</span>'}
           </td>
           <td class="px-4 py-3 text-right flex justify-end gap-2">
-            <button onclick="window.enableMemberEdit(${index})" class="text-blue-500 hover:text-blue-700 bg-blue-50 p-1.5 rounded transition" title="Editar"><i class="fas fa-pencil-alt"></i></button>
-            ${!isLeader ? `<button onclick="window.deleteMember(${index})" class="text-red-400 hover:text-red-600 bg-red-50 p-1.5 rounded transition" title="Eliminar"><i class="fas fa-trash"></i></button>` : ''}
+            <button data-action="enable-member-edit" data-index="${index}" class="text-blue-500 hover:text-blue-700 bg-blue-50 p-1.5 rounded transition" title="Editar"><i class="fas fa-pencil-alt"></i></button>
+            ${!isLeader ? `<button data-action="delete-member" data-index="${index}" class="text-red-400 hover:text-red-600 bg-red-50 p-1.5 rounded transition" title="Eliminar"><i class="fas fa-trash"></i></button>` : ''}
           </td>
         </tr>`;
     }

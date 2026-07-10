@@ -31,8 +31,5 @@ export function bindLoginView(auth) {
     resetCancelBtn.addEventListener('click', closeResetModal);
   }
 
-  const resetForm = document.getElementById('reset-form');
-  if (resetForm) {
-    resetForm.addEventListener('submit', (e) => sendResetLink(e, auth));
-  }
+
 }

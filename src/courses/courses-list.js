@@ -37,7 +37,7 @@ export function loadAdminDashboard() {
               <h3 class="font-bold text-lg text-slate-800">${escapeHtml(c.subject)}</h3>
               <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded font-bold">${escapeHtml(c.parallel)}</span>
             </div>
-            <button onclick="window.openEditCourseModal('${d.id}')" class="text-slate-400 hover:text-blue-600 p-1 bg-slate-50 rounded border border-transparent hover:border-blue-200 transition" title="Editar Curso Completo">
+            <button data-action="open-edit-course" data-id="${escapeAttr(d.id)}" class="text-slate-400 hover:text-blue-600 p-1 bg-slate-50 rounded border border-transparent hover:border-blue-200 transition" title="Editar Curso Completo">
               <i class="fas fa-pencil-alt"></i>
             </button>
           </div>
@@ -47,7 +47,7 @@ export function loadAdminDashboard() {
             <span class="font-bold text-slate-600"><i class="fas fa-clock mr-1"></i>${c.weeklyLimit}h/sem</span>
           </div>
           <div class="mt-2 text-center">
-            <button onclick="window.openCourseManager('${d.id}')" class="text-[#004274] font-bold hover:underline text-xs w-full py-1 bg-slate-50 rounded">Gestionar Grupos <i class="fas fa-arrow-right ml-1"></i></button>
+            <button data-action="open-course-manager" data-id="${escapeAttr(d.id)}" class="text-[#004274] font-bold hover:underline text-xs w-full py-1 bg-slate-50 rounded">Gestionar Grupos <i class="fas fa-arrow-right ml-1"></i></button>
           </div>
         </div>`;
     });

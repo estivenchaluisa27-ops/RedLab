@@ -46,7 +46,7 @@ export function openCourseManager(courseId) {
       tbody.innerHTML += `
       <tr class="border-b last:border-0 hover:bg-slate-50 transition">
           <td class="py-3 pl-3">
-              <button onclick="window.openGroupDetails('${d.id}')" class="font-bold text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-2 transition-colors">
+              <button data-action="open-group-details" data-id="${escapeAttr(d.id)}" class="font-bold text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-2 transition-colors">
                   <span class="text-sm">${escapeHtml(g.name)}</span>
                   <i class="fas fa-external-link-alt text-[11px] text-blue-400"></i>
               </button>
@@ -54,7 +54,7 @@ export function openCourseManager(courseId) {
           <td class="py-3 text-xs text-slate-600 font-medium">${escapeHtml(g.leader.email)}</td>
           <td class="py-3 text-sm text-slate-700 font-bold text-center">${membersCount}</td>
           <td class="py-3 text-right pr-3 flex justify-end gap-2">
-              <button onclick="window.deleteGroup('${d.id}')" class="text-red-400 hover:text-red-600 p-1 transition" title="Eliminar Grupo"><i class="fas fa-trash"></i></button>
+              <button data-action="delete-group" data-id="${escapeAttr(d.id)}" class="text-red-400 hover:text-red-600 p-1 transition" title="Eliminar Grupo"><i class="fas fa-trash"></i></button>
           </td>
       </tr>`;
     });

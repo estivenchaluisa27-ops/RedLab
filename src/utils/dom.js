@@ -39,8 +39,10 @@ export function toggleHidden(id) {
  * @param {'student'|'admin'} name
  */
 export function showView(name) {
-  const studentView = document.getElementById('student-view');
-  const adminView = document.getElementById('admin-view');
+  const studentView = document.getElementById('student-dashboard');
+  const adminView = document.getElementById('admin-dashboard');
+  const loginView = document.getElementById('login-view');
+  if (loginView) loginView.classList.toggle('hidden', name !== 'login');
   if (studentView) studentView.classList.toggle('hidden', name !== 'student');
   if (adminView) adminView.classList.toggle('hidden', name !== 'admin');
 }

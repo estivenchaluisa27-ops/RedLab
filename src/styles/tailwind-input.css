@@ -98,3 +98,8 @@ button:disabled {
     transform: none !important;
     box-shadow: none !important;
 }
+
+.custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 3px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748b; }

@@ -10,7 +10,7 @@ import { showView, el, showHide, toggleHidden } from './utils/dom.js';
 import { escapeHtml, escapeAttr } from './utils/escape.js';
 import { getWeekDays, formatDateYYYYMMDD, isPastDate } from './utils/dates.js';
 import { buildCourseId } from './courses/course-utils.js';
-import { initAuthListener as _initAuthListener, setupSession as _setupSession } from './auth/auth.js';
+import { initAuthListener as _initAuthListener, setupSession as _setupSession, unsubscribeAuthListener } from './auth/auth.js';
 import { handleLogin, handleLogout, togglePassword, openResetModal, closeResetModal, sendResetLink, openChangePasswordModal, closeChangePasswordModal, handleChangePassword } from './auth/auth-ui.js';
 import { bindLoginView } from './views/login-view.js';
 import { initCoursesList, loadAdminDashboard } from './courses/courses-list.js';
@@ -41,7 +41,7 @@ window._resetState = resetState;
 window._clearListeners = clearListeners;
 window._setUnsubscribers = setUnsubscribers;
 
-window.handleLogout = () => handleLogout(() => { clearListeners(); clearCalendarListeners(); }, window._auth);
+window.handleLogout = () => handleLogout(() => { unsubscribeAuthListener(); clearListeners(); clearCalendarListeners(); }, window._auth);
 window.openResetModal = openResetModal;
 window.closeResetModal = closeResetModal;
 window.sendResetLink = (e) => sendResetLink(e, window._auth);
@@ -121,11 +121,24 @@ document.addEventListener('DOMContentLoaded', () => {
     if (action === 'switch-tab') window.switchTab(btn.dataset.tab);
 
     // Courses
+    if (action === 'open-edit-course') window.openEditCourseModal(btn.dataset.id);
+    if (action === 'open-course-manager') window.openCourseManager(btn.dataset.id);
     if (action === 'open-create-course-modal') window.openCreateCourseModal();
     if (action === 'open-report-modal') window.openReportModal();
+    if (action === 'delete-reservation') window.deleteReservation(btn.dataset.id);
+    if (action === 'set-attendance') {
+      window.setAttendance(btn.dataset.group, btn.dataset.date, btn.dataset.cedula, btn.dataset.present === 'true', btn);
+    }
+    if (action === 'toggle-matrix-cell') btn.classList.toggle('selected');
     if (action === 'open-recurring-modal') document.getElementById('recurring-modal')?.classList.remove('hidden');
 
     // Groups
+    if (action === 'open-group-details') window.openGroupDetails(btn.dataset.id);
+    if (action === 'delete-group') window.deleteGroup(btn.dataset.id);
+    if (action === 'save-member-change') window.saveMemberChange(parseInt(btn.dataset.index));
+    if (action === 'cancel-member-edit') window.cancelMemberEdit();
+    if (action === 'enable-member-edit') window.enableMemberEdit(parseInt(btn.dataset.index));
+    if (action === 'delete-member') window.deleteMember(parseInt(btn.dataset.index));
     if (action === 'add-group') window.addGroup();
     if (action === 'save-group-basic-info') window.saveGroupBasicInfo();
     if (action === 'save-leader-info') window.saveLeaderInfo();

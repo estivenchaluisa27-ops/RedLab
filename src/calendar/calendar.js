@@ -176,7 +176,7 @@ function renderAdminCalendar(weekDays) {
 function renderMatrix() {
   const container = document.getElementById('matrix-container');
   if (!container) return;
-  container.innerHTML = `<div class="grid-matrix mb-4"><div></div><div class="matrix-header">Lun</div><div class="matrix-header">Mar</div><div class="matrix-header">Mié</div><div class="matrix-header">Jue</div><div class="matrix-header">Vie</div>${[7,8,9,10,11,12,13,14,15,16,17,18,19].map(h => `<div class="matrix-time">${h}:00</div>${[1,2,3,4,5].map(d => `<div class="matrix-cell" data-day="${d}" data-hour="${h}" onclick="this.classList.toggle('selected')"></div>`).join('')}`).join('')}</div>`;
+  container.innerHTML = `<div class="grid-matrix mb-4"><div></div><div class="matrix-header">Lun</div><div class="matrix-header">Mar</div><div class="matrix-header">Mié</div><div class="matrix-header">Jue</div><div class="matrix-header">Vie</div>${[7,8,9,10,11,12,13,14,15,16,17,18,19].map(h => `<div class="matrix-time">${h}:00</div>${[1,2,3,4,5].map(d => `<div class="matrix-cell" data-action="toggle-matrix-cell" data-day="${d}" data-hour="${h}"></div>`).join('')}`).join('')}</div>`;
 }
 
 function listenAdminPending() {
