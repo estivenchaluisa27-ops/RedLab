@@ -22,20 +22,13 @@ service cloud.firestore {
       return exists(/databases/$(database)/documents/student_directory/$(request.auth.token.email));
     }
 
-    function professorEmailMatches() {
-      return request.auth.token.email == resource.data.professorEmail;
+    function currentStudentDirectory() {
+      return get(/databases/$(database)/documents/student_directory/$(request.auth.token.email));
     }
 
-    function incomingProfessorEmailMatches() {
-      return request.auth.token.email == request.resource.data.professorEmail;
-    }
-
-    function studentOwnsDoc() {
-      return request.auth.uid == resource.data.userId;
-    }
-
-    function incomingStudentOwnsDoc() {
-      return request.auth.uid == request.resource.data.userId;
+    function currentStudentGroupName() {
+      let sd = currentStudentDirectory().data;
+      return get(/databases/$(database)/documents/courses/$(sd.courseId)/groups/$(sd.groupId)).data.name;
     }
 
     function isValidReservationCreate() {
@@ -51,6 +44,8 @@ service cloud.firestore {
           && r.groupName != ''
           && r.courseId is string
           && r.courseId != ''
+          && r.courseId == currentStudentDirectory().data.courseId
+          && r.groupName == currentStudentGroupName()
           && r.attendanceDetail == null;
     }
 
@@ -88,7 +83,7 @@ service cloud.firestore {
       allow read: if isSignedIn() && (
         isAdmin()
         || (isProfessor() && resource.data.professorEmail == request.auth.token.email)
-        || (isStudent() && resource.data.professorEmail != null)
+        || (isStudent() && currentStudentDirectory().data.courseId == courseId)
       );
       allow create: if isSignedIn() && isAdmin();
       allow update: if isSignedIn() && (
@@ -118,13 +113,18 @@ service cloud.firestore {
     // ==============================
     match /reservations/{reservationId} {
 
-      // LECTURA: Admins todo, profesores de sus cursos, estudiantes solo su grupo + bloqueos
+      // LECTURA: Admins todo; profesores ven ocupación global (approved/blocked) + pending de sus cursos; estudiantes solo su curso + bloqueos
       allow read: if isSignedIn() && (
         isAdmin()
-        || isProfessor()
+        || (isProfessor() && (
+          resource.data.status == 'blocked'
+          || resource.data.status == 'approved'
+          || (resource.data.courseId != null
+              && get(/databases/$(database)/documents/courses/$(resource.data.courseId)).data.professorEmail == request.auth.token.email)
+        ))
         || (isStudent() && (
           resource.data.status == 'blocked'
-          || resource.data.groupName == get(/databases/$(database)/documents/student_directory/$(request.auth.token.email)).data.groupName
+          || resource.data.courseId == currentStudentDirectory().data.courseId
         ))
       );
 
