@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, skip } from 'vitest';
 import {
   initializeTestEnvironment,
   assertSucceeds,
@@ -29,7 +29,27 @@ const ADMIN_UID = 'admin-uid';
 const PROF_UID = 'prof-uid';
 const STUDENT_UID = 'student-uid';
 
+let emulatorAvailable = false;
+
+async function checkEmulator(): Promise<boolean> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2000);
+    await fetch('http://localhost:8080', { signal: controller.signal, method: 'HEAD' });
+    clearTimeout(timeout);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 beforeAll(async () => {
+  emulatorAvailable = await checkEmulator();
+  if (!emulatorAvailable) {
+    console.log('⚠️  Firestore emulator not running on localhost:8080 — skipping rules tests');
+    console.log('   Start emulator with: npx firebase emulators:start --only firestore');
+    return;
+  }
   const rules = fs.readFileSync(path.join(PROJECT_ROOT, 'firestore.rules'), 'utf8');
   testEnv = await initializeTestEnvironment({
     projectId: PROJECT_ID,
@@ -42,10 +62,15 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await testEnv.cleanup();
+  if (emulatorAvailable && testEnv) {
+    await testEnv.cleanup();
+  }
 });
 
 beforeEach(async () => {
+  if (!emulatorAvailable) {
+    return;
+  }
   await testEnv.clearFirestore();
 
   // Admin doc
@@ -82,6 +107,10 @@ beforeEach(async () => {
 });
 
 describe('Firestore Rules — Security (P0-1, P0-2)', () => {
+  if (!emulatorAvailable) {
+    it.skip('Firestore emulator not available — start with: npx firebase emulators:start --only firestore', () => {});
+    return;
+  }
   // -------------------------------
   // P0-1: Spoofing prevention
   // -------------------------------
@@ -447,6 +476,10 @@ describe('Firestore Rules — Security (P0-1, P0-2)', () => {
 });
 
 describe('Firestore Rules — Bug fixes', () => {
+  if (!emulatorAvailable) {
+    it.skip('Firestore emulator not available', () => {});
+    return;
+  }
   it('currentStudentGroupName() resolves from real group doc, not student_directory', async () => {
     // This test verifies the fix for the latent bug where rules compared
     // groupName against student_directory.groupName (field that never existed).
