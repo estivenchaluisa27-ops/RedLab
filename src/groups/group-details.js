@@ -4,6 +4,7 @@
 import { getDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { escapeHtml } from '../utils/escape.js';
 import { alert as notifyAlert, notifyConfirm } from '../utils/notify.js';
+import { clearGroupUtilsCache } from './group-utils.js';
 
 // Estado privado del módulo
 let editingGroupData = null;
@@ -93,6 +94,7 @@ export async function saveGroupBasicInfo() {
   try {
     await updateDoc(doc(_db, "courses", _state.currentViewCourse, "groups", editingGroupId), { name: newName });
     editingGroupData.name = newName;
+    clearGroupUtilsCache();
     notifyAlert("Nombre actualizado.");
   } catch (e) { notifyAlert("Error: " + e.message); }
 }
@@ -114,6 +116,7 @@ export async function saveLeaderInfo() {
     });
     editingGroupData.leader = updatedLeader;
     editingGroupData.members = updatedMembers;
+    clearGroupUtilsCache();
     renderMembersTable();
     notifyAlert("Jefe de grupo actualizado.");
   } catch (e) { notifyAlert("Error: " + e.message); }
@@ -145,6 +148,7 @@ export async function saveMemberChange(index) {
     });
     editingGroupData.members = updatedMembers;
     editingMemberIndex = -1;
+    clearGroupUtilsCache();
     renderMembersTable();
   } catch (e) { notifyAlert("Error guardando miembro: " + e.message); }
 }
@@ -159,6 +163,7 @@ export async function deleteMember(index) {
       members: updatedMembers
     });
     editingGroupData.members = updatedMembers;
+    clearGroupUtilsCache();
     renderMembersTable();
   } catch (e) { notifyAlert("Error eliminando: " + e.message); }
 }
@@ -179,6 +184,7 @@ export async function addNewMember() {
     document.getElementById('add-mem-cedula').value = "";
     document.getElementById('add-mem-name').value = "";
     editingGroupData.members = updatedMembers;
+    clearGroupUtilsCache();
     renderMembersTable();
   } catch (e) { notifyAlert("Error agregando: " + e.message); }
 }

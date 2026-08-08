@@ -4,6 +4,7 @@
 import { collection, doc, writeBatch, deleteDoc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { escapeHtml } from '../utils/escape.js';
 import { alert as notifyAlert } from '../utils/notify.js';
+import { clearGroupUtilsCache } from './group-utils.js';
 
 let _db = null;
 let _state = null;
@@ -130,6 +131,7 @@ export async function deleteGroup(groupId) {
     try {
       await deleteDoc(doc(_db, "courses", _state.currentViewCourse, "groups", groupId));
       await deleteDoc(doc(_db, "student_directory", groupId));
+      clearGroupUtilsCache();
       Swal.fire({
         title: '¡Eliminado!',
         text: 'El grupo ha sido borrado correctamente.',

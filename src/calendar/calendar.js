@@ -199,40 +199,32 @@ function listenAdminPending() {
       s.forEach(d => reqs.push({ id: d.id, ...d.data() }));
       reqs.sort((a, b) => (a.createdAt?.toMillis() || 0) - (b.createdAt?.toMillis() || 0));
 
+      // Precarga paralela: cursos y profesores faltantes en una sola pasada
+      const missingCourses = [...new Set(reqs.map(r => r.courseId).filter(c => c && !(c in state.coursesCache)))];
+      await Promise.all(missingCourses.map(async (courseId) => {
+        try {
+          const cSnap = await getDoc(doc(_db, "courses", courseId));
+          state.coursesCache[courseId] = cSnap.exists() ? cSnap.data() : null;
+        } catch (e) { console.error("Error curso", e); }
+      }));
+
+      const missingProfs = [...new Set(reqs
+        .map(r => state.coursesCache[r.courseId]?.professorEmail)
+        .filter(e => e && !(e in state.professorsCache)))];
+      await Promise.all(missingProfs.map(async (email) => {
+        try {
+          const pSnap = await getDoc(doc(_db, "professors", email));
+          state.professorsCache[email] = pSnap.exists() ? pSnap.data().name : email;
+        } catch (e) { console.error("Error profe", e); }
+      }));
+
       for (const r of reqs) {
         let profName = "Cargando...";
-        let profEmail = null;
-
-        if (r.courseId) {
-          if (state.coursesCache[r.courseId]) {
-            profEmail = state.coursesCache[r.courseId].professorEmail;
-          } else {
-            try {
-              const cSnap = await getDoc(doc(_db, "courses", r.courseId));
-              if (cSnap.exists()) {
-                state.coursesCache[r.courseId] = cSnap.data();
-                profEmail = cSnap.data().professorEmail;
-              } else {
-                profName = "Curso Eliminado / Datos Antiguos";
-              }
-            } catch (e) { console.error("Error curso", e); }
-          }
-        }
-
-        if (profEmail) {
-          if (state.professorsCache[profEmail]) {
-            profName = state.professorsCache[profEmail];
-          } else {
-            try {
-              const pSnap = await getDoc(doc(_db, "professors", profEmail));
-              if (pSnap.exists()) {
-                profName = pSnap.data().name;
-              } else {
-                profName = profEmail;
-              }
-              state.professorsCache[profEmail] = profName;
-            } catch (e) { console.error("Error profe", e); }
-          }
+        const course = r.courseId ? state.coursesCache[r.courseId] : null;
+        if (r.courseId && course === null) {
+          profName = "Curso Eliminado / Datos Antiguos";
+        } else if (course?.professorEmail) {
+          profName = state.professorsCache[course.professorEmail] || course.professorEmail;
         }
 
         const el = document.createElement('div');

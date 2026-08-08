@@ -7,6 +7,7 @@ import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/
 import { escapeHtml } from '../utils/escape.js';
 import { showView } from '../utils/dom.js';
 import { alert as notifyAlert } from '../utils/notify.js';
+import { clearGroupUtilsCache } from '../groups/group-utils.js';
 import { loadAdminDashboard } from '../courses/courses-list.js';
 import { setupStudentView } from '../calendar/calendar.js';
 
@@ -42,7 +43,7 @@ export function initAuthListener(auth, db, state, resetState, setupSessionFn) {
         notifyAlert("Error de conexión al verificar tu perfil.");        await signOut(auth);
       }
     } else {
-      resetState(); showView('login');
+      resetState(); clearGroupUtilsCache(); showView('login');
       const btn = document.getElementById('login-submit-btn');
       if (btn) { btn.disabled = false; btn.innerHTML = 'INGRESAR'; }
     }
