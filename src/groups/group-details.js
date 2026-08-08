@@ -3,6 +3,7 @@
  */
 import { getDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { escapeHtml } from '../utils/escape.js';
+import { alert as notifyAlert, notifyConfirm } from '../utils/notify.js';
 
 // Estado privado del módulo
 let editingGroupData = null;
@@ -25,7 +26,7 @@ export async function openGroupDetails(groupId) {
 
   try {
     const docSnap = await getDoc(doc(_db, "courses", _state.currentViewCourse, "groups", groupId));
-    if (!docSnap.exists()) return alert("El grupo ya no existe.");
+    if (!docSnap.exists()) return notifyAlert("El grupo ya no existe.");
 
     editingGroupData = docSnap.data();
 
@@ -39,7 +40,7 @@ export async function openGroupDetails(groupId) {
     document.getElementById('modal-group-details').classList.remove('hidden');
   } catch (e) {
     console.error(e);
-    alert("Error cargando grupo: " + e.message);
+    notifyAlert("Error cargando grupo: " + e.message);
   }
 }
 
@@ -92,8 +93,8 @@ export async function saveGroupBasicInfo() {
   try {
     await updateDoc(doc(_db, "courses", _state.currentViewCourse, "groups", editingGroupId), { name: newName });
     editingGroupData.name = newName;
-    alert("Nombre actualizado.");
-  } catch (e) { alert("Error: " + e.message); }
+    notifyAlert("Nombre actualizado.");
+  } catch (e) { notifyAlert("Error: " + e.message); }
 }
 
 export async function saveLeaderInfo() {
@@ -114,8 +115,8 @@ export async function saveLeaderInfo() {
     editingGroupData.leader = updatedLeader;
     editingGroupData.members = updatedMembers;
     renderMembersTable();
-    alert("Jefe de grupo actualizado.");
-  } catch (e) { alert("Error: " + e.message); }
+    notifyAlert("Jefe de grupo actualizado.");
+  } catch (e) { notifyAlert("Error: " + e.message); }
 }
 
 export function enableMemberEdit(index) {
@@ -132,7 +133,7 @@ export async function saveMemberChange(index) {
   const newCed = document.getElementById(`edit-mem-ced-${index}`).value;
   const newName = document.getElementById(`edit-mem-name-${index}`).value;
 
-  if (!newCed || !newName) return alert("Datos vacíos");
+  if (!newCed || !newName) return notifyAlert("Datos vacíos");
 
   const updatedMembers = [...editingGroupData.members];
   updatedMembers[index].cedula = newCed;
@@ -145,11 +146,11 @@ export async function saveMemberChange(index) {
     editingGroupData.members = updatedMembers;
     editingMemberIndex = -1;
     renderMembersTable();
-  } catch (e) { alert("Error guardando miembro: " + e.message); }
+  } catch (e) { notifyAlert("Error guardando miembro: " + e.message); }
 }
 
 export async function deleteMember(index) {
-  if (!confirm("¿Seguro de eliminar a este integrante?")) return;
+  if (!await notifyConfirm("¿Seguro de eliminar a este integrante?")) return;
 
   const updatedMembers = editingGroupData.members.filter((_, i) => i !== index);
 
@@ -159,14 +160,14 @@ export async function deleteMember(index) {
     });
     editingGroupData.members = updatedMembers;
     renderMembersTable();
-  } catch (e) { alert("Error eliminando: " + e.message); }
+  } catch (e) { notifyAlert("Error eliminando: " + e.message); }
 }
 
 export async function addNewMember() {
   const ced = document.getElementById('add-mem-cedula').value;
   const name = document.getElementById('add-mem-name').value;
 
-  if (!ced || !name) return alert("Ingrese Cédula y Nombre");
+  if (!ced || !name) return notifyAlert("Ingrese Cédula y Nombre");
 
   const newMember = { cedula: ced, nombre: name, isLeader: false };
   const updatedMembers = [...editingGroupData.members, newMember];
@@ -179,5 +180,5 @@ export async function addNewMember() {
     document.getElementById('add-mem-name').value = "";
     editingGroupData.members = updatedMembers;
     renderMembersTable();
-  } catch (e) { alert("Error agregando: " + e.message); }
+  } catch (e) { notifyAlert("Error agregando: " + e.message); }
 }

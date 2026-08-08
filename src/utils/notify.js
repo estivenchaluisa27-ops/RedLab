@@ -4,13 +4,12 @@
 import { ensureSwal } from './swal-bootstrap.js';
 
 /**
- * Reemplaza alert() nativo con SweetAlert2.
- * Se asigna a window.alert en main.js.
+ * Muestra un mensaje con SweetAlert2, con fallback al alert nativo.
  */
 export function alert(message) {
   const Swal = ensureSwal();
   if (!Swal) {
-    window._nativeAlert(message);
+    window.alert(message);
     return;
   }
   const isError = message.toLowerCase().includes("error") ||
@@ -25,6 +24,30 @@ export function alert(message) {
       popup: 'rounded-xl shadow-2xl border-t-4 border-[#004274]'
     }
   });
+}
+
+/**
+ * Pide confirmación con SweetAlert2, con fallback a confirm() nativo.
+ * @param {string} message
+ * @returns {Promise<boolean>} true si el usuario confirmó
+ */
+export async function notifyConfirm(message) {
+  const Swal = ensureSwal();
+  if (!Swal) return window.confirm(message);
+  const result = await Swal.fire({
+    title: '¿Estás seguro?',
+    text: message,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#dc2626',
+    cancelButtonColor: '#64748b',
+    confirmButtonText: 'Sí, continuar',
+    cancelButtonText: 'Cancelar',
+    customClass: {
+      popup: 'rounded-xl shadow-2xl border-t-4 border-[#004274]'
+    }
+  });
+  return result.isConfirmed === true;
 }
 
 /**

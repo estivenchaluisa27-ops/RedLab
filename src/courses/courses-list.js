@@ -3,6 +3,7 @@
  */
 import { collection, query, where, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { escapeHtml } from '../utils/escape.js';
+import { switchTab, setupAdminCalendarLogic } from '../calendar/calendar.js';
 
 let _db = null;
 let _state = null;
@@ -18,7 +19,7 @@ export function clearCoursesListener() {
 }
 
 export function loadAdminDashboard() {
-  window.switchTab('calendar');
+  switchTab('calendar');
   const q = _state.role === 'admin' ? query(collection(_db, "courses")) : query(collection(_db, "courses"), where("professorEmail", "==", _state.user.email));
 
   clearCoursesListener();
@@ -61,5 +62,5 @@ export function loadAdminDashboard() {
     });
   }
 
-  if (typeof window._setupAdminCalendarLogic === 'function') window._setupAdminCalendarLogic();
+  setupAdminCalendarLogic();
 }

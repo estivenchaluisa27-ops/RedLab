@@ -5,6 +5,7 @@ import { collection, query, where, onSnapshot, getDocs, doc, updateDoc, deleteDo
 import { escapeHtml, escapeAttr } from '../utils/escape.js';
 import { lookupMembersByGroupName } from '../groups/group-utils.js';
 import { updateAdminActionBox, updateStudentUI } from '../calendar/calendar.js';
+import { alert as notifyAlert } from '../utils/notify.js';
 
 let _db = null;
 let _state = null;
@@ -33,7 +34,7 @@ export async function batchBlockAction(action) {
 export async function submitReservation() {
   const btn = document.getElementById('submit-request-btn');
 
-  if (_state.selectedSlots.length === 0) return alert("Selecciona al menos una hora.");
+  if (_state.selectedSlots.length === 0) return notifyAlert("Selecciona al menos una hora.");
 
   btn.disabled = true;
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
@@ -74,7 +75,7 @@ export async function submitReservation() {
 
     if (total > limit) {
       const remaining = Math.max(0, limit - existingCount);
-      alert(` LÍMITE EXCEDIDO\n\nEste curso permite máximo ${limit} horas por semana.\nYa tienes: ${existingCount} horas (agendadas o pendientes).\nIntentas pedir: ${newSlotsCount} horas.\n\nSolo puedes pedir: ${remaining} horas más esta semana.`);
+      notifyAlert(` LÍMITE EXCEDIDO\n\nEste curso permite máximo ${limit} horas por semana.\nYa tienes: ${existingCount} horas (agendadas o pendientes).\nIntentas pedir: ${newSlotsCount} horas.\n\nSolo puedes pedir: ${remaining} horas más esta semana.`);
       btn.disabled = false;
       btn.innerText = "Confirmar";
       return;
@@ -114,7 +115,7 @@ export async function submitReservation() {
     });
   } catch (error) {
     console.error(error);
-    alert("Error al procesar solicitud: " + error.message);
+    notifyAlert("Error al procesar solicitud: " + error.message);
   } finally {
     btn.disabled = false;
     btn.innerText = "Confirmar";
@@ -123,9 +124,9 @@ export async function submitReservation() {
 
 export async function admAct(id, app, d, h, gn) {
   const s = await getDocs(query(collection(_db, _RESERVATIONS_COLLECTION), where("date", "==", d), where("hour", "==", h), where("status", "in", ["approved", "blocked"])));
-  if (s.docs.find(x => x.data().status === 'blocked')) return alert("Horario bloqueado.");
+  if (s.docs.find(x => x.data().status === 'blocked')) return notifyAlert("Horario bloqueado.");
   const uniqueApproved = new Set(s.docs.filter(doc => doc.data().status === 'approved').map(doc => doc.data().groupName)).size;
-  if (uniqueApproved >= 4) return alert("Horario lleno.");
+  if (uniqueApproved >= 4) return notifyAlert("Horario lleno.");
   updateDoc(doc(_db, _RESERVATIONS_COLLECTION, id), { status: 'approved' });
 }
 
@@ -150,7 +151,7 @@ export async function deleteReservation(id) {
     await deleteDoc(doc(_db, _RESERVATIONS_COLLECTION, id));
     document.getElementById('attendance-modal').classList.add('hidden');
   } catch (e) {
-    alert("Error eliminando");
+    notifyAlert("Error eliminando");
   }
 }
 
@@ -222,7 +223,7 @@ export async function executeRecurringBlock(e) {
   const endStr = document.getElementById('rec-end').value;
   const action = document.getElementById('rec-action').value;
   const selectedCells = document.querySelectorAll('.matrix-cell.selected');
-  if (selectedCells.length === 0) return alert("Seleccione bloques.");
+  if (selectedCells.length === 0) return notifyAlert("Seleccione bloques.");
   const blocks = [];
   selectedCells.forEach(c => blocks.push({ d: parseInt(c.dataset.day), h: parseInt(c.dataset.hour) }));
   const batch = writeBatch(_db);
@@ -245,8 +246,8 @@ export async function executeRecurringBlock(e) {
       });
     }
   }
-  if (count > 490) return alert("Rango muy grande.");
+  if (count > 490) return notifyAlert("Rango muy grande.");
   await batch.commit();
-  alert(`Listo. ${count} bloques.`);
+  notifyAlert(`Listo. ${count} bloques.`);
   document.getElementById('recurring-modal').classList.add('hidden');
 }

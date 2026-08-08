@@ -2,7 +2,7 @@
  * src/auth/auth-ui.js — UI de login, logout, reset/change password
  */
 import { signInWithEmailAndPassword, signOut, sendPasswordResetEmail, updatePassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { showMessage } from '../utils/notify.js';
+import { showMessage, alert as notifyAlert } from '../utils/notify.js';
 
 /**
  * Maneja el login con email/password.
@@ -64,10 +64,10 @@ export async function sendResetLink(e, auth) {
   e.preventDefault();
   try {
     await sendPasswordResetEmail(auth, document.getElementById('reset-email').value);
-    alert("Enlace enviado.");
+    notifyAlert("Enlace enviado.");
     closeResetModal();
   } catch {
-    alert("Error al enviar.");
+    notifyAlert("Error al enviar.");
   }
 }
 
@@ -84,15 +84,15 @@ export async function handleChangePassword(e, auth) {
   e.preventDefault();
   const p1 = document.getElementById('new-password').value;
   const p2 = document.getElementById('confirm-password').value;
-  if (p1 !== p2 || p1.length < 6) return alert("Error en contraseña.");
+  if (p1 !== p2 || p1.length < 6) return notifyAlert("Error en contraseña.");
   try {
     await updatePassword(auth.currentUser, p1);
-    alert("Actualizada.");
+    notifyAlert("Actualizada.");
     closeChangePasswordModal();
   } catch (e) {
     if (e.code === 'auth/requires-recent-login') {
-      alert("Re-ingrese.");
+      notifyAlert("Re-ingrese.");
       await signOut(auth);
-    } else alert("Error.");
+    } else notifyAlert("Error.");
   }
 }

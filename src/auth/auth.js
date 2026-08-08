@@ -6,6 +6,9 @@ import { getDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { escapeHtml } from '../utils/escape.js';
 import { showView } from '../utils/dom.js';
+import { alert as notifyAlert } from '../utils/notify.js';
+import { loadAdminDashboard } from '../courses/courses-list.js';
+import { setupStudentView } from '../calendar/calendar.js';
 
 let unsubscribeAuth = null;
 
@@ -33,11 +36,10 @@ export function initAuthListener(auth, db, state, resetState, setupSessionFn) {
         if (profSnap.exists()) { setupSessionFn('professor', profSnap.data(), null); return; }
         if (studentSnap.exists()) { setupSessionFn('student', null, studentSnap.data()); return; }
 
-        alert("Usuario no registrado."); await signOut(auth);
+        notifyAlert("Usuario no registrado."); await signOut(auth);
       } catch (error) {
         console.error(error);
-        alert("Error de conexión al verificar tu perfil.");
-        await signOut(auth);
+        notifyAlert("Error de conexión al verificar tu perfil.");        await signOut(auth);
       }
     } else {
       resetState(); showView('login');
@@ -70,8 +72,7 @@ export async function setupSession(role, userData, studentData, state, db) {
   if (role === 'admin' || role === 'professor') {
     showView('admin');
     if (nameEl) nameEl.innerHTML = `<span class="font-bold">${escapeHtml(userData.name)}</span><span class="ml-2 text-xs bg-yellow-500 text-black px-2 rounded">${role.toUpperCase()}</span>`;
-    // Temporal: función aún no extraída
-    if (typeof window.loadAdminDashboard === 'function') window.loadAdminDashboard();
+    loadAdminDashboard();
   } else if (role === 'student') {
     state.courseId = studentData.courseId;
     state.groupId = studentData.groupId;
@@ -91,8 +92,7 @@ export async function setupSession(role, userData, studentData, state, db) {
 
         if (nameEl) nameEl.innerHTML = `<div class="text-right leading-tight"><div class="font-bold text-white text-sm">${escapeHtml(gData.name)}</div><div class="text-xs text-blue-200">${escapeHtml(state.user.email)}</div><span class="course-badge mt-1">${escapeHtml(cData.subject)} (${escapeHtml(cData.parallel)})</span></div><div class="ml-3 bg-white/10 p-2 rounded-full"><i class="fas fa-user text-white"></i></div>`;
         showView('student');
-        // Temporal: función aún no extraída
-        if (typeof window.setupStudentView === 'function') window.setupStudentView();
+        setupStudentView();
       }
     } catch (error) {
       console.error("Error cargando perfil:", error);

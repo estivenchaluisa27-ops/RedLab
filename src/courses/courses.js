@@ -4,6 +4,7 @@
 import { collection, doc, getDoc, getDocs, updateDoc, addDoc, where, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { escapeHtml } from '../utils/escape.js';
 import { buildCourseId } from './course-utils.js';
+import { alert as notifyAlert, notifyConfirm } from '../utils/notify.js';
 
 let _db = null;
 let _state = null;
@@ -30,7 +31,7 @@ export async function createCourse(e) {
 
   const customId = buildCourseId(subject, parallel);
 
-  if (!confirm(`¿Confirmar creación?\n\nEl ID en base de datos será: "${customId}"`)) {
+  if (!await notifyConfirm(`¿Confirmar creación?\n\nEl ID en base de datos será: "${customId}"`)) {
     return;
   }
 
@@ -39,14 +40,14 @@ export async function createCourse(e) {
       subject, parallel, career, weeklyLimit: limit,
       professorEmail: professor, id: customId
     });
-    alert("Curso creado.");
+    notifyAlert("Curso creado.");
     document.getElementById('modal-course').classList.add('hidden');
     document.getElementById('c-subject').value = '';
     document.getElementById('c-parallel').value = '';
     document.getElementById('c-career').value = '';
     document.getElementById('c-limit').value = '4';
   } catch (err) {
-    alert("Error crítico: " + err.message);
+    notifyAlert("Error crítico: " + err.message);
   }
 }
 
@@ -57,7 +58,7 @@ export async function openEditCourseModal(courseId) {
     let courseData = _state.coursesCache[courseId];
     if (!courseData) {
       const docSnap = await getDoc(doc(_db, "courses", courseId));
-      if (!docSnap.exists()) return alert("El curso no existe.");
+      if (!docSnap.exists()) return notifyAlert("El curso no existe.");
       courseData = docSnap.data();
     }
 
@@ -79,7 +80,7 @@ export async function openEditCourseModal(courseId) {
     document.getElementById('modal-edit-course').classList.remove('hidden');
   } catch (e) {
     console.error(e);
-    alert("Error: " + e.message);
+    notifyAlert("Error: " + e.message);
   }
 }
 
@@ -99,13 +100,13 @@ export async function saveCourseChanges(e) {
       professorEmail: newProfEmail
     });
 
-    alert("Curso actualizado.");
+    notifyAlert("Curso actualizado.");
     document.getElementById('modal-edit-course').classList.add('hidden');
 
     if (_state.coursesCache[courseId]) {
       Object.assign(_state.coursesCache[courseId], { subject: newSubject, parallel: newParallel, weeklyLimit: newLimit, professorEmail: newProfEmail });
     }
   } catch (err) {
-    alert("Error al guardar: " + err.message);
+    notifyAlert("Error al guardar: " + err.message);
   }
 }

@@ -3,6 +3,7 @@
  */
 import { collection, doc, writeBatch, deleteDoc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { escapeHtml } from '../utils/escape.js';
+import { alert as notifyAlert } from '../utils/notify.js';
 
 let _db = null;
 let _state = null;
@@ -136,7 +137,7 @@ export async function deleteGroup(groupId) {
         confirmButtonColor: '#004274'
       });
     } catch (e) {
-      alert("Error al eliminar: " + e.message);
+      notifyAlert("Error al eliminar: " + e.message);
     }
   }
 }

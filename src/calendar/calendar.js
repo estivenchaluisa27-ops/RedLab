@@ -2,6 +2,7 @@ import { collection, query, where, onSnapshot, getDoc, doc } from "https://www.g
 import { state } from '../state.js';
 import { escapeHtml, escapeAttr } from '../utils/escape.js';
 import { getWeekDays, formatDateYYYYMMDD, isPastDate } from '../utils/dates.js';
+import { openAttendanceModal, batchBlockAction, deleteReservation } from '../reservations/reservations.js';
 
 let _db = null;
 let _RESERVATIONS_COLLECTION = null;
@@ -150,7 +151,7 @@ function renderAdminCalendar(weekDays) {
           const infoBtn = document.createElement('div');
           infoBtn.className = 'info-btn';
           infoBtn.innerHTML = '<i class="fas fa-eye"></i>';
-          infoBtn.onclick = (e) => { e.stopPropagation(); window.openAttendanceModal(k.split('_')[0], k.split('_')[1], arr); };
+          infoBtn.onclick = (e) => { e.stopPropagation(); openAttendanceModal(k.split('_')[0], k.split('_')[1], arr); };
           container.appendChild(infoBtn);
         }
 
@@ -259,8 +260,8 @@ export function setupAdminCalendarLogic() {
   const update = () => { const w = getWeekDays(state.weekOffset); renderAdminCalendar(w); };
   document.getElementById('admin-prev-week').onclick = () => { state.weekOffset--; state.selectedSlots = []; update(); updateAdminActionBox(); };
   document.getElementById('admin-next-week').onclick = () => { state.weekOffset++; state.selectedSlots = []; update(); updateAdminActionBox(); };
-  document.getElementById('admin-block-btn').onclick = () => window.batchBlockAction('block');
-  document.getElementById('admin-unblock-btn').onclick = () => window.batchBlockAction('unblock');
+  document.getElementById('admin-block-btn').onclick = () => batchBlockAction('block');
+  document.getElementById('admin-unblock-btn').onclick = () => batchBlockAction('unblock');
   renderMatrix();
   update();
   listenAdminPending();
@@ -281,7 +282,7 @@ function handleStudentClick(btn) {
       confirmButtonText: 'Sí, cancelar turno',
       cancelButtonText: 'Mantener turno'
     }).then((result) => {
-      if (result.isConfirmed) window.deleteReservation(btn.dataset.docId);
+      if (result.isConfirmed) deleteReservation(btn.dataset.docId);
     });
     return;
   }
