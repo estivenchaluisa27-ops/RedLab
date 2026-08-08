@@ -1,6 +1,6 @@
 # Auditoría técnica — RedLab
 
-Fecha: 2026-08-07
+Fecha: 2026-08-07 (actualizado: remeadiación fases 1-6 completada y desplegada)
 Alcance: estado actual tras el refactor monolito → módulos (plan.md, fases 1-6 completadas).
 Método: análisis estático del código fuente, reglas de Firestore, config de hosting y CI.
 
@@ -20,6 +20,10 @@ contra el código y añade hallazgos nuevos.
 
 ## P0 — Seguridad (Firestore rules)
 
+> **Estado (2026-08-07/08): P0-1 y P0-2 REMEDIADOS** — `firestore.rules` endurecidas y
+> desplegadas (commit FASE 1). Tests de validación añadidos y pasando (commit `b252d49`).
+> P0-3 queda como **deuda aceptada** por decisión del propietario (véase el final de esta sección).
+
 ### P0-1. Spoofing de `courseId`/`groupName` en creación de reservas
 `firestore.rules:41-55` — `isValidReservationCreate()` valida que `userId == auth.uid`,
 pero **no cruza `courseId`/`groupName` contra `student_directory`**. Un estudiante puede
@@ -31,6 +35,11 @@ Falta equivalente de:
 request.resource.data.groupName == get(/databases/$(database)/documents/student_directory/$(request.auth.token.email)).data.groupName
 request.resource.data.courseId == get(...).data.courseId
 ```
+
+**Remediado**: `isValidReservationCreate()` ahora exige
+`courseId == currentStudentDirectory().data.courseId` y
+`groupName == currentStudentGroupName()` (resuelto server-side desde
+`courses/{courseId}/groups/{groupId}.name`). Presupuesto: 3 gets + 1 exists (< 10).
 
 ### P0-2. Lecturas demasiado amplias
 - `firestore.rules:91` — estudiantes pueden leer **todos los cursos** de la institución
@@ -44,10 +53,27 @@ request.resource.data.courseId == get(...).data.courseId
 Impacto: fuga de metadatos (profesorEmail, horarios de toda la universidad) y del
 calendario completo entre grupos/cursos.
 
+**Remediado**:
+- Cursos: estudiantes solo leen `courses` con `courseId == student_directory.courseId`
+  (el login ya consulta por su curso).
+- Reservas profesor: `blocked` + `approved` globales (necesarios para `admAct` y el
+  conteo de ocupación física de 4 grupos/slot) + `pending` solo de sus cursos.
+- Reservas estudiante: solo su curso + `blocked` globales (filtro por `courseId`,
+  corrige además un bug latente: la regla comparaba contra `groupName`, campo que
+  nunca se escribe en `student_directory`).
+- Eliminadas 4 funciones helper muertas que el validador marcó como no usadas.
+
 ### P0-3. Límite semanal solo en cliente
 Deuda #2 del plan.md, confirmada: `weeklyLimit` se valida únicamente en el front
 (`src/reservations/reservations.js`). Con la API directa de Firestore un estudiante
 puede crear N solicitudes pendientes. La regla de create valida forma, no política.
+
+**Estado: DEUDA ACEPTADA (2026-08-07)** — decisión del propietario. Las rules de
+Firestore no pueden contar documentos (sin agregaciones), así que el enforcement
+robusto exige una Cloud Function `onCreate` transaccional (plan Blaze, pago por uso)
+o un contador por usuario+semana validado en rules (no atómico bajo concurrencia).
+Se descartan ambas: el cliente ya enforcea el límite y el abuso requiere requests
+técnicas directas. Riesgo residual asumido y documentado.
 
 ---
 
@@ -135,6 +161,7 @@ hashing de archivos no hay forma de cachear assets inmutables (deuda de performa
 - Plan.md honesto y detallado: documenta riesgos y deuda explícitamente.
 - Ordenación `localeCompare` con `numeric: true` en tablas.
 - Manejo de errores con try/catch en todas las operaciones Firestore.
+- **Tests de rules con emulador** (Java 21 instalado localmente, 19 tests validando P0-1, P0-2).
 
 ---
 
@@ -148,7 +175,7 @@ hashing de archivos no hay forma de cachear assets inmutables (deuda de performa
 | 4 | SheetJS → 0.20.3; añadir SRI+crossorigin a los 3 CDNs | P1 | Bajo |
 | 5 | Mapa de acciones + imports directos; eliminar `window.*` | P1 | Medio |
 | 6 | `Promise.all` en `listenAdminPending` | P2 | Bajo |
-| 7 | ESLint + verificación `build:css` en CI | P2 | Bajo |
-| 8 | Tests de reglas con emulador | P2 | Medio |
-| 9 | Limpieza: swal-bootstrap corrupto, archivo `git` vacío, unificar alert/Swal | P3 | Bajo |
-| 10 | Accesibilidad (focus trap, aria) | P3 | Medio |
+| 7 | ESLint + verificación `build:css` en CI | P2 | Bajo | ✅ FASE 6 |
+| 8 | Tests de reglas con emulador | P2 | Medio | ✅ FASE 7 — 19 tests pasando (Java 21 instalado) |
+| 9 | Limpieza: swal-bootstrap corrupto, archivo `git` vacío, unificar alert/Swal | P3 | Bajo | ✅ FASE 3 |
+| 10 | Accesibilidad (focus trap, aria) | P3 | Medio | Pendiente |
