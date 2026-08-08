@@ -16,6 +16,8 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - run: npm run lint
+      - run: npm run build:css && git diff --exit-code -- styles.css
       - run: npx vitest run
 
   deploy:

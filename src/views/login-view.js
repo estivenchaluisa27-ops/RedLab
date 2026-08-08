@@ -1,7 +1,7 @@
 /**
  * src/views/login-view.js — Bind de eventos del formulario de login
  */
-import { handleLogin, togglePassword, openResetModal, closeResetModal, sendResetLink } from '../auth/auth-ui.js';
+import { handleLogin, togglePassword, openResetModal, closeResetModal } from '../auth/auth-ui.js';
 
 /**
  * Registra event listeners del login view.

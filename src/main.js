@@ -4,7 +4,6 @@
  */
 import { initFirebase, RESERVATIONS_COLLECTION } from './firebase-config.js';
 import { state, resetState, clearListeners } from './state.js';
-import { showView } from './utils/dom.js';
 import { initAuthListener as _initAuthListener, setupSession as _setupSession, unsubscribeAuthListener } from './auth/auth.js';
 import { handleLogout, sendResetLink, openResetModal, closeResetModal, openChangePasswordModal, closeChangePasswordModal, handleChangePassword } from './auth/auth-ui.js';
 import { bindLoginView } from './views/login-view.js';
@@ -12,9 +11,9 @@ import { initCoursesList } from './courses/courses-list.js';
 import { initCourses, openCreateCourseModal, createCourse, openEditCourseModal, saveCourseChanges } from './courses/courses.js';
 import { initGroups, openCourseManager, addGroup, deleteGroup } from './groups/groups.js';
 import { initGroupDetails, openGroupDetails, saveGroupBasicInfo, saveLeaderInfo, enableMemberEdit, cancelMemberEdit, saveMemberChange, deleteMember, addNewMember } from './groups/group-details.js';
-import { initReservations, batchBlockAction, submitReservation, admAct, rejectReq, deleteReservation, openAttendanceModal, setAttendance, executeRecurringBlock } from './reservations/reservations.js';
+import { initReservations, submitReservation, admAct, rejectReq, deleteReservation, setAttendance, executeRecurringBlock } from './reservations/reservations.js';
 import { initReports, openReportModal, executeReport } from './reports/reports.js';
-import { initCalendar, setupAdminCalendarLogic, setupStudentView, switchTab, clearCalendarListeners } from './calendar/calendar.js';
+import { initCalendar, switchTab, clearCalendarListeners } from './calendar/calendar.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const { db, auth } = initFirebase();

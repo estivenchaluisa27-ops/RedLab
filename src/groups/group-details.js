@@ -55,7 +55,7 @@ export function renderMembersTable() {
     const isEditing = index === editingMemberIndex;
     const isLeader = mem.isLeader || false;
 
-    let rowHtml = '';
+    let rowHtml;
 
     if (isEditing) {
       rowHtml = `

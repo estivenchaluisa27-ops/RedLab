@@ -2,7 +2,7 @@
  * src/courses/courses-list.js — Grid de cursos + select de profesores (admin dashboard)
  */
 import { collection, query, where, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-import { escapeHtml } from '../utils/escape.js';
+import { escapeHtml, escapeAttr } from '../utils/escape.js';
 import { switchTab, setupAdminCalendarLogic } from '../calendar/calendar.js';
 
 let _db = null;

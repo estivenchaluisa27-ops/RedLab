@@ -1,7 +1,7 @@
 /**
  * src/reservations/reservations.js — Reservas, asistencia, bloqueos
  */
-import { collection, query, where, onSnapshot, getDocs, doc, updateDoc, deleteDoc, writeBatch, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { collection, query, where, getDocs, doc, updateDoc, deleteDoc, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { escapeHtml, escapeAttr } from '../utils/escape.js';
 import { lookupMembersByGroupName } from '../groups/group-utils.js';
 import { updateAdminActionBox, updateStudentUI } from '../calendar/calendar.js';
@@ -122,7 +122,7 @@ export async function submitReservation() {
   }
 }
 
-export async function admAct(id, app, d, h, gn) {
+export async function admAct(id, app, d, h, _gn) {
   const s = await getDocs(query(collection(_db, _RESERVATIONS_COLLECTION), where("date", "==", d), where("hour", "==", h), where("status", "in", ["approved", "blocked"])));
   if (s.docs.find(x => x.data().status === 'blocked')) return notifyAlert("Horario bloqueado.");
   const uniqueApproved = new Set(s.docs.filter(doc => doc.data().status === 'approved').map(doc => doc.data().groupName)).size;

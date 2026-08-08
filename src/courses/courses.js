@@ -1,7 +1,7 @@
 /**
  * src/courses/courses.js — CRUD de cursos (crear, editar, modal)
  */
-import { collection, doc, getDoc, getDocs, updateDoc, addDoc, where, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { collection, doc, getDoc, getDocs, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { escapeHtml } from '../utils/escape.js';
 import { buildCourseId } from './course-utils.js';
 import { alert as notifyAlert, notifyConfirm } from '../utils/notify.js';

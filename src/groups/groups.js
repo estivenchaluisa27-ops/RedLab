@@ -1,8 +1,8 @@
 /**
  * src/groups/groups.js — Gestión de grupos (crear, eliminar, abrir modal)
  */
-import { collection, doc, writeBatch, deleteDoc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-import { escapeHtml } from '../utils/escape.js';
+import { collection, doc, writeBatch, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { escapeHtml, escapeAttr } from '../utils/escape.js';
 import { alert as notifyAlert } from '../utils/notify.js';
 import { clearGroupUtilsCache } from './group-utils.js';
 
