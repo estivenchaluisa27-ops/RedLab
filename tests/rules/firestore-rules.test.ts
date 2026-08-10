@@ -7,7 +7,7 @@ import {
 } from '@firebase/rules-unit-testing';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as net from 'net';
+import * as http from 'http';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -17,7 +17,7 @@ let testEnv: RulesTestEnvironment;
 
 const PROJECT_ID = 'lab-redes-turnos';
 
-const EMULATOR_PORT = Number(process.env.FIRESTORE_EMULATOR_PORT) || 8080;
+const EMULATOR_PORT = Number(process.env.FIRESTORE_EMULATOR_PORT) || 8081;
 const EMULATOR_HOST = '127.0.0.1';
 
 const ADMIN_EMAIL = 'admin@test.com';
@@ -37,21 +37,23 @@ const emulatorAvailable = await checkEmulator();
 
 async function checkEmulator(): Promise<boolean> {
   return new Promise((resolve) => {
-    const socket = new net.Socket();
-    socket.setTimeout(2000);
-    socket.on('connect', () => {
-      socket.destroy();
-      resolve(true);
-    });
-    socket.on('timeout', () => {
-      socket.destroy();
+    const req = http.get(
+      { host: EMULATOR_HOST, port: EMULATOR_PORT, path: '/', timeout: 2000 },
+      (res) => {
+        let body = '';
+        res.on('data', (chunk) => (body += chunk));
+        res.on('end', () => {
+          resolve(!body.includes('<html') && !body.includes('<!doctype'));
+        });
+      }
+    );
+    req.on('timeout', () => {
+      req.destroy();
       resolve(false);
     });
-    socket.on('error', () => {
-      socket.destroy();
+    req.on('error', () => {
       resolve(false);
     });
-    socket.connect(EMULATOR_PORT, EMULATOR_HOST);
   });
 }
 
