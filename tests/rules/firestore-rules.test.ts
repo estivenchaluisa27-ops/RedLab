@@ -7,6 +7,7 @@ import {
 } from '@firebase/rules-unit-testing';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as net from 'net';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -15,6 +16,9 @@ const PROJECT_ROOT = path.resolve(__dirname, '..', '..');
 let testEnv: RulesTestEnvironment;
 
 const PROJECT_ID = 'lab-redes-turnos';
+
+const EMULATOR_PORT = Number(process.env.FIRESTORE_EMULATOR_PORT) || 8080;
+const EMULATOR_HOST = '127.0.0.1';
 
 const ADMIN_EMAIL = 'admin@test.com';
 const PROF_EMAIL = 'prof@test.com';
@@ -29,24 +33,31 @@ const ADMIN_UID = 'admin-uid';
 const PROF_UID = 'prof-uid';
 const STUDENT_UID = 'student-uid';
 
-let emulatorAvailable = false;
+const emulatorAvailable = await checkEmulator();
 
 async function checkEmulator(): Promise<boolean> {
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 2000);
-    await fetch('http://localhost:8080', { signal: controller.signal, method: 'HEAD' });
-    clearTimeout(timeout);
-    return true;
-  } catch {
-    return false;
-  }
+  return new Promise((resolve) => {
+    const socket = new net.Socket();
+    socket.setTimeout(2000);
+    socket.on('connect', () => {
+      socket.destroy();
+      resolve(true);
+    });
+    socket.on('timeout', () => {
+      socket.destroy();
+      resolve(false);
+    });
+    socket.on('error', () => {
+      socket.destroy();
+      resolve(false);
+    });
+    socket.connect(EMULATOR_PORT, EMULATOR_HOST);
+  });
 }
 
 beforeAll(async () => {
-  emulatorAvailable = await checkEmulator();
   if (!emulatorAvailable) {
-    console.log('⚠️  Firestore emulator not running on localhost:8080 — skipping rules tests');
+    console.log(`⚠️  Firestore emulator not running on localhost:${EMULATOR_PORT} — skipping rules tests`);
     console.log('   Start emulator with: npx firebase emulators:start --only firestore');
     return;
   }
@@ -55,8 +66,8 @@ beforeAll(async () => {
     projectId: PROJECT_ID,
     firestore: {
       rules,
-      host: 'localhost',
-      port: 8080,
+      host: EMULATOR_HOST,
+      port: EMULATOR_PORT,
     },
   });
 });
