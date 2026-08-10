@@ -32,7 +32,7 @@ export function loadAdminDashboard() {
       _state.coursesCache[d.id] = c;
 
       grid.innerHTML += `
-        <div class="bg-white p-5 rounded-lg shadow border-l-4 border-[#004274] hover:shadow-lg transition relative group">
+        <div class="bg-white p-5 rounded-xl card-lift border-l-4 border-uce-700 hover:border-uce-500 relative group">
           <div class="flex justify-between items-start">
             <div>
               <h3 class="font-bold text-lg text-slate-800">${escapeHtml(c.subject)}</h3>
@@ -48,7 +48,7 @@ export function loadAdminDashboard() {
             <span class="font-bold text-slate-600"><i class="fas fa-clock mr-1"></i>${c.weeklyLimit}h/sem</span>
           </div>
           <div class="mt-2 text-center">
-            <button data-action="open-course-manager" data-id="${escapeAttr(d.id)}" class="text-[#004274] font-bold hover:underline text-xs w-full py-1 bg-slate-50 rounded">Gestionar Grupos <i class="fas fa-arrow-right ml-1"></i></button>
+            <button data-action="open-course-manager" data-id="${escapeAttr(d.id)}" class="text-uce-700 font-bold hover:underline text-xs w-full py-1 bg-slate-50 rounded">Gestionar Grupos <i class="fas fa-arrow-right ml-1"></i></button>
           </div>
         </div>`;
     });

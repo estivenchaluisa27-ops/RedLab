@@ -228,7 +228,7 @@ function listenAdminPending() {
         }
 
         const el = document.createElement('div');
-        el.className = 'bg-white p-3 rounded-lg shadow-sm border border-slate-200 mb-2 flex justify-between items-center fade-in';
+        el.className = 'bg-white p-3 rounded-xl card-lift mb-2 flex justify-between items-center fade-in hover:border-uce-700/30';
         el.innerHTML = `
         <div>
             <div class="font-bold text-sm text-slate-700">${escapeHtml(r.groupName)}</div>
@@ -407,9 +407,9 @@ export function setupStudentView() {
 export function switchTab(tab) {
   document.getElementById('tab-calendar').classList.add('hidden');
   document.getElementById('tab-courses').classList.add('hidden');
-  document.getElementById('tab-btn-cal').classList.remove('border-[#004274]', 'text-[#004274]');
-  document.getElementById('tab-btn-cou').classList.remove('border-[#004274]', 'text-[#004274]');
+  document.getElementById('tab-btn-cal').classList.remove('border-uce-700', 'text-uce-700');
+  document.getElementById('tab-btn-cou').classList.remove('border-uce-700', 'text-uce-700');
   document.getElementById(`tab-${tab}`).classList.remove('hidden');
   const btn = tab === 'calendar' ? 'tab-btn-cal' : 'tab-btn-cou';
-  document.getElementById(btn).classList.add('border-[#004274]', 'text-[#004274]');
+  document.getElementById(btn).classList.add('border-uce-700', 'text-uce-700');
 }
