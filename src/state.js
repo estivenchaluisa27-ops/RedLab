@@ -17,7 +17,7 @@ export let state = {
 };
 
 export function resetState() {
-  state = {
+  Object.assign(state, {
     user: null,
     role: null,
     courseId: null,
@@ -29,7 +29,7 @@ export function resetState() {
     coursesCache: {},
     professorsCache: {},
     weeklyLimit: 4
-  };
+  });
 }
 
 let unsubscribeReservations = null;
