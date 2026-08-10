@@ -14,8 +14,11 @@ import { initGroupDetails, openGroupDetails, saveGroupBasicInfo, saveLeaderInfo,
 import { initReservations, submitReservation, admAct, rejectReq, deleteReservation, setAttendance, executeRecurringBlock } from './reservations/reservations.js';
 import { initReports, openReportModal, executeReport } from './reports/reports.js';
 import { initCalendar, switchTab, clearCalendarListeners } from './calendar/calendar.js';
+import { initMotionObserver, handlePress } from './utils/motion.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+  initMotionObserver();
+  document.addEventListener('pointerdown', handlePress, true);
   const { db, auth } = initFirebase();
 
   initCoursesList(db, state);

@@ -3,6 +3,7 @@ import { state } from '../state.js';
 import { escapeHtml, escapeAttr } from '../utils/escape.js';
 import { getWeekDays, formatDateYYYYMMDD, isPastDate } from '../utils/dates.js';
 import { openAttendanceModal, batchBlockAction, deleteReservation } from '../reservations/reservations.js';
+import { animateViewIn } from '../utils/motion.js';
 
 let _db = null;
 let _RESERVATIONS_COLLECTION = null;
@@ -409,7 +410,9 @@ export function switchTab(tab) {
   document.getElementById('tab-courses').classList.add('hidden');
   document.getElementById('tab-btn-cal').classList.remove('border-uce-700', 'text-uce-700');
   document.getElementById('tab-btn-cou').classList.remove('border-uce-700', 'text-uce-700');
-  document.getElementById(`tab-${tab}`).classList.remove('hidden');
+  const tabEl = document.getElementById(`tab-${tab}`);
+  tabEl.classList.remove('hidden');
   const btn = tab === 'calendar' ? 'tab-btn-cal' : 'tab-btn-cou';
   document.getElementById(btn).classList.add('border-uce-700', 'text-uce-700');
+  animateViewIn(tabEl);
 }

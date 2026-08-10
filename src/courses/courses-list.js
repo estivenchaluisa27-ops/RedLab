@@ -4,10 +4,12 @@
 import { collection, query, where, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { escapeHtml, escapeAttr } from '../utils/escape.js';
 import { switchTab, setupAdminCalendarLogic } from '../calendar/calendar.js';
+import { animateListIn } from '../utils/motion.js';
 
 let _db = null;
 let _state = null;
 let unsubscribeCourses = null;
+let coursesStaggered = false;
 
 export function initCoursesList(db, state) {
   _db = db;
@@ -27,6 +29,7 @@ export function loadAdminDashboard() {
   unsubscribeCourses = onSnapshot(q, (snap) => {
     const grid = document.getElementById('courses-grid');
     grid.innerHTML = '';
+    const firstRender = !coursesStaggered;
     snap.forEach(d => {
       const c = d.data();
       _state.coursesCache[d.id] = c;
@@ -52,6 +55,10 @@ export function loadAdminDashboard() {
           </div>
         </div>`;
     });
+    if (firstRender && grid.children.length) {
+      coursesStaggered = true;
+      animateListIn(grid);
+    }
   });
 
   if (_state.role === 'admin') {

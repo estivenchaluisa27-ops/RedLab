@@ -1,6 +1,7 @@
 /**
  * src/utils/dom.js — Utilidades DOM (el, showHide, toggleHidden, showView)
  */
+import { animateViewIn } from './motion.js';
 
 /**
  * Abreviatura de document.getElementById
@@ -45,4 +46,7 @@ export function showView(name) {
   if (loginView) loginView.classList.toggle('hidden', name !== 'login');
   if (studentView) studentView.classList.toggle('hidden', name !== 'student');
   if (adminView) adminView.classList.toggle('hidden', name !== 'admin');
+  if (name === 'admin' && adminView) animateViewIn(adminView);
+  if (name === 'student' && studentView) animateViewIn(studentView);
+  if (name === 'login' && loginView) animateViewIn(loginView);
 }
