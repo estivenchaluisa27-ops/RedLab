@@ -5,7 +5,7 @@
 import { initFirebase, RESERVATIONS_COLLECTION } from './firebase-config.js';
 import { state, resetState, clearListeners } from './state.js';
 import { initAuthListener as _initAuthListener, setupSession as _setupSession, unsubscribeAuthListener } from './auth/auth.js';
-import { handleLogout, sendResetLink, openResetModal, closeResetModal, openChangePasswordModal, closeChangePasswordModal, handleChangePassword } from './auth/auth-ui.js';
+import { handleLogout, sendResetLink, openResetModal, closeResetModal, openChangePasswordModal, closeChangePasswordModal, handleChangePassword, openSignupModal, closeSignupModal, handleSignup } from './auth/auth-ui.js';
 import { bindLoginView } from './views/login-view.js';
 import { initCoursesList } from './courses/courses-list.js';
 import { initCourses, openCreateCourseModal, createCourse, openEditCourseModal, saveCourseChanges } from './courses/courses.js';
@@ -35,6 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
     'close-change-password-modal': () => closeChangePasswordModal(),
     'open-reset-modal': () => openResetModal(),
     'close-reset-modal': () => closeResetModal(),
+    'open-signup-modal': () => openSignupModal(),
+    'close-signup-modal': () => closeSignupModal(),
 
     // Close any modal
     'close-modal': (btn) => {
@@ -84,6 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
     'save-course-changes': (e) => saveCourseChanges(e),
     'execute-recurring-block': (e) => executeRecurringBlock(e),
     'execute-report': (e) => executeReport(e),
+    'create-account': (e) => handleSignup(e, auth),
   };
 
   document.addEventListener('click', (e) => {

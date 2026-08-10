@@ -106,7 +106,7 @@ export async function addGroup() {
     Swal.fire({
       icon: 'success',
       title: 'Grupo Creado',
-      text: `El líder ${email} ya está registrado y puede ingresar al sistema.`,
+      text: `El líder ${email} ya está habilitado. Debe crear su cuenta desde la página de inicio con su correo institucional @uce.edu.ec.`,
       timer: 3000,
       showConfirmButton: false
     });

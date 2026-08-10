@@ -1,7 +1,7 @@
 /**
  * src/auth/auth-ui.js — UI de login, logout, reset/change password
  */
-import { signInWithEmailAndPassword, signOut, sendPasswordResetEmail, updatePassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { signInWithEmailAndPassword, signOut, sendPasswordResetEmail, updatePassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { showMessage, alert as notifyAlert } from '../utils/notify.js';
 
 /**
@@ -68,6 +68,52 @@ export async function sendResetLink(e, auth) {
     closeResetModal();
   } catch {
     notifyAlert("Error al enviar.");
+  }
+}
+
+// --- Signup Modal (auto-registro de jefes de grupo) ---
+const UCE_EMAIL_REGEX = /^[a-zA-Z0-9._-]+@uce\.edu\.ec$/;
+
+export function openSignupModal() {
+  document.getElementById('signup-modal').classList.remove('hidden');
+}
+
+export function closeSignupModal() {
+  document.getElementById('signup-modal').classList.add('hidden');
+}
+
+export async function handleSignup(e, auth) {
+  e.preventDefault();
+  const email = document.getElementById('signup-email').value.trim().toLowerCase();
+  const p1 = document.getElementById('signup-password').value;
+  const p2 = document.getElementById('signup-confirm').value;
+
+  if (!UCE_EMAIL_REGEX.test(email)) {
+    return notifyAlert("Debe usar un correo institucional @uce.edu.ec.");
+  }
+  if (p1.length < 6) {
+    return notifyAlert("Contraseña mínimo 6 caracteres.");
+  }
+  if (p1 !== p2) {
+    return notifyAlert("Las contraseñas no coinciden.");
+  }
+
+  try {
+    await createUserWithEmailAndPassword(auth, email, p1);
+    notifyAlert("Cuenta creada. Ya puedes ingresar.");
+    closeSignupModal();
+    document.getElementById('signup-form').reset();
+  } catch (error) {
+    if (error.code === 'auth/email-already-in-use') {
+      notifyAlert("Ya existe una cuenta con este correo. Inicia sesión.");
+    } else if (error.code === 'auth/weak-password') {
+      notifyAlert("Contraseña demasiado débil (mínimo 6 caracteres).");
+    } else if (error.code === 'auth/invalid-email') {
+      notifyAlert("Correo inválido.");
+    } else {
+      console.error(error);
+      notifyAlert("Error al crear la cuenta. Intenta de nuevo.");
+    }
   }
 }
 

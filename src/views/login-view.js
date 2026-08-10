@@ -1,7 +1,7 @@
 /**
  * src/views/login-view.js — Bind de eventos del formulario de login
  */
-import { handleLogin, togglePassword, openResetModal, closeResetModal } from '../auth/auth-ui.js';
+import { handleLogin, togglePassword, openResetModal, closeResetModal, openSignupModal, closeSignupModal } from '../auth/auth-ui.js';
 
 /**
  * Registra event listeners del login view.
@@ -29,6 +29,17 @@ export function bindLoginView(auth) {
   const resetCancelBtn = document.querySelector('[data-action="close-reset-modal"]');
   if (resetCancelBtn) {
     resetCancelBtn.addEventListener('click', closeResetModal);
+  }
+
+  // Signup modal
+  const signupBtn = document.querySelector('[data-action="open-signup-modal"]');
+  if (signupBtn) {
+    signupBtn.addEventListener('click', openSignupModal);
+  }
+
+  const signupCancelBtn = document.querySelector('[data-action="close-signup-modal"]');
+  if (signupCancelBtn) {
+    signupCancelBtn.addEventListener('click', closeSignupModal);
   }
 
 
