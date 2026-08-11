@@ -8,14 +8,15 @@ import { initAuthListener as _initAuthListener, setupSession as _setupSession, u
 import { handleLogout, sendResetLink, openResetModal, closeResetModal, openChangePasswordModal, closeChangePasswordModal, handleChangePassword, openSignupModal, closeSignupModal, handleSignup } from './auth/auth-ui.js';
 import { bindLoginView } from './views/login-view.js';
 import { initCoursesList } from './courses/courses-list.js';
-import { initCourses, openCreateCourseModal, createCourse, openEditCourseModal, saveCourseChanges } from './courses/courses.js';
-import { initGroups, openCourseManager, addGroup, deleteGroup } from './groups/groups.js';
-import { initGroupDetails, openGroupDetails, saveGroupBasicInfo, saveLeaderInfo, enableMemberEdit, cancelMemberEdit, saveMemberChange, deleteMember, addNewMember } from './groups/group-details.js';
+import { initCourses, createCourse, saveCourseChanges, setupEditCourseView } from './courses/courses.js';
+import { initGroups, addGroup, deleteGroup, setupCourseGroupsView, clearGroupsListener } from './groups/groups.js';
+import { initGroupDetails, setupGroupDetailsView, saveGroupBasicInfo, saveLeaderInfo, enableMemberEdit, cancelMemberEdit, saveMemberChange, deleteMember, addNewMember } from './groups/group-details.js';
 import { initReservations, submitReservation, admAct, rejectReq, deleteReservation, setAttendance, executeRecurringBlock } from './reservations/reservations.js';
-import { initReports, openReportModal, executeReport } from './reports/reports.js';
+import { initReports, setupReportesView, executeReport } from './reports/reports.js';
 import { initCalendar, clearCalendarListeners, setupAdminCalendarLogic } from './calendar/calendar.js';
 import { initMotionObserver, handlePress } from './utils/motion.js';
-import { initAdminRouter, registerSectionSetup } from './admin-router-controller.js';
+import { initAdminRouter, registerSectionSetup, registerSubviewSetup, registerSubviewOnLeave } from './admin-router-controller.js';
+import { navigate } from './router.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   initMotionObserver();
@@ -30,9 +31,19 @@ document.addEventListener('DOMContentLoaded', () => {
   initReports(db, state);
   initCalendar(db, RESERVATIONS_COLLECTION);
 
-  // Router admin — registro de setups por sección
+  // Router admin — registro de setups por sección y sub-vista
   registerSectionSetup('calendario', () => setupAdminCalendarLogic(), { rerunOnEveryEnter: true });
-  registerSectionSetup('cursos', () => { /* setup corre via loadAdminDashboard/onSnapshot; aquí va vacío en Fase A */ });
+  registerSectionSetup('cursos', () => { /* la sub-view activa decide setup, ver registerSubviewSetup */ });
+  registerSectionSetup('reportes', () => setupReportesView(), { rerunOnEveryEnter: true });
+
+  // Sub-vistas de cursos: setup se invoca al montar cada sub-view
+  registerSubviewSetup('curso-nuevo', () => { /* form vacío por defecto; no requiere setup adicional */ });
+  registerSubviewSetup('curso-editar', (params) => setupEditCourseView(params));
+  registerSubviewSetup('curso-grupos', (params) => setupCourseGroupsView(params));
+  registerSubviewSetup('grupo-detalle', (params) => setupGroupDetailsView(params));
+
+  // onLeave: limpiar el listener de grupos al salir de curso-grupos
+  registerSubviewOnLeave('curso-grupos', () => clearGroupsListener());
 
   bindLoginView(auth);
 
@@ -52,11 +63,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (target) document.getElementById(target)?.classList.add('hidden');
     },
 
-    // Courses
-    'open-edit-course': (btn) => openEditCourseModal(btn.dataset.id),
-    'open-course-manager': (btn) => openCourseManager(btn.dataset.id),
-    'open-create-course-modal': () => openCreateCourseModal(),
-    'open-report-modal': () => openReportModal(),
+    // Courses — ahora navegan a sub-vistas en vez de abrir modales
+    'open-edit-course': (btn) => navigate(`#/admin/cursos/${encodeURIComponent(btn.dataset.id)}/editar`),
+    'open-course-manager': (btn) => navigate(`#/admin/cursos/${encodeURIComponent(btn.dataset.id)}/grupos`),
+    'open-create-course-modal': () => navigate('#/admin/cursos/nuevo'),
+    'open-report-modal': () => navigate('#/admin/reportes'),
     'delete-reservation': (btn) => deleteReservation(btn.dataset.id),
     'set-attendance': (btn) => {
       setAttendance(btn.dataset.group, btn.dataset.date, btn.dataset.cedula, btn.dataset.present === 'true', btn);
@@ -64,8 +75,13 @@ document.addEventListener('DOMContentLoaded', () => {
     'toggle-matrix-cell': (btn) => btn.classList.toggle('selected'),
     'open-recurring-modal': () => document.getElementById('recurring-modal')?.classList.remove('hidden'),
 
-    // Groups
-    'open-group-details': (btn) => openGroupDetails(btn.dataset.id),
+    // Groups — open-group-details navega a la sub-view grupo-detalle del courseId actual
+    'open-group-details': (btn) => {
+      // currentViewCourse fue seteado por setupCourseGroupsView al entrar a curso-grupos.
+      const courseId = state.currentViewCourse;
+      if (!courseId) return;
+      navigate(`#/admin/cursos/${encodeURIComponent(courseId)}/grupos/${encodeURIComponent(btn.dataset.id)}`);
+    },
     'delete-group': (btn) => deleteGroup(btn.dataset.id),
     'save-member-change': (btn) => saveMemberChange(parseInt(btn.dataset.index)),
     'cancel-member-edit': () => cancelMemberEdit(),

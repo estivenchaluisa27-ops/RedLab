@@ -64,14 +64,15 @@ export function buildReportRows(reservationsDocs, selectedCourses, coursesCache,
   return rows;
 }
 
-export function openReportModal() {
+export function setupReportesView() {
   const list = document.getElementById('rep-courses-list');
+  if (!list) return;
   list.innerHTML = '';
 
   list.innerHTML += `
     <label class="flex items-center space-x-2 p-1.5 hover:bg-slate-200 rounded cursor-pointer border-b border-slate-200 mb-1">
       <input type="checkbox" class="rep-toggle-all rounded text-blue-600 w-4 h-4 cursor-pointer">
-      <span class="font-bold text-[#004274] text-xs uppercase tracking-wide">Seleccionar Todos</span>
+      <span class="font-bold text-uce-700 text-xs uppercase tracking-wide">Seleccionar Todos</span>
     </label>
   `;
 
@@ -97,8 +98,6 @@ export function openReportModal() {
   const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
   document.getElementById('rep-start').value = formatDateYYYYMMDD(firstDay);
   document.getElementById('rep-end').value = formatDateYYYYMMDD(today);
-
-  document.getElementById('modal-report').classList.remove('hidden');
 }
 
 export async function executeReport(e) {
@@ -161,7 +160,6 @@ export async function executeReport(e) {
     XLSX.writeFile(workbook, `Asistencia_RedLab_${startStr}_al_${endStr}.xlsx`);
 
     Swal.close();
-    document.getElementById('modal-report').classList.add('hidden');
   } catch (error) {
     console.error(error);
     Swal.fire('Error', 'Hubo un problema procesando los datos: ' + error.message, 'error');

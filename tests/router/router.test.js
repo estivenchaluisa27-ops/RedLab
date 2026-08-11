@@ -43,6 +43,68 @@ describe('router — parseHash', () => {
   });
 });
 
+describe('router — parseHash sub-rutas de cursos (Fase B)', () => {
+  it('parsea #/admin/cursos/nuevo', () => {
+    window.location.hash = '#/admin/cursos/nuevo';
+    const r = parseHash();
+    expect(r.section).toBe('cursos');
+    expect(r.params).toEqual({ action: 'nuevo' });
+  });
+
+  it('parsea #/admin/cursos/REDES-I-P1/editar', () => {
+    window.location.hash = '#/admin/cursos/REDES-I-P1/editar';
+    const r = parseHash();
+    expect(r.section).toBe('cursos');
+    expect(r.params).toEqual({ action: 'editar', courseId: 'REDES-I-P1' });
+  });
+
+  it('parsea #/admin/cursos/REDES-I-P1/grupos', () => {
+    window.location.hash = '#/admin/cursos/REDES-I-P1/grupos';
+    const r = parseHash();
+    expect(r.section).toBe('cursos');
+    expect(r.params).toEqual({ action: 'grupos', courseId: 'REDES-I-P1' });
+  });
+
+  it('parsea #/admin/cursos/REDES-I-P1/grupos/lider@uce.edu.ec', () => {
+    window.location.hash = '#/admin/cursos/REDES-I-P1/grupos/lider@uce.edu.ec';
+    const r = parseHash();
+    expect(r.section).toBe('cursos');
+    expect(r.params).toEqual({ action: 'grupos', courseId: 'REDES-I-P1', groupId: 'lider@uce.edu.ec' });
+  });
+
+  it('decodea courseId con caracteres especiales (encodeURIComponent)', () => {
+    const encoded = encodeURIComponent('Redes I (P1)');
+    window.location.hash = `#/admin/cursos/${encoded}/editar`;
+    const r = parseHash();
+    expect(r.params.courseId).toBe('Redes I (P1)');
+    expect(r.params.action).toBe('editar');
+  });
+
+  it('cursoId sin action reconocida cae a lista de cursos', () => {
+    window.location.hash = '#/admin/cursos/some-id';
+    const r = parseHash();
+    expect(r.params).toEqual({});
+  });
+
+  it('grupos sin groupId no incluye groupId en params', () => {
+    window.location.hash = '#/admin/cursos/abc/grupos';
+    const r = parseHash();
+    expect(r.params.groupId).toBeUndefined();
+  });
+});
+
+describe('router — parseHash reportes y ajustes', () => {
+  it('parsea #/admin/reportes', () => {
+    window.location.hash = '#/admin/reportes';
+    expect(parseHash()).toEqual({ section: 'reportes', params: {} });
+  });
+
+  it('parsea #/admin/ajustes', () => {
+    window.location.hash = '#/admin/ajustes';
+    expect(parseHash()).toEqual({ section: 'ajustes', params: {} });
+  });
+});
+
 describe('router — navigate', () => {
   it('cambia el hash del navegador', () => {
     navigate('#/admin/cursos');

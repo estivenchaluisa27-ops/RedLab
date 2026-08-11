@@ -1,10 +1,14 @@
 /**
- * src/groups/groups.js — Gestión de grupos (crear, eliminar, abrir modal)
+ * src/groups/groups.js — Gestión de grupos (crear, eliminar, abrir sub-view grupo-detalle)
+ * Fase B: la lista de grupos vive en sub-view 'curso-grupos'. El listener de
+ * Firestore se arranca al entrar a la sub-view y se limpia al salir
+ * (registerSubviewOnLeave). openGroupDetails ahora navega a #/admin/cursos/:courseId/grupos/:groupId.
  */
 import { collection, doc, writeBatch, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { escapeHtml, escapeAttr } from '../utils/escape.js';
 import { alert as notifyAlert } from '../utils/notify.js';
 import { clearGroupUtilsCache } from './group-utils.js';
+import { navigate } from '../router.js';
 
 let _db = null;
 let _state = null;
@@ -19,14 +23,24 @@ export function clearGroupsListener() {
   if (unsubscribeGroups) { unsubscribeGroups(); unsubscribeGroups = null; }
 }
 
-export function openCourseManager(courseId) {
+/**
+ * Setup de la sub-view 'curso-grupos'. Recibe params con courseId.
+ * Arranca el listener onSnapshot que pobla #groups-table-body. Es llamado
+ * por el router cada vez que se entra a #/admin/cursos/:courseId/grupos.
+ */
+export function setupCourseGroupsView(params) {
+  const courseId = params && params.courseId;
+  if (!courseId) {
+    notifyAlert("Curso no especificado.");
+    navigate('#/admin/cursos');
+    return;
+  }
   _state.currentViewCourse = courseId;
-  document.getElementById('modal-group-manage').classList.remove('hidden');
-
   clearGroupsListener();
 
   unsubscribeGroups = onSnapshot(collection(_db, "courses", courseId, "groups"), (snap) => {
     const tbody = document.getElementById('groups-table-body');
+    if (!tbody) return;
     tbody.innerHTML = '';
 
     let groupsArray = [];

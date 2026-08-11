@@ -25,11 +25,16 @@ const SECTIONS = ['calendario', 'cursos', 'grupos', 'reportes', 'ajustes'];
 
 /**
  * Parsea el hash actual en { section, params }.
- * Hashes soportados (FASE A):
- *   #/admin/calendario                 → { section: 'calendario', params: {} }
- *   #/admin/cursos                     → { section: 'cursos',     params: {} }
- * FASE B agregará sub-rutas con params (cursoId, groupId). Por ahora, lo que
- * no matchee cae a 'calendario' como default seguro.
+ * Hashes soportados (FASE B):
+ *   #/admin/calendario                                  → { section: 'calendario', params: {} }
+ *   #/admin/cursos                                      → { section: 'cursos',     params: {} }
+ *   #/admin/cursos/nuevo                                → { section: 'cursos',     params: { action: 'nuevo' } }
+ *   #/admin/cursos/:courseId/editar                     → { section: 'cursos',     params: { courseId, action: 'editar' } }
+ *   #/admin/cursos/:courseId/grupos                     → { section: 'cursos',     params: { courseId, action: 'grupos' } }
+ *   #/admin/cursos/:courseId/grupos/:groupId            → { section: 'cursos',     params: { courseId, action: 'grupos', groupId } }
+ *   #/admin/reportes                                    → { section: 'reportes',   params: {} }
+ *   #/admin/ajustes                                     → { section: 'ajustes',     params: {} }
+ * Lo que no matchee cae a 'calendario' como default seguro.
  * @returns {{ section: string, params: object }}
  */
 export function parseHash() {
@@ -39,7 +44,30 @@ export function parseHash() {
     return { section: 'calendario', params: {} };
   }
   const section = SECTIONS.includes(parts[1]) ? parts[1] : 'calendario';
-  // FASE A: solo sección, sin sub-params. Reserve params parsing para Fase B.
+
+  // FASE B: sub-rutas de cursos con params.
+  if (section === 'cursos' && parts.length > 2) {
+    const next = parts[2];
+    if (next === 'nuevo') {
+      return { section: 'cursos', params: { action: 'nuevo' } };
+    }
+    // next es un courseId. parts[3] es la action ('editar' | 'grupos').
+    const courseId = decodeURIComponent(next);
+    const action = parts[3] || '';
+    if (action === 'editar') {
+      return { section: 'cursos', params: { action: 'editar', courseId } };
+    }
+    if (action === 'grupos') {
+      const params = { action: 'grupos', courseId };
+      if (parts[4]) {
+        params.groupId = decodeURIComponent(parts[4]);
+      }
+      return { section: 'cursos', params };
+    }
+    // CursoId sin action reconocida: mostrar lista de cursos.
+    return { section: 'cursos', params: {} };
+  }
+
   return { section, params: {} };
 }
 
