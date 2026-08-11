@@ -47,16 +47,48 @@
     <div id="change-password-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 fade-in"><h3 class="font-bold text-lg text-slate-800 mb-2">Cambiar Contraseña</h3><form id="change-password-form" class="space-y-4"><input type="password" id="new-password" placeholder="Nueva" class="w-full p-2 border rounded" minlength="6" required><input type="password" id="confirm-password" placeholder="Confirmar" class="w-full p-2 border rounded" minlength="6" required><div class="flex justify-end gap-2 pt-2"><button type="button" data-action="close-change-password-modal" class="text-slate-500 px-4 py-2">Cancelar</button><button type="submit" class="bg-green-600 text-white px-4 py-2 rounded font-bold">Actualizar</button></div></form></div></div>
     <div id="signup-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 fade-in"><h3 class="font-bold text-lg text-slate-800 mb-2">Crear Cuenta</h3><p class="text-xs text-slate-500 mb-4">Usa tu correo institucional @uce.edu.ec. Solo los estudiantes habilitados por el administrador pueden crear su cuenta.</p><form id="signup-form" data-action="create-account" class="space-y-4"><input type="email" id="signup-email" placeholder="Correo institucional (ej: nombre@uce.edu.ec)" pattern="[a-zA-Z0-9._-]+@uce\.edu\.ec" title="Debe ser un correo institucional @uce.edu.ec" class="w-full p-2 border rounded" required><input type="password" id="signup-password" placeholder="Contraseña (mínimo 6)" class="w-full p-2 border rounded" minlength="6" required><input type="password" id="signup-confirm" placeholder="Confirmar contraseña" class="w-full p-2 border rounded" minlength="6" required><div class="flex justify-end gap-2 pt-2"><button type="button" data-action="close-signup-modal" class="text-slate-500 px-4 py-2">Cancelar</button><button type="submit" class="bg-uce-gradient text-white px-4 py-2 rounded font-bold">Crear Cuenta</button></div></form></div></div>
 
-    <div id="admin-dashboard" class="hidden min-h-screen flex flex-col">
-        <header class="uce-header text-white p-4 shadow-lg sticky top-0 z-30"><div class="max-w-7xl mx-auto flex justify-between items-center"><div class="flex items-center gap-4"><div class="bg-white rounded-full p-1 shadow-md"><img src="https://redi.cedia.edu.ec/members/UCE.png" class="h-10 object-contain"></div><div><h1 class="font-bold text-lg leading-tight brand-font">PANEL ADMINISTRADOR</h1><span class="text-base text-blue-200 font-details">Laboratorio de Redes</span></div></div><div class="flex items-center gap-4"><div id="admin-header-user-info" class="hidden md:flex items-center bg-white/10 px-4 py-2 rounded-lg backdrop-blur-md text-sm"></div><button data-action="open-change-password-modal" class="text-xs text-blue-200 hover:text-white underline mr-2">Clave</button><button data-action="handle-logout" class="text-xs bg-gold-500 text-uce-900 font-bold hover:bg-gold-400 px-4 py-2 rounded-full shadow-md">Salir</button></div></div></header>
-        
-        <main class="flex-1 max-w-7xl mx-auto w-full p-4 lg:p-8">
-            <div class="flex gap-4 mb-6 border-b border-slate-200 pb-1">
-                <button id="tab-btn-cal" data-action="switch-tab" data-tab="calendar" class="px-4 py-2 font-bold text-uce-700 border-b-2 border-uce-700 hover:bg-slate-100 rounded-t">Calendario</button>
-                <button id="tab-btn-cou" data-action="switch-tab" data-tab="courses" class="px-4 py-2 font-bold text-slate-500 hover:text-uce-700 border-b-2 border-transparent hover:bg-slate-100 rounded-t">Cursos</button>
+    <div id="admin-dashboard" class="hidden min-h-screen flex flex-col md:flex-row">
+        <!-- Topbar (mobile + desktop) -->
+        <header class="uce-header text-white shadow-lg sticky top-0 z-30 md:order-2 md:flex-1">
+            <div class="max-w-7xl mx-auto flex justify-between items-center px-4 py-3">
+                <div class="flex items-center gap-3">
+                    <button id="admin-burger" type="button" aria-label="Abrir menú" class="md:hidden text-white text-xl px-2 py-1 rounded hover:bg-white/10 transition"><i class="fas fa-bars"></i></button>
+                    <div class="bg-white rounded-full p-1 shadow-md"><img src="https://redi.cedia.edu.ec/members/UCE.png" class="h-9 object-contain" alt="UCE"></div>
+                    <div>
+                        <h1 class="font-bold text-base leading-tight brand-font">RedLab <span class="text-blue-200 font-details text-sm font-medium">· Lab de Redes</span></h1>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div id="admin-header-user-info" class="hidden md:flex items-center bg-white/10 px-3 py-2 rounded-lg backdrop-blur-md text-sm"></div>
+                    <button data-action="open-change-password-modal" class="text-xs text-blue-200 hover:text-white underline" title="Cambiar contraseña">Clave</button>
+                    <button data-action="handle-logout" class="text-xs bg-gold-500 text-uce-900 font-bold hover:bg-gold-400 px-4 py-2 rounded-full shadow-md transition" title="Cerrar sesión">Salir</button>
+                </div>
             </div>
+        </header>
 
-            <div id="tab-calendar" class="fade-in grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <!-- Sidebar -->
+        <aside id="admin-sidebar" class="bg-uce-800 text-uce-100 w-full md:w-64 md:order-1 md:min-h-screen md:sticky md:top-0 shrink-0 shadow-lg">
+            <nav class="p-3 space-y-1" aria-label="Navegación principal">
+                <a href="#/admin/calendario" data-route="calendario" class="sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-uce-700/60 transition" aria-current="page">
+                    <i class="fas fa-calendar-alt w-5 text-center"></i><span>Calendario</span>
+                </a>
+                <a href="#/admin/cursos" data-route="cursos" class="sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-uce-700/60 transition">
+                    <i class="fas fa-book w-5 text-center"></i><span>Cursos</span>
+                </a>
+                <a href="#/admin/reportes" data-route="reportes" class="sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-uce-700/60 transition hidden" data-fase="B">
+                    <i class="fas fa-file-excel w-5 text-center"></i><span>Reportes</span>
+                </a>
+                <a href="#/admin/ajustes" data-route="ajustes" class="sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-uce-700/60 transition hidden" data-fase="B">
+                    <i class="fas fa-cog w-5 text-center"></i><span>Ajustes</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main content — el router renderiza aquí -->
+        <main id="admin-section" class="flex-1 md:order-3 max-w-7xl mx-auto w-full p-4 lg:p-8">
+
+            <!-- Sección: Calendario (FASE A — contenido existente, movido aquí como <section> -->
+            <section id="section-calendario" data-section="calendario" class="fade-in grid grid-cols-1 lg:grid-cols-4 gap-8">
                 <div class="lg:col-span-3"><div class="calendar-wrapper mb-4"><div class="p-4 bg-white border-b flex justify-between items-center"><button id="admin-prev-week" class="text-slate-500 px-3 py-2"><i class="fas fa-chevron-left"></i></button><h2 id="admin-week-title" class="font-bold text-lg text-slate-700"></h2><button id="admin-next-week" class="text-slate-500 px-3 py-2"><i class="fas fa-chevron-right"></i></button></div><table class="calendar-table"><thead id="admin-calendar-head"></thead><tbody id="admin-calendar-body"></tbody></table></div><div id="admin-action-box" class="hidden bg-uce-gradient text-white p-4 rounded-xl flex justify-between items-center shadow-xl fade-in border border-uce-900"><span id="admin-selection-count" class="font-bold text-lg"></span><div class="flex gap-3"><button id="admin-block-btn" class="bg-red-500 hover:bg-red-600 px-5 py-2 rounded-lg font-bold">Bloquear</button><button id="admin-unblock-btn" class="bg-emerald-500 hover:bg-emerald-600 px-5 py-2 rounded-lg font-bold">Desbloquear</button></div></div>
                     <div class="mt-4 flex justify-end gap-2">
                         <button data-action="open-report-modal" class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 flex items-center gap-2 font-bold text-sm transition-all active:scale-95">
@@ -65,18 +97,36 @@
                         <button id="admin-recurring-btn" data-action="open-recurring-modal" class="bg-uce-gradient text-white px-4 py-2 rounded shadow hover:opacity-90 flex items-center gap-2 font-bold text-sm transition-all active:scale-95">
                             <i class="fas fa-calendar-alt"></i> Gestión Clases
                         </button>
-                    </div>     
-                </div>           
+                    </div>
+                </div>
                 <div class="lg:col-span-1 bg-white p-5 rounded-xl card-lift h-fit max-h-[calc(100vh-100px)] overflow-y-auto custom-scrollbar"><h3 class="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-4 text-xs uppercase tracking-wider">Solicitudes Pendientes</h3><div id="admin-requests-list" class="space-y-2"></div></div>
-            </div>
+            </section>
 
-            <div id="tab-courses" class="hidden fade-in">
+            <!-- Sección: Cursos -->
+            <section id="section-cursos" data-section="cursos" class="hidden fade-in">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-xl font-bold text-slate-700">Cursos Activos</h2>
                     <button data-action="open-create-course-modal" class="bg-uce-gradient text-white px-4 py-2 rounded shadow hover:opacity-90 font-bold text-sm"><i class="fas fa-plus mr-2"></i>Nuevo Curso</button>
                 </div>
                 <div id="courses-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-            </div>
+            </section>
+
+            <!-- Placeholder: Reportes (Fase B) -->
+            <section id="section-reportes" data-section="reportes" class="hidden fade-in">
+                <div class="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-500">
+                    <i class="fas fa-tools text-3xl text-slate-300 mb-3"></i>
+                    <p class="font-medium">Sección de Reportes disponible en Fase B del rediseño.</p>
+                </div>
+            </section>
+
+            <!-- Placeholder: Ajustes (Fase B) -->
+            <section id="section-ajustes" data-section="ajustes" class="hidden fade-in">
+                <div class="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-500">
+                    <i class="fas fa-tools text-3xl text-slate-300 mb-3"></i>
+                    <p class="font-medium">Sección de Ajustes disponible en Fase B del rediseño.</p>
+                </div>
+            </section>
+
         </main>
     </div>
 

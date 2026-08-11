@@ -3,7 +3,6 @@
  */
 import { collection, query, where, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { escapeHtml, escapeAttr } from '../utils/escape.js';
-import { switchTab, setupAdminCalendarLogic } from '../calendar/calendar.js';
 import { animateListIn } from '../utils/motion.js';
 
 let _db = null;
@@ -21,13 +20,13 @@ export function clearCoursesListener() {
 }
 
 export function loadAdminDashboard() {
-  switchTab('calendar');
   const q = _state.role === 'admin' ? query(collection(_db, "courses")) : query(collection(_db, "courses"), where("professorEmail", "==", _state.user.email));
 
   clearCoursesListener();
 
   unsubscribeCourses = onSnapshot(q, (snap) => {
     const grid = document.getElementById('courses-grid');
+    if (!grid) return;
     grid.innerHTML = '';
     const firstRender = !coursesStaggered;
     snap.forEach(d => {
@@ -64,10 +63,9 @@ export function loadAdminDashboard() {
   if (_state.role === 'admin') {
     getDocs(collection(_db, "professors")).then(snap => {
       const sel = document.getElementById('c-professor');
+      if (!sel) return;
       sel.innerHTML = '<option value="">Seleccione Profesor...</option>';
       snap.forEach(d => { sel.innerHTML += `<option value="${d.id}">${escapeHtml(d.data().name)}</option>`; });
     });
   }
-
-  setupAdminCalendarLogic();
 }

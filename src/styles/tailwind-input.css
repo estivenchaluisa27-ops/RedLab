@@ -99,9 +99,7 @@ button:disabled {
     box-shadow: none !important;
 }
 
-/* 5. Excepciones: Evitar que las pestañas (Tabs) o celdas salten feo */
-#tab-btn-cal:hover, #tab-btn-cou:hover,
-#tab-btn-cal:active, #tab-btn-cou:active,
+/* 5. Excepciones: Evitar que celdas del calendario y matriz salten feo */
 .slot, .matrix-cell {
     transform: none !important;
     box-shadow: none !important;
@@ -124,3 +122,22 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
 .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 3px; }
 .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+/* 8. Sidebar admin drawer (mobile) — overlay scrollable
+   En desktop (md+) el sidebar es sticky fijo vía clases Tailwind;
+   en mobile se abre como overlay desde el botón burger. */
+@media (max-width: 767px) {
+    #admin-sidebar {
+        position: fixed;
+        inset: 0 auto 0 0;
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+        z-index: 40;
+        max-height: 100vh;
+        overflow-y: auto;
+        box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+    #admin-sidebar.admin-sidebar-open {
+        transform: translateX(0);
+    }
+}

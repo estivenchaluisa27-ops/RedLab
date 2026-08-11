@@ -10,6 +10,7 @@ import { alert as notifyAlert } from '../utils/notify.js';
 import { clearGroupUtilsCache } from '../groups/group-utils.js';
 import { loadAdminDashboard } from '../courses/courses-list.js';
 import { setupStudentView } from '../calendar/calendar.js';
+import { goAdminSection } from '../admin-router-controller.js';
 
 let unsubscribeAuth = null;
 
@@ -74,6 +75,8 @@ export async function setupSession(role, userData, studentData, state, db) {
     showView('admin');
     if (nameEl) nameEl.innerHTML = `<span class="font-bold">${escapeHtml(userData.name)}</span><span class="ml-2 text-xs bg-yellow-500 text-black px-2 rounded">${role.toUpperCase()}</span>`;
     loadAdminDashboard();
+    // El router del admin decide la sección activa. Default: calendario.
+    goAdminSection('calendario');
   } else if (role === 'student') {
     state.courseId = studentData.courseId;
     state.groupId = studentData.groupId;

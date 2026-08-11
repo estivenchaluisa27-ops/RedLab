@@ -13,8 +13,9 @@ import { initGroups, openCourseManager, addGroup, deleteGroup } from './groups/g
 import { initGroupDetails, openGroupDetails, saveGroupBasicInfo, saveLeaderInfo, enableMemberEdit, cancelMemberEdit, saveMemberChange, deleteMember, addNewMember } from './groups/group-details.js';
 import { initReservations, submitReservation, admAct, rejectReq, deleteReservation, setAttendance, executeRecurringBlock } from './reservations/reservations.js';
 import { initReports, openReportModal, executeReport } from './reports/reports.js';
-import { initCalendar, switchTab, clearCalendarListeners } from './calendar/calendar.js';
+import { initCalendar, clearCalendarListeners, setupAdminCalendarLogic } from './calendar/calendar.js';
 import { initMotionObserver, handlePress } from './utils/motion.js';
+import { initAdminRouter, registerSectionSetup } from './admin-router-controller.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   initMotionObserver();
@@ -28,6 +29,10 @@ document.addEventListener('DOMContentLoaded', () => {
   initReservations(db, state, RESERVATIONS_COLLECTION);
   initReports(db, state);
   initCalendar(db, RESERVATIONS_COLLECTION);
+
+  // Router admin — registro de setups por sección
+  registerSectionSetup('calendario', () => setupAdminCalendarLogic(), { rerunOnEveryEnter: true });
+  registerSectionSetup('cursos', () => { /* setup corre via loadAdminDashboard/onSnapshot; aquí va vacío en Fase A */ });
 
   bindLoginView(auth);
 
@@ -46,9 +51,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const target = btn.dataset.target;
       if (target) document.getElementById(target)?.classList.add('hidden');
     },
-
-    // Tabs
-    'switch-tab': (btn) => switchTab(btn.dataset.tab),
 
     // Courses
     'open-edit-course': (btn) => openEditCourseModal(btn.dataset.id),
@@ -127,4 +129,28 @@ document.addEventListener('DOMContentLoaded', () => {
   _initAuthListener(auth, db, state, resetState,
     (role, userData, studentData) => _setupSession(role, userData, studentData, state, db)
   );
+
+  // Iniciar router del panel admin — se mantiene inactivo hasta que showView('admin')
+  // le quite 'hidden' al #admin-dashboard. El handler del router actualizará el
+  // sidebar activo y mostrará la sección default (calendario).
+  initAdminRouter();
+
+  // Sidebar drawer en mobile: el botón burger toggla el sidebar a overlay
+  const burger = document.getElementById('admin-burger');
+  const sidebar = document.getElementById('admin-sidebar');
+  if (burger && sidebar) {
+    burger.addEventListener('click', () => {
+      const isShown = !sidebar.classList.contains('admin-sidebar-open');
+      sidebar.classList.toggle('admin-sidebar-open', isShown);
+      burger.setAttribute('aria-expanded', String(isShown));
+    });
+    // Cerrar sidebar al navegar (cualquier click en un sidebar-item)
+    sidebar.addEventListener('click', (e) => {
+      const item = e.target.closest('.sidebar-item');
+      if (item && window.matchMedia('(max-width: 767px)').matches) {
+        sidebar.classList.remove('admin-sidebar-open');
+        burger?.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
 });
