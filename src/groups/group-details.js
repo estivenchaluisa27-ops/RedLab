@@ -1,24 +1,24 @@
 /**
- * src/groups/group-details.js — Edición profunda de grupos (miembros, líder, nombre)
- * Fase B: openGroupDetails pasa a ser setup function de sub-view 'grupo-detalle'
- *           invocada por el router con params { courseId, groupId }.
- *           El botón "Atrás" se inicializa para volver a la sub-view curso-grupos
- *           del mismo courseId.
- * Fase C reemplazará renderMembersTable + addNewMember + saveMemberChange +
- * deleteMember por MemberGrid custom (TSV paste + dedup + auto-save debounce).
+ * src/groups/group-details.js — Edición profunda de un grupo
+ * Fase C: la tabla de integrantes es provista por MemberGrid custom vanilla
+ *   (paste TSV, dedup, auto-save debounce, keyboard nav, Event API).
+ *   Elimina renderMembersTable + addNewMember + saveMemberChange + deleteMember
+ *   (la persistencia de miembros pasa a ser centralizada por onChange del grid).
+ *   saveGroupBasicInfo y saveLeaderInfo siguen在此 para edición de nombre/líder.
+ * El setup se invoca al entrar a la sub-view 'grupo-detalle' via router con
+ *   params { courseId, groupId }. El botón "Atrás" vuelve a curso-grupos del mismo curso.
  */
 import { getDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-import { escapeHtml } from '../utils/escape.js';
-import { alert as notifyAlert, notifyConfirm } from '../utils/notify.js';
+import { alert as notifyAlert } from '../utils/notify.js';
 import { clearGroupUtilsCache } from './group-utils.js';
 import { navigate } from '../router.js';
+import { mountMemberGrid } from './member-grid.js';
 
-// Estado privado del módulo
 let editingGroupData = null;
 let editingGroupId = null;
-let editingMemberIndex = -1;
 let _db = null;
 let _state = null;
+let _gridCleanup = null;
 
 export function initGroupDetails(db, state) {
   _db = db;
@@ -30,7 +30,7 @@ export function getEditingGroupData() { return editingGroupData; }
 
 /**
  * Setup de la sub-view 'grupo-detalle'. Recibe params con courseId y groupId.
- * Carga el doc del grupo y rellena todos los inputs.
+ * Carga el doc del grupo, rellena inputs y monta el MemberGrid.
  */
 export async function setupGroupDetailsView(params) {
   const courseId = params && params.courseId;
@@ -40,15 +40,15 @@ export async function setupGroupDetailsView(params) {
     navigate('#/admin/cursos');
     return;
   }
+
+  // Limpiar grid previo si re-entramos a la sub-view (caso: ya había un grid montado)
+  if (_gridCleanup) { try { _gridCleanup(); } catch (e) { /* noop: cleanup falló, igual marcamos null */ } _gridCleanup = null; }
+
   _state.currentViewCourse = courseId;
   editingGroupId = groupId;
-  editingMemberIndex = -1;
 
-  // Configurar el botón "Atrás" para regresar a la sub-view grupos del mismo curso.
   const backBtn = document.getElementById('grupo-detalle-back');
-  if (backBtn) {
-    backBtn.href = `#/admin/cursos/${encodeURIComponent(courseId)}/grupos`;
-  }
+  if (backBtn) backBtn.href = `#/admin/cursos/${encodeURIComponent(courseId)}/grupos`;
   const backLabel = document.getElementById('grupo-detalle-back-label');
   if (backLabel) backLabel.textContent = 'Grupos';
 
@@ -67,61 +67,52 @@ export async function setupGroupDetailsView(params) {
     document.getElementById('edit-leader-cedula').value = editingGroupData.leader.cedula;
     document.getElementById('edit-leader-name').value = editingGroupData.leader.fullName;
 
-    renderMembersTable();
+    const badge = document.getElementById('members-count-badge');
+    const members = (editingGroupData.members) || [];
+    if (badge) badge.innerText = members.length;
+
+    // Montar el MemberGrid custom vanilla en el container reservado
+    const gridContainer = document.getElementById('member-grid-container');
+    if (gridContainer) {
+      _gridCleanup = mountMemberGrid(gridContainer, {
+        initialMembers: members,
+        onChange: async (newMembers) => {
+          if (!editingGroupData) return;
+          await updateDoc(doc(_db, "courses", _state.currentViewCourse, "groups", editingGroupId), {
+            members: newMembers
+          });
+          editingGroupData.members = newMembers;
+          if (badge) badge.innerText = newMembers.length;
+          clearGroupUtilsCache();   // memory #20: invalida el _membersCache de group-utils
+        }
+      });
+
+      // Actualizar badge "Sin guardar" cuando grid marca dirty
+      gridContainer.addEventListener('membergrid:dirty', (e) => {
+        const badgeDirty = document.getElementById('members-dirty-badge');
+        if (!badgeDirty) return;
+        badgeDirty.classList.toggle('hidden', !e.detail.dirty);
+      });
+    }
   } catch (e) {
     console.error(e);
     notifyAlert("Error cargando grupo: " + e.message);
   }
 }
 
-export function renderMembersTable() {
-  const tbody = document.getElementById('edit-members-tbody');
-  if (!tbody) return;
-  const members = (editingGroupData && editingGroupData.members) || [];
-  const badge = document.getElementById('members-count-badge');
-  if (badge) badge.innerText = members.length;
-  tbody.innerHTML = '';
-
-  members.forEach((mem, index) => {
-    const isEditing = index === editingMemberIndex;
-    const isLeader = mem.isLeader || false;
-
-    let rowHtml;
-
-    if (isEditing) {
-      rowHtml = `
-        <tr class="bg-blue-50 border-b border-slate-200">
-          <td class="px-4 py-2"><input id="edit-mem-ced-${index}" value="${escapeHtml(mem.cedula)}" class="w-full p-1 border rounded text-sm"></td>
-          <td class="px-4 py-2"><input id="edit-mem-name-${index}" value="${escapeHtml(mem.nombre)}" class="w-full p-1 border rounded text-sm"></td>
-          <td class="px-4 py-3 text-xs">${isLeader ? '<span class="bg-uce-700 text-white px-2 py-0.5 rounded font-bold text-[10px]">LÍDER</span>' : '<span class="text-slate-400">Estudiante</span>'}</td>
-          <td class="px-4 py-3 text-right flex justify-end gap-2">
-            <button data-action="save-member-change" data-index="${index}" class="text-green-600 hover:text-green-800 bg-green-100 px-2 py-1 rounded text-xs font-bold"><i class="fas fa-check mr-1"></i>Guardar</button>
-            <button data-action="cancel-member-edit" class="text-slate-500 hover:text-slate-700 text-xs px-2 py-1"><i class="fas fa-times"></i></button>
-          </td>
-        </tr>`;
-    } else {
-      rowHtml = `
-        <tr class="hover:bg-slate-50 transition border-b border-slate-100 last:border-0">
-          <td class="px-4 py-3 text-sm text-slate-600 font-medium">${escapeHtml(mem.cedula)}</td>
-          <td class="px-4 py-3 text-sm text-slate-800 font-medium">${escapeHtml(mem.nombre)}</td>
-          <td class="px-4 py-3 text-xs">
-            ${isLeader
-              ? '<span class="bg-uce-700 text-white px-2 py-0.5 rounded font-bold text-[10px]">LÍDER</span>'
-              : '<span class="text-slate-400">Estudiante</span>'}
-          </td>
-          <td class="px-4 py-3 text-right flex justify-end gap-2">
-            <button data-action="enable-member-edit" data-index="${index}" class="text-blue-500 hover:text-blue-700 bg-blue-50 p-1.5 rounded transition" title="Editar"><i class="fas fa-pencil-alt"></i></button>
-            ${!isLeader ? `<button data-action="delete-member" data-index="${index}" class="text-red-400 hover:text-red-600 bg-red-50 p-1.5 rounded transition" title="Eliminar"><i class="fas fa-trash"></i></button>` : ''}
-          </td>
-        </tr>`;
-    }
-    tbody.innerHTML += rowHtml;
-  });
+/**
+ * Limpieza total si el usuario abandona la sub-view (hook onLeave).
+ * Desmonta el grid para evitar listeners zombie y snapshot leaks.
+ */
+export function destroyGroupDetailsView() {
+  if (_gridCleanup) { try { _gridCleanup(); } catch (e) { /* noop: cleanup falló, igual marcamos null */ } _gridCleanup = null; }
+  editingGroupData = null;
+  editingGroupId = null;
 }
 
 export async function saveGroupBasicInfo() {
   const newName = document.getElementById('edit-group-name').value;
-  if (!newName) return;
+  if (!newName || !editingGroupData || !editingGroupId) return;
   try {
     await updateDoc(doc(_db, "courses", _state.currentViewCourse, "groups", editingGroupId), { name: newName });
     editingGroupData.name = newName;
@@ -131,11 +122,12 @@ export async function saveGroupBasicInfo() {
 }
 
 export async function saveLeaderInfo() {
+  if (!editingGroupData || !editingGroupId) return;
   const newCedula = document.getElementById('edit-leader-cedula').value;
   const newName = document.getElementById('edit-leader-name').value;
 
   const updatedLeader = { ...editingGroupData.leader, cedula: newCedula, fullName: newName };
-  const updatedMembers = editingGroupData.members.map(m => {
+  const updatedMembers = (editingGroupData.members || []).map(m => {
     if (m.isLeader) return { ...m, cedula: newCedula, nombre: newName };
     return m;
   });
@@ -148,74 +140,8 @@ export async function saveLeaderInfo() {
     editingGroupData.leader = updatedLeader;
     editingGroupData.members = updatedMembers;
     clearGroupUtilsCache();
-    renderMembersTable();
+    const badge = document.getElementById('members-count-badge');
+    if (badge) badge.innerText = updatedMembers.length;
     notifyAlert("Jefe de grupo actualizado.");
   } catch (e) { notifyAlert("Error: " + e.message); }
-}
-
-export function enableMemberEdit(index) {
-  editingMemberIndex = index;
-  renderMembersTable();
-}
-
-export function cancelMemberEdit() {
-  editingMemberIndex = -1;
-  renderMembersTable();
-}
-
-export async function saveMemberChange(index) {
-  const newCed = document.getElementById(`edit-mem-ced-${index}`).value;
-  const newName = document.getElementById(`edit-mem-name-${index}`).value;
-
-  if (!newCed || !newName) return notifyAlert("Datos vacíos");
-
-  const updatedMembers = [...editingGroupData.members];
-  updatedMembers[index].cedula = newCed;
-  updatedMembers[index].nombre = newName;
-
-  try {
-    await updateDoc(doc(_db, "courses", _state.currentViewCourse, "groups", editingGroupId), {
-      members: updatedMembers
-    });
-    editingGroupData.members = updatedMembers;
-    editingMemberIndex = -1;
-    clearGroupUtilsCache();
-    renderMembersTable();
-  } catch (e) { notifyAlert("Error guardando miembro: " + e.message); }
-}
-
-export async function deleteMember(index) {
-  if (!await notifyConfirm("¿Seguro de eliminar a este integrante?")) return;
-
-  const updatedMembers = editingGroupData.members.filter((_, i) => i !== index);
-
-  try {
-    await updateDoc(doc(_db, "courses", _state.currentViewCourse, "groups", editingGroupId), {
-      members: updatedMembers
-    });
-    editingGroupData.members = updatedMembers;
-    clearGroupUtilsCache();
-    renderMembersTable();
-  } catch (e) { notifyAlert("Error eliminando: " + e.message); }
-}
-
-export async function addNewMember() {
-  const ced = document.getElementById('add-mem-cedula').value;
-  const name = document.getElementById('add-mem-name').value;
-
-  if (!ced || !name) return notifyAlert("Ingrese Cédula y Nombre");
-
-  const newMember = { cedula: ced, nombre: name, isLeader: false };
-  const updatedMembers = [...editingGroupData.members, newMember];
-
-  try {
-    await updateDoc(doc(_db, "courses", _state.currentViewCourse, "groups", editingGroupId), {
-      members: updatedMembers
-    });
-    document.getElementById('add-mem-cedula').value = "";
-    document.getElementById('add-mem-name').value = "";
-    editingGroupData.members = updatedMembers;
-    clearGroupUtilsCache();
-    renderMembersTable();
-  } catch (e) { notifyAlert("Error agregando: " + e.message); }
 }

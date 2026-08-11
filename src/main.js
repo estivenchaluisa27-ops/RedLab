@@ -10,7 +10,7 @@ import { bindLoginView } from './views/login-view.js';
 import { initCoursesList } from './courses/courses-list.js';
 import { initCourses, createCourse, saveCourseChanges, setupEditCourseView } from './courses/courses.js';
 import { initGroups, addGroup, deleteGroup, setupCourseGroupsView, clearGroupsListener } from './groups/groups.js';
-import { initGroupDetails, setupGroupDetailsView, saveGroupBasicInfo, saveLeaderInfo, enableMemberEdit, cancelMemberEdit, saveMemberChange, deleteMember, addNewMember } from './groups/group-details.js';
+import { initGroupDetails, setupGroupDetailsView, destroyGroupDetailsView, saveGroupBasicInfo, saveLeaderInfo } from './groups/group-details.js';
 import { initReservations, submitReservation, admAct, rejectReq, deleteReservation, setAttendance, executeRecurringBlock } from './reservations/reservations.js';
 import { initReports, setupReportesView, executeReport } from './reports/reports.js';
 import { initCalendar, clearCalendarListeners, setupAdminCalendarLogic } from './calendar/calendar.js';
@@ -44,6 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // onLeave: limpiar el listener de grupos al salir de curso-grupos
   registerSubviewOnLeave('curso-grupos', () => clearGroupsListener());
+  // onLeave: destruir el MemberGrid al salir de grupo-detalle (limpia listeners)
+  registerSubviewOnLeave('grupo-detalle', () => destroyGroupDetailsView());
 
   bindLoginView(auth);
 
@@ -83,14 +85,9 @@ document.addEventListener('DOMContentLoaded', () => {
       navigate(`#/admin/cursos/${encodeURIComponent(courseId)}/grupos/${encodeURIComponent(btn.dataset.id)}`);
     },
     'delete-group': (btn) => deleteGroup(btn.dataset.id),
-    'save-member-change': (btn) => saveMemberChange(parseInt(btn.dataset.index)),
-    'cancel-member-edit': () => cancelMemberEdit(),
-    'enable-member-edit': (btn) => enableMemberEdit(parseInt(btn.dataset.index)),
-    'delete-member': (btn) => deleteMember(parseInt(btn.dataset.index)),
     'add-group': () => addGroup(),
     'save-group-basic-info': () => saveGroupBasicInfo(),
     'save-leader-info': () => saveLeaderInfo(),
-    'add-new-member': () => addNewMember(),
 
     // Pending requests (dynamically generated)
     'adm-act': (btn) => {
