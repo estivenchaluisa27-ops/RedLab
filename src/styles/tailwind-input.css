@@ -2,15 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
-body { font-family: 'Plus Jakarta Sans', 'Roboto', sans-serif; background-color: #eef2f7; background-image: radial-gradient(1000px 600px at 85% -10%, rgba(0, 66, 116, 0.08), transparent 60%), radial-gradient(800px 500px at -10% 30%, rgba(225, 173, 1, 0.05), transparent 55%), radial-gradient(#c3ccd8 1px, transparent 1px); background-size: auto, auto, 20px 20px; background-attachment: fixed; }
-h1, h2, h3, .brand-font { font-family: 'Sora', sans-serif; font-weight: 800; letter-spacing: -0.01em; }
-.font-details { font-weight: 500; letter-spacing: 0.3px; }
+body { font-family: 'Sora', sans-serif; background-color: #f8fafc; }
+h1, h2, h3 { font-weight: 800; letter-spacing: -0.01em; }
+
 .fade-in { animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-.uce-header { background-image: linear-gradient(135deg, #004274 0%, #002244 60%, #001a33 100%) !important; border-bottom: 4px solid #e1ad01; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -2px rgba(0, 0, 0, 0.1); }
-#login-view { background-image: linear-gradient(rgba(0, 66, 116, 0.85), rgba(0, 51, 102, 0.95)), url('https://ecuadoruniversitario.com/wp-content/uploads/2015/03/uce.jpg'); background-size: cover; background-position: center; background-attachment: fixed; }
-#login-view::before { content: ''; position: absolute; inset: 0; background: radial-gradient(600px 300px at 70% 15%, rgba(225, 173, 1, 0.12), transparent 60%); pointer-events: none; }
+.uce-header { background-color: #004274 !important; border-bottom: 4px solid #e1ad01; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -2px rgba(0, 0, 0, 0.1); }
+#login-view { background-color: #003366; background-size: cover; background-position: center; background-attachment: fixed; }
+
 
 .badge-jf { background-color: #004274; color: white; font-size: 0.65rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-left: 8px; display: inline-flex; align-items: center; border: 1px solid #003366; }
 .course-badge { font-size: 0.75rem; font-weight: 900; padding: 2px 6px; border-radius: 4px; margin-right: 6px; border: 1px solid rgba(0,0,0,0.1); display: inline-block; background-color: #f3f4f6; color: #4b5563; }
@@ -63,7 +63,7 @@ h1, h2, h3, .brand-font { font-family: 'Sora', sans-serif; font-weight: 800; let
 .matrix-cell.selected { background-color: #004274; color: white; border-color: #003366; }
 .matrix-time { font-weight: bold; color: #475569; display: flex; align-items: center; justify-content: flex-end; padding-right: 6px; }
 
-.watermark { position: fixed; bottom: 1rem; left: 1rem; font-size: 0.7rem; font-weight: 700; font-family: 'Montserrat', monospace; pointer-events: none; user-select: none; z-index: 100; color: rgba(100, 116, 139, 0.5); }
+.watermark { position: fixed; bottom: 1rem; left: 1rem; font-size: 0.7rem; font-weight: 700; font-family: inherit; pointer-events: none; user-select: none; z-index: 100; color: rgba(100, 116, 139, 0.5); }
 #login-view .watermark { color: rgba(255,255,255,0.4); }
 
 /* Estilo EXCLUSIVO para correos en Gestión de Grupos */

@@ -145,7 +145,7 @@ export function mountMemberGrid(container, opts = {}) {
             </tr>
           </thead>
           <tbody data-mg-tbody></tbody>
-          <tfoot class="bg-blue-50">
+          <tfoot class="bg-uce-50">
             <tr data-mg-newrow>
               <td class="px-3 py-2"><input type="text" data-mg-new="cedula" placeholder="Cédula" aria-label="Cédula nuevo integrante" class="w-full p-1.5 border border-slate-200 rounded text-xs"></td>
               <td class="px-3 py-2"><input type="text" data-mg-new="nombre" placeholder="Nombre Completo" aria-label="Nombre nuevo integrante" class="w-full p-1.5 border border-slate-200 rounded text-xs"></td>
@@ -158,7 +158,7 @@ export function mountMemberGrid(container, opts = {}) {
       <div class="mt-3 flex justify-between items-center">
         <p data-mg-count class="text-xs text-slate-500"></p>
         <div class="flex gap-2">
-          <button type="button" data-mg-save class="bg-uce-gradient text-white px-4 py-2 rounded font-bold text-sm hover:opacity-90 transition disabled:opacity-50" disabled>Guardar</button>
+           <button type="button" data-mg-save class="bg-uce-700 text-white px-4 py-2 rounded font-bold text-sm hover:opacity-90 transition disabled:opacity-50" disabled>Guardar</button>
         </div>
       </div>
     `;
@@ -213,7 +213,7 @@ export function mountMemberGrid(container, opts = {}) {
         tdCed.setAttribute('aria-label', `Cédula fila ${idx + 1}`);
         tdCed.setAttribute('aria-invalid', String(isDup));
         tdCed.textContent = r.cedula;
-        tdCed.className += ' outline-none focus:bg-blue-50 focus:ring-2 focus:ring-inset focus:ring-blue-400 transition';
+        tdCed.className += ' outline-none focus:bg-uce-50 focus:ring-2 focus:ring-inset focus:ring-uce-400 transition';
         if (isDup) tdCed.title = 'Cédula duplicada en otra fila';
       }
       tdCed.dataset.mgField = 'cedula';
@@ -221,7 +221,7 @@ export function mountMemberGrid(container, opts = {}) {
 
       // Nombre
       const tdName = document.createElement('td');
-      tdName.className = 'px-3 py-2 outline-none focus:bg-blue-50 focus:ring-2 focus:ring-inset focus:ring-blue-400 transition';
+      tdName.className = 'px-3 py-2 outline-none focus:bg-uce-50 focus:ring-2 focus:ring-inset focus:ring-uce-400 transition';
       tdName.setAttribute('contenteditable', 'true');
       tdName.setAttribute('role', 'textbox');
       tdName.setAttribute('aria-label', `Nombre fila ${idx + 1}`);
