@@ -50,7 +50,7 @@
     <div id="admin-dashboard" class="hidden min-h-screen flex flex-col md:flex-row">
         <!-- Topbar (mobile + desktop) -->
         <header class="uce-header text-white shadow-lg sticky top-0 z-30 md:order-2 md:flex-1">
-            <div class="max-w-7xl mx-auto flex justify-between items-center px-4 py-3">
+            <div class="flex justify-between items-center px-4 py-3">
                 <div class="flex items-center gap-3">
                     <button id="admin-burger" type="button" aria-label="Abrir menú" class="md:hidden text-white text-xl px-2 py-1 rounded hover:bg-white/10 transition"><i class="fas fa-bars"></i></button>
                     <div class="bg-white rounded-full p-1 shadow-md"><img src="https://redi.cedia.edu.ec/members/UCE.png" class="h-9 object-contain" alt="UCE"></div>
@@ -67,7 +67,7 @@
         </header>
 
         <!-- Sidebar -->
-        <aside id="admin-sidebar" class="bg-uce-800 text-uce-100 w-full md:w-64 md:order-1 md:min-h-screen md:sticky md:top-0 shrink-0 shadow-lg">
+        <aside id="admin-sidebar" class="bg-uce-800 text-uce-100 w-full md:w-56 md:order-1 md:min-h-screen md:sticky md:top-0 shrink-0 shadow-lg">
             <nav class="p-3 space-y-1" aria-label="Navegación principal">
                 <a href="#/admin/calendario" data-route="calendario" class="sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-uce-700/60 transition" aria-current="page">
                     <i class="fas fa-calendar-alt w-5 text-center"></i><span>Calendario</span>
@@ -85,7 +85,7 @@
         </aside>
 
         <!-- Main content — el router renderiza aquí -->
-        <main id="admin-section" class="flex-1 md:order-3 max-w-7xl mx-auto w-full p-4 lg:p-8">
+        <main id="admin-section" class="flex-1 md:order-3 w-full p-4 lg:p-8">
 
             <!-- Sección: Calendario (FASE A — contenido existente, movido aquí como <section> -->
             <section id="section-calendario" data-section="calendario" class="fade-in grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -217,8 +217,8 @@
                             <div class="md:col-span-1 space-y-2">
                                 <label class="block text-xs font-bold text-slate-500 uppercase">Identificador Grupo</label>
                                 <div class="flex gap-2">
-                                    <input type="text" id="edit-group-name" class="w-full p-2 border border-slate-300 rounded font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ej: G1">
-                                    <button data-action="save-group-basic-info" class="bg-blue-600 text-white px-3 rounded hover:bg-blue-700 transition" title="Guardar Nombre"><i class="fas fa-save"></i></button>
+                                    <input type="text" id="edit-group-name" class="w-full p-2 border border-slate-300 rounded font-bold text-slate-700 focus:ring-2 focus:ring-uce-500 outline-none" placeholder="Ej: G1">
+                                    <button data-action="save-group-basic-info" class="bg-uce-600 text-white px-3 rounded hover:bg-uce-700 transition" title="Guardar Nombre"><i class="fas fa-save"></i></button>
                                 </div>
                                 <p class="text-[10px] text-slate-400">Este nombre aparece en el calendario.</p>
                             </div>
@@ -232,12 +232,12 @@
                                     </div>
                                     <div>
                                         <label class="block text-[15px] font-bold text-slate-500">Cédula</label>
-                                        <input type="text" id="edit-leader-cedula" class="w-full p-1.5 border rounded text-sm focus:border-blue-500 outline-none">
+                                        <input type="text" id="edit-leader-cedula" class="w-full p-1.5 border rounded text-sm focus:border-uce-500 outline-none">
                                     </div>
                                     <div class="md:col-span-2">
                                         <label class="block text-[15px] font-bold text-slate-500">Nombres Completos</label>
                                         <div class="flex gap-2">
-                                            <input type="text" id="edit-leader-name" class="w-full p-1.5 border rounded text-sm focus:border-blue-500 outline-none">
+                                            <input type="text" id="edit-leader-name" class="w-full p-1.5 border rounded text-sm focus:border-uce-500 outline-none">
                                             <button data-action="save-leader-info" class="bg-uce-gradient text-white px-4 text-xs font-bold rounded hover:opacity-90 transition">Actualizar</button>
                                         </div>
                                     </div>
@@ -267,11 +267,11 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Fecha Inicio</label>
-                                <input type="date" id="rep-start" class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none text-sm text-slate-700" required>
+                                <input type="date" id="rep-start" class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-uce-500 outline-none text-sm text-slate-700" required>
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Fecha Fin</label>
-                                <input type="date" id="rep-end" class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none text-sm text-slate-700" required>
+                                <input type="date" id="rep-end" class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-uce-500 outline-none text-sm text-slate-700" required>
                             </div>
                         </div>
                         <div>
