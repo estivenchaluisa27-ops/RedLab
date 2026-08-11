@@ -38,9 +38,9 @@ export function loadAdminDashboard() {
           <div class="flex justify-between items-start">
             <div>
               <h3 class="font-bold text-lg text-slate-800">${escapeHtml(c.subject)}</h3>
-              <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded font-bold">${escapeHtml(c.parallel)}</span>
+              <span class="bg-uce-100 text-uce-800 text-xs px-2 py-1 rounded font-bold">${escapeHtml(c.parallel)}</span>
             </div>
-            <button data-action="open-edit-course" data-id="${escapeAttr(d.id)}" class="text-slate-400 hover:text-blue-600 p-1 bg-slate-50 rounded border border-transparent hover:border-blue-200 transition" title="Editar Curso Completo">
+            <button data-action="open-edit-course" data-id="${escapeAttr(d.id)}" class="text-slate-400 hover:text-uce-700 p-1 bg-slate-50 rounded border border-transparent hover:border-uce-200 transition" title="Editar Curso Completo">
               <i class="fas fa-pencil-alt"></i>
             </button>
           </div>

@@ -233,7 +233,7 @@ function listenAdminPending() {
         <div>
             <div class="font-bold text-sm text-slate-700">${escapeHtml(r.groupName)}</div>
             <div class="text-xs text-slate-500">${escapeHtml(r.date)} ${r.hour}:00</div>
-            <div class="text-[13px] text-blue-600 font-bold mt-1">
+            <div class="text-[13px] text-uce-600 font-bold mt-1">
                 <i class="fas fa-chalkboard-teacher mr-1"></i>${escapeHtml(profName)}
             </div>
         </div>

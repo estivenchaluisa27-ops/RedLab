@@ -62,9 +62,9 @@ export function setupCourseGroupsView(params) {
       tbody.innerHTML += `
       <tr class="border-b last:border-0 hover:bg-slate-50 transition">
           <td class="py-3 pl-3">
-              <button data-action="open-group-details" data-id="${escapeAttr(d.id)}" class="font-bold text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-2 transition-colors">
+              <button data-action="open-group-details" data-id="${escapeAttr(d.id)}" class="font-bold text-uce-600 hover:text-uce-700 hover:underline flex items-center gap-2 transition-colors">
                   <span class="text-sm">${escapeHtml(g.name)}</span>
-                  <i class="fas fa-external-link-alt text-[11px] text-blue-400"></i>
+                  <i class="fas fa-external-link-alt text-[11px] text-uce-400"></i>
               </button>
           </td>
           <td class="py-3 text-xs text-slate-600 font-medium">${escapeHtml(g.leader.email)}</td>
