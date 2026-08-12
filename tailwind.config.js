@@ -24,8 +24,8 @@ export default {
         },
       },
       fontFamily: {
-        display: ['Sora', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        sans: ['Sora', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        display: ['"Segoe UI Light"', '"Open Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        sans: ['"Segoe UI Light"', '"Open Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
         card: '0 1px 2px rgba(0,34,68,0.06), 0 8px 24px -12px rgba(0,66,116,0.18)',

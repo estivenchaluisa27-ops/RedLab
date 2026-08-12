@@ -15,8 +15,16 @@ export async function handleLogin(e, auth) {
   btn.disabled = true;
   btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>VALIDANDO...';
 
+  const email = document.getElementById('login-email').value;
+  const remember = document.getElementById('remember-me')?.checked;
+  if (remember) {
+    localStorage.setItem('redlab_remember_email', email.trim().toLowerCase());
+  } else {
+    localStorage.removeItem('redlab_remember_email');
+  }
+
   try {
-    await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value);
+    await signInWithEmailAndPassword(auth, email, document.getElementById('login-password').value);
   } catch {
     btn.disabled = false;
     btn.innerHTML = 'INGRESAR';

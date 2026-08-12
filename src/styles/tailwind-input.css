@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-body { font-family: 'Sora', sans-serif; background-color: #f8fafc; }
+body { font-family: 'Segoe UI Light', 'Open Sans', 'Segoe UI', Verdana, Arial, sans-serif; background-color: #f8fafc; }
 h1, h2, h3 { font-weight: 800; letter-spacing: -0.01em; }
 
 .fade-in { animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -139,5 +139,196 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
     }
     #admin-sidebar.admin-sidebar-open {
         transform: translateX(0);
+    }
+}
+
+/* ===== AUTH: TARJETA DARK GLASS NAVY (estilo TutoMatch adaptado) ===== */
+.auth-card {
+    background: rgba(13, 32, 54, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 2px solid rgba(255, 255, 255, 0.14);
+    border-top: 4px solid #e1ad01;
+    border-radius: 2px;
+    padding: 3rem;
+    box-shadow: 0 25px 60px -15px rgba(0, 20, 40, 0.6);
+}
+
+.auth-label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #cbd5e1;
+    margin-bottom: 0.5rem;
+}
+
+.auth-input {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    background: rgba(255, 255, 255, 0.06);
+    border: 2px solid rgba(255, 255, 255, 0.14);
+    border-radius: 2px;
+    color: #f1f5f9;
+    font-size: 0.95rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.auth-input::placeholder { color: rgba(148, 163, 184, 0.55); }
+
+.auth-input:focus {
+    outline: none;
+    border-color: #e1ad01 !important;
+    box-shadow: 0 0 0 3px rgba(225, 173, 1, 0.15) !important;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.auth-input:-webkit-autofill,
+.auth-input:-webkit-autofill:hover,
+.auth-input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px rgba(13, 32, 54, 0.92) inset !important;
+    -webkit-text-fill-color: #f1f5f9 !important;
+    caret-color: #f1f5f9;
+    border-color: #e1ad01;
+}
+
+.auth-btn {
+    padding: 1rem;
+    background: #004274;
+    border: none;
+    border-radius: 2px;
+    color: white;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    font-family: inherit;
+}
+
+.auth-btn:hover:not(:disabled) { background: #003366; }
+.auth-btn:active:not(:disabled) { background: #002c54; }
+
+.auth-checkbox {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.18);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.auth-checkbox:checked {
+    background: #e1ad01;
+    border-color: #e1ad01;
+}
+
+.auth-checkbox:checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #003366;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.auth-checkbox:focus-visible,
+.auth-link:focus-visible {
+    outline: 2px solid #e1ad01;
+    outline-offset: 2px;
+}
+
+.auth-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: #cbd5e1;
+    user-select: none;
+}
+
+.auth-link {
+    font-size: 0.85rem;
+    color: #e1ad01;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.2s ease;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    padding: 0;
+}
+
+.auth-link:hover { color: #ffffff; }
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 1.5rem 0;
+    color: rgba(148, 163, 184, 0.6);
+    font-size: 0.85rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.auth-error {
+    background: rgba(220, 38, 38, 0.12);
+    border: 1px solid rgba(220, 38, 38, 0.25);
+    border-radius: 2px;
+    color: #fca5a5;
+    font-size: 0.9rem;
+    padding: 0.75rem 1rem;
+}
+
+/* --- Modales auth (mismo lenguaje visual) --- */
+.auth-modal-card {
+    background: rgba(13, 32, 54, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 2px solid rgba(255, 255, 255, 0.14);
+    border-top: 4px solid #e1ad01;
+    border-radius: 2px;
+    padding: 1.75rem;
+    color: #f1f5f9;
+}
+
+.auth-modal-card .auth-input { padding: 0.7rem 0.85rem; font-size: 0.9rem; }
+
+.auth-ghost-btn {
+    padding: 0.5rem 1rem;
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.14);
+    border-radius: 2px;
+    color: #cbd5e1;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.auth-ghost-btn:hover:not(:disabled) {
+    border-color: rgba(255, 255, 255, 0.35);
+    color: #ffffff;
+}
+
+#login-view .toggle-password { color: rgba(148, 163, 184, 0.7); }
+#login-view .toggle-password:hover { color: #e1ad01; }
+
+@media (prefers-reduced-motion: reduce) {
+    .auth-card, .auth-input, .auth-btn, .auth-checkbox, .auth-ghost-btn, .auth-link, .auth-modal-card {
+        transition: none;
     }
 }

@@ -9,7 +9,7 @@
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 512'%3E%3Cpath fill='%23004274' d='M0 336c0 79.5 64.5 144 144 144h368c70.7 0 128-57.3 128-128 0-61.9-44-113.6-102.4-125.4C514.3 81.3 425 0 320 0 217.6 0 130.7 77.8 120 177.3 51.6 188.4 0 249.6 0 320zm144 96c-53 0-96-43-96-96s43-96 96-96h32c13.3 0 24-10.7 24-24V80c0-26.5 21.5-48 48-48h128c26.5 0 48 21.5 48 48v16c0 13.3 10.7 24 24 24h32c53 0 96 43 96 96s-43 96-96 96H144z'/%3E%3C/svg%3E">
 
     <link rel="stylesheet" href="/styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/js/all.min.js" integrity="sha384-sCgwm7cN2+PN5J6MEF+tnqkCY4Wc5WRcGU+I9b04LSQaPRMO09dnbrVilAWAbH1z" crossorigin="anonymous"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25/dist/sweetalert2.all.min.js" integrity="sha384-nLoOnA/BDh8A/jxqtckg4DumuCGOBYUnNJLZdQz/zfYNp3wcjGSoWTAzgko06G/2" crossorigin="anonymous"></script>
@@ -21,31 +21,34 @@
 <body class="min-h-screen text-slate-800 flex flex-col">
 
     <div id="login-view" class="min-h-screen flex flex-col items-center justify-center p-4">
-        <div class="bg-white/95 backdrop-blur-md p-8 rounded-2xl shadow-modal w-full max-w-md border-t-4 border-gold-500 animate-scale-in">
+        <div class="auth-card w-full max-w-md animate-scale-in">
             <div class="text-center mb-8">
                 <img src="https://redi.cedia.edu.ec/members/UCE.png" alt="UCE" class="h-24 mx-auto mb-4 drop-shadow-md object-contain">
-                <h1 class="text-2xl font-bold text-uce-700 brand-font mt-4">Universidad Central del Ecuador</h1>
-                <p class="text-sm font-medium text-slate-500 mt-1">Laboratorio de Redes y Telecomunicaciones</p>
+                <h1 class="text-2xl font-bold text-white mt-4">Universidad Central del Ecuador</h1>
+                <p class="text-sm font-medium text-slate-300/80 mt-1">Laboratorio de Redes y Telecomunicaciones</p>
             </div>
             <form id="login-form" class="space-y-5">
-                <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Correo Institucional</label>
-                <input type="email" id="login-email" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-uce-700 outline-none transition bg-white" required></div>
-                <div class="password-container"><label class="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Contraseña</label>
-                <input type="password" id="login-password" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-uce-700 outline-none transition bg-white" required>
+                <div><label class="auth-label block text-xs font-bold uppercase mb-1 ml-1">Correo Institucional</label>
+                <input type="email" id="login-email" class="auth-input" placeholder="tu@uce.edu.ec" required></div>
+                <div class="password-container"><label class="auth-label block text-xs font-bold uppercase mb-1 ml-1">Contraseña</label>
+                <input type="password" id="login-password" class="auth-input" placeholder="Tu contraseña" required>
                 <i class="fas fa-eye toggle-password"></i></div>
-                <div class="text-right"><button type="button" data-action="open-reset-modal" class="text-xs text-uce-700 font-bold hover:underline">¿Olvidaste tu contraseña?</button></div>
-                    <button type="submit" id="login-submit-btn" class="w-full bg-uce-700 text-white py-3 rounded-lg font-bold hover:opacity-90 transition shadow-glow transform active:scale-95">INGRESAR</button>
-                <div class="text-center"><button type="button" data-action="open-signup-modal" class="text-xs text-uce-700 font-bold hover:underline">¿No tienes cuenta? Créala aquí</button></div>
+                <div class="flex items-center justify-between">
+                    <label class="auth-checkbox-label"><input type="checkbox" id="remember-me" class="auth-checkbox"><span>Recordarme</span></label>
+                    <button type="button" data-action="open-reset-modal" class="auth-link">¿Olvidaste tu contraseña?</button>
+                </div>
+                    <button type="submit" id="login-submit-btn" class="auth-btn w-full">INGRESAR</button>
+                <div class="text-center"><button type="button" data-action="open-signup-modal" class="auth-link">¿No tienes cuenta? Créala aquí</button></div>
 
             </form>
-            <div id="message-box" class="hidden mt-4 text-center text-red-600 font-bold text-sm"></div>
+            <div id="message-box" class="auth-error hidden mt-4 text-center font-bold text-sm"></div>
         </div>
         <div class="watermark text-white/30 font-bold text-xs pointer-events-none">RedLab v4.1 </div>
     </div>
 
-    <div id="reset-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 fade-in"><h3 class="font-bold text-lg text-slate-800 mb-2">Recuperar Contraseña</h3><form id="reset-form" class="space-y-4"><input type="email" id="reset-email" placeholder="ejemplo@uce.edu.ec" class="w-full p-2 border rounded" required><div class="flex justify-end gap-2"><button type="button" data-action="close-reset-modal" class="text-slate-500 px-4 py-2">Cancelar</button>                        <button type="submit" class="bg-uce-700 text-white px-4 py-2 rounded font-bold">Enviar</button></div></form></div></div>
-    <div id="change-password-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 fade-in"><h3 class="font-bold text-lg text-slate-800 mb-2">Cambiar Contraseña</h3><form id="change-password-form" class="space-y-4"><input type="password" id="new-password" placeholder="Nueva" class="w-full p-2 border rounded" minlength="6" required><input type="password" id="confirm-password" placeholder="Confirmar" class="w-full p-2 border rounded" minlength="6" required><div class="flex justify-end gap-2 pt-2"><button type="button" data-action="close-change-password-modal" class="text-slate-500 px-4 py-2">Cancelar</button><button type="submit" class="bg-green-600 text-white px-4 py-2 rounded font-bold">Actualizar</button></div></form></div></div>
-    <div id="signup-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 fade-in"><h3 class="font-bold text-lg text-slate-800 mb-2">Crear Cuenta</h3><p class="text-xs text-slate-500 mb-4">Usa tu correo institucional @uce.edu.ec. Solo los estudiantes habilitados por el administrador pueden crear su cuenta.</p><form id="signup-form" data-action="create-account" class="space-y-4"><input type="email" id="signup-email" placeholder="Correo institucional (ej: nombre@uce.edu.ec)" pattern="[a-zA-Z0-9._-]+@uce\.edu\.ec" title="Debe ser un correo institucional @uce.edu.ec" class="w-full p-2 border rounded" required><input type="password" id="signup-password" placeholder="Contraseña (mínimo 6)" class="w-full p-2 border rounded" minlength="6" required><input type="password" id="signup-confirm" placeholder="Confirmar contraseña" class="w-full p-2 border rounded" minlength="6" required><div class="flex justify-end gap-2 pt-2"><button type="button" data-action="close-signup-modal" class="text-slate-500 px-4 py-2">Cancelar</button>                        <button type="submit" class="bg-uce-700 text-white px-4 py-2 rounded font-bold">Crear Cuenta</button></div></form></div></div>
+    <div id="reset-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="auth-modal-card w-full max-w-sm fade-in"><h3 class="font-bold text-lg text-white mb-2">Recuperar Contraseña</h3><form id="reset-form" class="space-y-4"><input type="email" id="reset-email" placeholder="ejemplo@uce.edu.ec" class="auth-input" required><div class="flex justify-end gap-2"><button type="button" data-action="close-reset-modal" class="auth-ghost-btn">Cancelar</button>                        <button type="submit" class="auth-btn font-bold">Enviar</button></div></form></div></div>
+    <div id="change-password-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="auth-modal-card w-full max-w-sm fade-in"><h3 class="font-bold text-lg text-white mb-2">Cambiar Contraseña</h3><form id="change-password-form" class="space-y-4"><input type="password" id="new-password" placeholder="Nueva" class="auth-input" minlength="6" required><input type="password" id="confirm-password" placeholder="Confirmar" class="auth-input" minlength="6" required><div class="flex justify-end gap-2 pt-2"><button type="button" data-action="close-change-password-modal" class="auth-ghost-btn">Cancelar</button><button type="submit" class="auth-btn font-bold">Actualizar</button></div></form></div></div>
+    <div id="signup-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="auth-modal-card w-full max-w-sm fade-in"><h3 class="font-bold text-lg text-white mb-2">Crear Cuenta</h3><p class="text-xs text-slate-300/70 mb-4">Usa tu correo institucional @uce.edu.ec. Solo los estudiantes habilitados por el administrador pueden crear su cuenta.</p><form id="signup-form" data-action="create-account" class="space-y-4"><input type="email" id="signup-email" placeholder="Correo institucional (ej: nombre@uce.edu.ec)" pattern="[a-zA-Z0-9._-]+@uce\.edu\.ec" title="Debe ser un correo institucional @uce.edu.ec" class="auth-input" required><input type="password" id="signup-password" placeholder="Contraseña (mínimo 6)" class="auth-input" minlength="6" required><input type="password" id="signup-confirm" placeholder="Confirmar contraseña" class="auth-input" minlength="6" required><div class="flex justify-end gap-2 pt-2"><button type="button" data-action="close-signup-modal" class="auth-ghost-btn">Cancelar</button>                        <button type="submit" class="auth-btn font-bold">Crear Cuenta</button></div></form></div></div>
 
     <div id="admin-dashboard" class="hidden min-h-screen flex flex-col">
         <!-- Topbar (full-width) -->
