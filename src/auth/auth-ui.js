@@ -138,15 +138,19 @@ export async function handleChangePassword(e, auth) {
   e.preventDefault();
   const p1 = document.getElementById('new-password').value;
   const p2 = document.getElementById('confirm-password').value;
-  if (p1 !== p2 || p1.length < 6) return notifyAlert("Error en contraseña.");
+  if (p1.length < 6) return notifyAlert("La contraseña debe tener al menos 6 caracteres.");
+  if (p1 !== p2) return notifyAlert("Las contraseñas no coinciden. Verifica e intenta de nuevo.");
   try {
     await updatePassword(auth.currentUser, p1);
-    notifyAlert("Actualizada.");
+    notifyAlert("Contraseña actualizada correctamente.");
     closeChangePasswordModal();
   } catch (e) {
     if (e.code === 'auth/requires-recent-login') {
-      notifyAlert("Re-ingrese.");
+      notifyAlert("Por seguridad, debes volver a iniciar sesión antes de cambiar tu contraseña. Se cerrará la sesión actual.");
       await signOut(auth);
-    } else notifyAlert("Error.");
+    } else {
+      console.error('Error al cambiar contraseña:', e);
+      notifyAlert("Error al cambiar contraseña: " + (e.message || "Intenta de nuevo."));
+    }
   }
 }

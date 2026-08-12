@@ -8,6 +8,7 @@ import { escapeHtml } from '../utils/escape.js';
 import { showView } from '../utils/dom.js';
 import { alert as notifyAlert } from '../utils/notify.js';
 import { clearGroupUtilsCache } from '../groups/group-utils.js';
+import { setSentryUser, clearSentryUser } from '../utils/sentry.js';
 import { loadAdminDashboard } from '../courses/courses-list.js';
 import { setupStudentView } from '../calendar/calendar.js';
 import { goAdminSection } from '../admin-router-controller.js';
@@ -27,24 +28,38 @@ export function initAuthListener(auth, db, state, resetState, setupSessionFn) {
   unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
     if (user) {
       state.user = user;
-      try {
-        const [adminSnap, profSnap, studentSnap] = await Promise.all([
-          getDoc(doc(db, "admins", user.email)),
-          getDoc(doc(db, "professors", user.email)),
-          getDoc(doc(db, "student_directory", user.email))
-        ]);
+      let adminSnap = null;
+      let profSnap = null;
+      let studentSnap = null;
 
-        if (adminSnap.exists()) { setupSessionFn('admin', adminSnap.data(), null); return; }
-        if (profSnap.exists()) { setupSessionFn('professor', profSnap.data(), null); return; }
-        if (studentSnap.exists()) { setupSessionFn('student', null, studentSnap.data()); return; }
+      try {
+        adminSnap = await getDoc(doc(db, "admins", user.email));
+      } catch (error) {
+        console.error("getDoc(admins) falló:", error.code, error.message);
+      }
+      try {
+        profSnap = await getDoc(doc(db, "professors", user.email));
+      } catch (error) {
+        console.error("getDoc(professors) falló:", error.code, error.message);
+      }
+      try {
+        studentSnap = await getDoc(doc(db, "student_directory", user.email));
+      } catch (error) {
+        console.error("getDoc(student_directory) falló:", error.code, error.message);
+      }
+
+      try {
+        if (adminSnap && adminSnap.exists()) { setupSessionFn('admin', adminSnap.data(), null); return; }
+        if (profSnap && profSnap.exists()) { setupSessionFn('professor', profSnap.data(), null); return; }
+        if (studentSnap && studentSnap.exists()) { setupSessionFn('student', null, studentSnap.data()); return; }
 
         notifyAlert("Usuario no registrado."); await signOut(auth);
       } catch (error) {
-        console.error(error);
+        console.error("setupSession falló:", error.code, error.message);
         notifyAlert("Error de conexión al verificar tu perfil.");        await signOut(auth);
       }
     } else {
-      resetState(); clearGroupUtilsCache(); showView('login');
+      resetState(); clearGroupUtilsCache(); clearSentryUser(); showView('login');
       const btn = document.getElementById('login-submit-btn');
       if (btn) { btn.disabled = false; btn.innerHTML = 'INGRESAR'; }
     }
@@ -68,6 +83,7 @@ export function unsubscribeAuthListener() {
  */
 export async function setupSession(role, userData, studentData, state, db) {
   state.role = role;
+  setSentryUser(state.user?.email || null);
   const headerEl = role === 'student' ? 'student-header-user-info' : 'admin-header-user-info';
   const nameEl = document.getElementById(headerEl);
 

@@ -1,7 +1,7 @@
 /**
  * src/views/login-view.js — Bind de eventos del formulario de login
  */
-import { handleLogin, togglePassword, openResetModal, closeResetModal, openSignupModal, closeSignupModal } from '../auth/auth-ui.js';
+import { handleLogin, togglePassword } from '../auth/auth-ui.js';
 
 const REMEMBER_EMAIL_KEY = 'redlab_remember_email';
 
@@ -33,27 +33,8 @@ export function bindLoginView(auth) {
     toggleBtn.addEventListener('click', () => togglePassword('login-password', toggleBtn));
   }
 
-  // Reset password
-  const resetBtn = document.querySelector('[data-action="open-reset-modal"]');
-  if (resetBtn) {
-    resetBtn.addEventListener('click', openResetModal);
-  }
-
-  const resetCancelBtn = document.querySelector('[data-action="close-reset-modal"]');
-  if (resetCancelBtn) {
-    resetCancelBtn.addEventListener('click', closeResetModal);
-  }
-
-  // Signup modal
-  const signupBtn = document.querySelector('[data-action="open-signup-modal"]');
-  if (signupBtn) {
-    signupBtn.addEventListener('click', openSignupModal);
-  }
-
-  const signupCancelBtn = document.querySelector('[data-action="close-signup-modal"]');
-  if (signupCancelBtn) {
-    signupCancelBtn.addEventListener('click', closeSignupModal);
-  }
-
+  // Nota: los botones open-reset-modal, close-reset-modal, open-signup-modal y
+  // close-signup-modal se manejan por el dispatcher global de data-action en main.js.
+  // No se registran listeners adicionales aquí para evitar doble despacho.
 
 }

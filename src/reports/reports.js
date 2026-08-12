@@ -2,6 +2,7 @@ import { collection, query, where, getDocs } from "https://www.gstatic.com/fireb
 import { escapeHtml } from '../utils/escape.js';
 import { formatDateYYYYMMDD } from '../utils/dates.js';
 import { lookupMembersByGroupName } from '../groups/group-utils.js';
+import { alert as notifyAlert } from '../utils/notify.js';
 
 let _db = null;
 let _state = null;
@@ -102,6 +103,13 @@ export function setupReportesView() {
 
 export async function executeReport(e) {
   e.preventDefault();
+
+  if (typeof XLSX === 'undefined') {
+    return notifyAlert("Error: La librería de Excel (SheetJS) no se cargó correctamente. Verifica tu conexión a internet y recarga la página.");
+  }
+  if (typeof Swal === 'undefined') {
+    return notifyAlert("Error: SweetAlert2 no se cargó correctamente. Verifica tu conexión a internet y recarga la página.");
+  }
 
   const startStr = document.getElementById('rep-start').value;
   const endStr = document.getElementById('rep-end').value;

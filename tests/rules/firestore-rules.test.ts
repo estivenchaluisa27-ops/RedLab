@@ -514,4 +514,103 @@ describe('Firestore Rules — Bug fixes', () => {
       student.firestore().collection('reservations').add(reservation)
     );
   });
+
+  // ----------------------------------------------------------------
+  // Regression — student calendar listener (calendar.js:renderStudentCalendar)
+  // After commit 91dfa12 hardened reservation read rules, the previous
+  // single-listener query (date >= X && date <= Y without status/courseId)
+  // returned permission-denied. The fix splits the listener into two
+  // deterministic queries: blocked-only (global) and courseId-only (own course).
+  // Each query must pass the rules independently.
+  // ----------------------------------------------------------------
+
+  it('Student CAN run blocked+date-range listener (calendar.js:studentBlocked)', async () => {
+    const student = testEnv.authenticatedContext(STUDENT_UID, { email: STUDENT_EMAIL });
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().collection('reservations').add({
+        date: '2026-08-15',
+        hour: 10,
+        status: 'blocked',
+        userId: 'ADMIN',
+        groupName: '',
+        courseId: COURSE_ID,
+        attendanceDetail: null,
+      });
+      await ctx.firestore().collection('reservations').add({
+        date: '2026-08-15',
+        hour: 11,
+        status: 'blocked',
+        userId: 'ADMIN',
+        groupName: '',
+        courseId: OTHER_COURSE_ID,
+        attendanceDetail: null,
+      });
+    });
+    await assertSucceeds(
+      student.firestore()
+        .collection('reservations')
+        .where('status', '==', 'blocked')
+        .where('date', '>=', '2026-08-10')
+        .where('date', '<=', '2026-08-20')
+        .get()
+    );
+  });
+
+  it('Student CAN run courseId+date-range listener (calendar.js:studentCourse)', async () => {
+    const student = testEnv.authenticatedContext(STUDENT_UID, { email: STUDENT_EMAIL });
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().collection('reservations').add({
+        date: '2026-08-15',
+        hour: 10,
+        status: 'pending',
+        userId: STUDENT_UID,
+        groupName: 'Grupo Test',
+        courseId: COURSE_ID,
+        attendanceDetail: null,
+      });
+      await ctx.firestore().collection('reservations').add({
+        date: '2026-08-15',
+        hour: 11,
+        status: 'approved',
+        userId: 'other-student',
+        groupName: 'Grupo Test',
+        courseId: COURSE_ID,
+        attendanceDetail: 'present',
+      });
+    });
+    await assertSucceeds(
+      student.firestore()
+        .collection('reservations')
+        .where('courseId', '==', COURSE_ID)
+        .where('date', '>=', '2026-08-10')
+        .where('date', '<=', '2026-08-20')
+        .get()
+    );
+  });
+
+  it('Student CANNOT run the OLD query (date-range only without status/courseId)', async () => {
+    // Regression guard: the original single listener used
+    //   where date >= X && date <= Y
+    // without any status/courseId filter, which is non-deterministic under
+    // the hardened rules and must remain denied so we never regress to it.
+    const student = testEnv.authenticatedContext(STUDENT_UID, { email: STUDENT_EMAIL });
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().collection('reservations').add({
+        date: '2026-08-15',
+        hour: 10,
+        status: 'pending',
+        userId: 'other-student',
+        groupName: 'Otro Grupo',
+        courseId: OTHER_COURSE_ID,
+        attendanceDetail: null,
+      });
+    });
+    await assertFails(
+      student.firestore()
+        .collection('reservations')
+        .where('date', '>=', '2026-08-10')
+        .where('date', '<=', '2026-08-20')
+        .get()
+    );
+  });
 });

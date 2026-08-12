@@ -7,7 +7,7 @@ import { state, resetState, clearListeners } from './state.js';
 import { initAuthListener as _initAuthListener, setupSession as _setupSession, unsubscribeAuthListener } from './auth/auth.js';
 import { handleLogout, sendResetLink, openResetModal, closeResetModal, openChangePasswordModal, closeChangePasswordModal, handleChangePassword, openSignupModal, closeSignupModal, handleSignup } from './auth/auth-ui.js';
 import { bindLoginView } from './views/login-view.js';
-import { initCoursesList } from './courses/courses-list.js';
+import { initCoursesList, clearCoursesListener } from './courses/courses-list.js';
 import { initCourses, createCourse, saveCourseChanges, setupEditCourseView } from './courses/courses.js';
 import { initGroups, addGroup, deleteGroup, setupCourseGroupsView, clearGroupsListener } from './groups/groups.js';
 import { initGroupDetails, setupGroupDetailsView, destroyGroupDetailsView, saveGroupBasicInfo, saveLeaderInfo } from './groups/group-details.js';
@@ -15,10 +15,13 @@ import { initReservations, submitReservation, admAct, rejectReq, deleteReservati
 import { initReports, setupReportesView, executeReport } from './reports/reports.js';
 import { initCalendar, clearCalendarListeners, setupAdminCalendarLogic } from './calendar/calendar.js';
 import { initMotionObserver, handlePress } from './utils/motion.js';
+import { initSentry } from './utils/sentry.js';
+import { createClickDispatcher, createSubmitDispatcher } from './utils/dispatcher.js';
 import { initAdminRouter, registerSectionSetup, registerSubviewSetup, registerSubviewOnLeave } from './admin-router-controller.js';
 import { navigate } from './router.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+  initSentry();
   initMotionObserver();
   document.addEventListener('pointerdown', handlePress, true);
   const { db, auth } = initFirebase();
@@ -51,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Event delegation — all data-action handlers
   const clickActions = {
-    'handle-logout': () => handleLogout(() => { unsubscribeAuthListener(); clearListeners(); clearCalendarListeners(); }, auth),
+    'handle-logout': () => handleLogout(() => { unsubscribeAuthListener(); clearListeners(); clearCalendarListeners(); clearCoursesListener(); }, auth),
     'open-change-password-modal': () => openChangePasswordModal(),
     'close-change-password-modal': () => closeChangePasswordModal(),
     'open-reset-modal': () => openResetModal(),
@@ -107,19 +110,8 @@ document.addEventListener('DOMContentLoaded', () => {
     'create-account': (e) => handleSignup(e, auth),
   };
 
-  document.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-action]');
-    if (!btn) return;
-    const handler = clickActions[btn.dataset.action];
-    if (handler) handler(btn);
-  });
-
-  document.addEventListener('submit', (e) => {
-    const form = e.target.closest('[data-action]');
-    if (!form) return;
-    const handler = submitActions[form.dataset.action];
-    if (handler) handler(e);
-  });
+  document.addEventListener('click', createClickDispatcher(clickActions));
+  document.addEventListener('submit', createSubmitDispatcher(submitActions));
 
   // Bind change password form
   const cpForm = document.getElementById('change-password-form');

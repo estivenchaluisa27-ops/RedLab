@@ -4,7 +4,7 @@
  * Firestore se arranca al entrar a la sub-view y se limpia al salir
  * (registerSubviewOnLeave). openGroupDetails ahora navega a #/admin/cursos/:courseId/grupos/:groupId.
  */
-import { collection, doc, writeBatch, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { collection, doc, writeBatch, deleteDoc, onSnapshot, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { escapeHtml, escapeAttr } from '../utils/escape.js';
 import { alert as notifyAlert } from '../utils/notify.js';
 import { clearGroupUtilsCache } from './group-utils.js';
@@ -143,12 +143,41 @@ export async function deleteGroup(groupId) {
 
   if (result.isConfirmed) {
     try {
+      // Obtener el nombre del grupo para buscar reservas huérfanas
+      const groupSnap = await getDocs(query(
+        collection(_db, "courses", _state.currentViewCourse, "groups"),
+        where("__name__", "==", groupId)
+      ));
+      let groupName = null;
+      if (!groupSnap.empty) {
+        groupName = groupSnap.docs[0].data().name;
+      }
+
       await deleteDoc(doc(_db, "courses", _state.currentViewCourse, "groups", groupId));
       await deleteDoc(doc(_db, "student_directory", groupId));
+
+      // Limpiar reservas huérfanas del grupo eliminado
+      if (groupName) {
+        try {
+          const reservationsSnap = await getDocs(query(
+            collection(_db, "reservations"),
+            where("groupName", "==", groupName),
+            where("courseId", "==", _state.currentViewCourse)
+          ));
+          if (!reservationsSnap.empty) {
+            const batch = writeBatch(_db);
+            reservationsSnap.forEach(d => batch.delete(d.ref));
+            await batch.commit();
+          }
+        } catch (resErr) {
+          console.error("Error limpiando reservas huérfanas:", resErr);
+        }
+      }
+
       clearGroupUtilsCache();
       Swal.fire({
         title: '¡Eliminado!',
-        text: 'El grupo ha sido borrado correctamente.',
+        text: 'El grupo y sus reservas han sido borrados correctamente.',
         icon: 'success',
         confirmButtonColor: '#004274'
       });

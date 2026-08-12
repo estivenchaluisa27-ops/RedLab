@@ -53,7 +53,7 @@ service cloud.firestore {
     // ADMINISTRADORES
     // ==============================
     match /admins/{email} {
-      allow read: if isSignedIn() && (isAdmin() || isProfessor());
+      allow read: if isSignedIn() && (isAdmin() || isProfessor() || email == request.auth.token.email);
       allow write: if isSignedIn() && isAdmin();
     }
 
@@ -61,7 +61,7 @@ service cloud.firestore {
     // PROFESORES
     // ==============================
     match /professors/{email} {
-      allow read: if isSignedIn() && (isAdmin() || isProfessor());
+      allow read: if isSignedIn() && (isAdmin() || isProfessor() || email == request.auth.token.email);
       allow write: if isSignedIn() && isAdmin();
     }
 

@@ -4,7 +4,7 @@
  *           no modales. openCreateCourseModal/openEditCourseModal pasan a ser
  *           setup functions invocadas por el admin-router-controller.
  */
-import { collection, doc, getDoc, getDocs, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { collection, doc, getDoc, getDocs, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { escapeHtml } from '../utils/escape.js';
 import { buildCourseId } from './course-utils.js';
 import { alert as notifyAlert, notifyConfirm } from '../utils/notify.js';
@@ -39,9 +39,9 @@ export async function createCourse(e) {
   }
 
   try {
-    await addDoc(collection(_db, "courses"), {
+    await setDoc(doc(_db, "courses", customId), {
       subject, parallel, career, weeklyLimit: limit,
-      professorEmail: professor, id: customId
+      professorEmail: professor
     });
     notifyAlert("Curso creado.");
     // Limpiar form para próxima visita y volver a la lista.

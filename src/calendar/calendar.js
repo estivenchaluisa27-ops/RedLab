@@ -8,6 +8,8 @@ let _db = null;
 let _RESERVATIONS_COLLECTION = null;
 let _unsubscribeReservations = null;
 let _unsubscribePending = null;
+let _unsubscribeStudentBlocked = null;
+let _unsubscribeStudentCourse = null;
 
 export function initCalendar(db, RESERVATIONS_COLLECTION) {
   _db = db;
@@ -17,6 +19,8 @@ export function initCalendar(db, RESERVATIONS_COLLECTION) {
 export function clearCalendarListeners() {
   if (_unsubscribeReservations) { _unsubscribeReservations(); _unsubscribeReservations = null; }
   if (_unsubscribePending) { _unsubscribePending(); _unsubscribePending = null; }
+  if (_unsubscribeStudentBlocked) { _unsubscribeStudentBlocked(); _unsubscribeStudentBlocked = null; }
+  if (_unsubscribeStudentCourse) { _unsubscribeStudentCourse(); _unsubscribeStudentCourse = null; }
 }
 
 export function classifySlot(dateStr, hourStr, reservations, userState) {
@@ -325,71 +329,102 @@ function renderStudentCalendar(weekDays) {
     tbody.appendChild(tr);
   }
 
-  if (_unsubscribeReservations) _unsubscribeReservations();
-  _unsubscribeReservations = onSnapshot(
+  if (_unsubscribeStudentBlocked) _unsubscribeStudentBlocked();
+  if (_unsubscribeStudentCourse) _unsubscribeStudentCourse();
+
+  const blockedDocs = new Map();
+  const courseDocs = new Map();
+
+  const mergeAndRender = (map) => {
+    const merged = new Map();
+    for (const [id, data] of blockedDocs) merged.set(id, data);
+    for (const [id, data] of courseDocs) merged.set(id, data);
+    renderStudentSlots(map, Array.from(merged.values()));
+  };
+
+  _unsubscribeStudentBlocked = onSnapshot(
     query(collection(_db, _RESERVATIONS_COLLECTION),
+      where("status", "==", "blocked"),
       where("date", ">=", formatDateYYYYMMDD(weekDays[0])),
       where("date", "<=", formatDateYYYYMMDD(weekDays[4]))),
     (s) => {
-      map.forEach((b, k) => {
-        const [dStr, hStr] = k.split('_');
-        if (isPastDate(dStr, parseInt(hStr))) {
-          b.className = 'slot slot-past opacity-50';
-          b.innerHTML = '<span class="text-xs">No Disp.</span>';
-          b.dataset.status = 'past';
-          b.disabled = true;
-        } else {
-          b.className = 'slot slot-free';
-          b.innerHTML = '<span class="opacity-50">Disponible</span>';
-          b.dataset.status = 'free';
-          b.disabled = false;
-        }
-      });
-
-      const groups = new Map();
-      s.forEach(d => {
-        const k = `${d.data().date}_${d.data().hour}`;
-        if (!groups.has(k)) groups.set(k, []);
-        groups.get(k).push({ id: d.id, ...d.data() });
-      });
-
-      groups.forEach((arr, k) => {
-        const b = map.get(k);
-        if (!b || b.dataset.status === 'past') return;
-        const [dStr, hStr] = k.split('_');
-        const result = classifySlot(dStr, hStr, arr, state);
-        if (result.type === 'blocked') {
-          b.className = 'slot slot-blocked';
-          b.innerHTML = '<span>No disp.</span>';
-          b.dataset.status = 'blocked';
-          b.disabled = true;
-        } else if (result.type === 'my-approved' || result.type === 'my-pending') {
-          b.className = `slot ${result.className}`;
-          b.innerHTML = `<span>${result.label}</span>`;
-          b.dataset.status = `my-${mineStatus(result.type)}`;
-          b.dataset.docId = result.docId;
-        } else if (result.type === 'full') {
-          b.className = 'slot slot-full';
-          b.innerHTML = '<span>Lleno</span>';
-          b.dataset.status = 'full';
-          b.disabled = true;
-        } else if (result.type === 'partial') {
-          b.className = 'slot slot-partial';
-          b.innerHTML = `<span>Disp.</span><div class="occupancy-badge">${result.occupancy}/4</div>`;
-          b.dataset.status = 'partial';
-        }
-      });
-
-      state.selectedSlots.forEach(id => {
-        const b = map.get(id);
-        if (b && !b.disabled) {
-          b.classList.add('slot-selected');
-          b.innerHTML = '<span><i class="fas fa-check mb-1"></i><br>Selecc.</span>';
-        }
-      });
-      updateStudentUI();
+      blockedDocs.clear();
+      s.forEach(d => blockedDocs.set(d.id, { id: d.id, ...d.data() }));
+      mergeAndRender(map);
     }
   );
+
+  _unsubscribeStudentCourse = onSnapshot(
+    query(collection(_db, _RESERVATIONS_COLLECTION),
+      where("courseId", "==", state.courseId),
+      where("date", ">=", formatDateYYYYMMDD(weekDays[0])),
+      where("date", "<=", formatDateYYYYMMDD(weekDays[4]))),
+    (s) => {
+      courseDocs.clear();
+      s.forEach(d => courseDocs.set(d.id, { id: d.id, ...d.data() }));
+      mergeAndRender(map);
+    }
+  );
+}
+
+function renderStudentSlots(map, docsArray) {
+  map.forEach((b, k) => {
+    const [dStr, hStr] = k.split('_');
+    if (isPastDate(dStr, parseInt(hStr))) {
+      b.className = 'slot slot-past opacity-50';
+      b.innerHTML = '<span class="text-xs">No Disp.</span>';
+      b.dataset.status = 'past';
+      b.disabled = true;
+    } else {
+      b.className = 'slot slot-free';
+      b.innerHTML = '<span class="opacity-50">Disponible</span>';
+      b.dataset.status = 'free';
+      b.disabled = false;
+    }
+  });
+
+  const groups = new Map();
+  docsArray.forEach(d => {
+    const k = `${d.date}_${d.hour}`;
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(d);
+  });
+
+  groups.forEach((arr, k) => {
+    const b = map.get(k);
+    if (!b || b.dataset.status === 'past') return;
+    const [dStr, hStr] = k.split('_');
+    const result = classifySlot(dStr, hStr, arr, state);
+    if (result.type === 'blocked') {
+      b.className = 'slot slot-blocked';
+      b.innerHTML = '<span>No disp.</span>';
+      b.dataset.status = 'blocked';
+      b.disabled = true;
+    } else if (result.type === 'my-approved' || result.type === 'my-pending') {
+      b.className = `slot ${result.className}`;
+      b.innerHTML = `<span>${result.label}</span>`;
+      b.dataset.status = `my-${mineStatus(result.type)}`;
+      b.dataset.docId = result.docId;
+    } else if (result.type === 'full') {
+      b.className = 'slot slot-full';
+      b.innerHTML = '<span>Lleno</span>';
+      b.dataset.status = 'full';
+      b.disabled = true;
+    } else if (result.type === 'partial') {
+      b.className = 'slot slot-partial';
+      b.innerHTML = `<span>Disp.</span><div class="occupancy-badge">${result.occupancy}/4</div>`;
+      b.dataset.status = 'partial';
+    }
+  });
+
+  state.selectedSlots.forEach(id => {
+    const b = map.get(id);
+    if (b && !b.disabled) {
+      b.classList.add('slot-selected');
+      b.innerHTML = '<span><i class="fas fa-check mb-1"></i><br>Selecc.</span>';
+    }
+  });
+  updateStudentUI();
 }
 
 function mineStatus(type) {

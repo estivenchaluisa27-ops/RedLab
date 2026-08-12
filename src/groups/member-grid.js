@@ -22,6 +22,8 @@
  *   - beforeinput + InputEvent.inputType === 'insertFromPaste' — Baseline marzo 2021
  */
 
+import { escapeHtml } from '../utils/escape.js';
+
 const SAVE_DEBOUNCE_MS = 800;
 const LARGE_GROUP_WARNING = 500;
 
@@ -206,7 +208,7 @@ export function mountMemberGrid(container, opts = {}) {
       const tdCed = document.createElement('td');
       tdCed.className = 'px-3 py-2 ' + (isDup ? 'bg-red-50 ' : '');
       if (isLeader) {
-        tdCed.innerHTML = `<div class="flex items-center gap-2"><span class="font-bold text-slate-700">${escape(r.cedula)}</span><i class="fas fa-crown text-amber-500 text-xs" title="Jefe de grupo"></i></div>`;
+        tdCed.innerHTML = `<div class="flex items-center gap-2"><span class="font-bold text-slate-700">${escapeHtml(r.cedula)}</span><i class="fas fa-crown text-amber-500 text-xs" title="Jefe de grupo"></i></div>`;
       } else {
         tdCed.setAttribute('contenteditable', 'true');
         tdCed.setAttribute('role', 'textbox');
@@ -270,10 +272,6 @@ export function mountMemberGrid(container, opts = {}) {
   function updateSaveButton() {
     const btn = container.querySelector('[data-mg-save]');
     if (btn) btn.disabled = !hasDirty;
-  }
-
-  function escape(s) {
-    return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&','<':'<','>':'>','"':'"',"'":'&#39;' }[c]));
   }
 
   // ---------- Handlers ----------

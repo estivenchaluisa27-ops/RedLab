@@ -58,7 +58,7 @@ export async function notifyConfirm(message) {
 export function showMessage(type, text) {
   const m = document.getElementById('message-box');
   if (m) {
-    m.innerHTML = text;
+    m.textContent = text;
     m.classList.remove('hidden');
   } else {
     alert(text);

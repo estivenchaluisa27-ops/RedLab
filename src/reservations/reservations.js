@@ -47,9 +47,11 @@ export async function submitReservation() {
     const dateObj = new Date(firstSlotDate + "T12:00:00");
 
     const day = dateObj.getDay();
-    const diffToMon = dateObj.getDate() - day + (day === 0 ? -6 : 1);
-    const monday = new Date(dateObj.setDate(diffToMon));
-    const friday = new Date(dateObj.setDate(diffToMon + 4));
+    const diffToMon = day === 0 ? -6 : 1 - day;
+    const monday = new Date(dateObj);
+    monday.setDate(dateObj.getDate() + diffToMon);
+    const friday = new Date(monday);
+    friday.setDate(monday.getDate() + 4);
 
     const { formatDateYYYYMMDD } = await import('../utils/dates.js');
     const startStr = formatDateYYYYMMDD(monday);
@@ -127,7 +129,12 @@ export async function admAct(id, app, d, h, _gn) {
   if (s.docs.find(x => x.data().status === 'blocked')) return notifyAlert("Horario bloqueado.");
   const uniqueApproved = new Set(s.docs.filter(doc => doc.data().status === 'approved').map(doc => doc.data().groupName)).size;
   if (uniqueApproved >= 4) return notifyAlert("Horario lleno.");
-  updateDoc(doc(_db, _RESERVATIONS_COLLECTION, id), { status: 'approved' });
+  try {
+    await updateDoc(doc(_db, _RESERVATIONS_COLLECTION, id), { status: 'approved' });
+  } catch (error) {
+    console.error('Error al aprobar reserva:', error);
+    notifyAlert("Error al aprobar la solicitud: " + error.message);
+  }
 }
 
 export async function rejectReq(id) {
@@ -226,8 +233,9 @@ export async function executeRecurringBlock(e) {
   if (selectedCells.length === 0) return notifyAlert("Seleccione bloques.");
   const blocks = [];
   selectedCells.forEach(c => blocks.push({ d: parseInt(c.dataset.day), h: parseInt(c.dataset.hour) }));
-  const batch = writeBatch(_db);
-  let count = 0;
+
+  // Fase 1: contar operaciones ANTES de construir el batch
+  const operations = [];
   const startDate = new Date(startStr + 'T00:00:00');
   const endDate = new Date(endStr + 'T00:00:00');
   for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
@@ -239,15 +247,24 @@ export async function executeRecurringBlock(e) {
       const da = String(d.getDate()).padStart(2, '0');
       const dateStr = `${y}-${m}-${da}`;
       blocksForDay.forEach(b => {
-        const ref = doc(_db, _RESERVATIONS_COLLECTION, `BLOCK_${dateStr}_${b.h}`);
-        if (action === 'block') batch.set(ref, { date: dateStr, hour: b.h, status: 'blocked', userId: 'ADMIN', type: 'recurring', createdAt: serverTimestamp() });
-        else batch.delete(ref);
-        count++;
+        operations.push({ dateStr, hour: b.h });
       });
     }
   }
-  if (count > 490) return notifyAlert("Rango muy grande.");
+
+  // Validar ANTES de construir el batch (límite Firestore: 500 ops/batch)
+  if (operations.length > 490) return notifyAlert(`Rango muy grande (${operations.length} bloques). Máximo permitido: 490. Reduce el rango de fechas.`);
+  if (operations.length === 0) return notifyAlert("No se generaron bloques para el rango seleccionado.");
+
+  // Fase 2: construir y enviar el batch
+  const batch = writeBatch(_db);
+  operations.forEach(op => {
+    const ref = doc(_db, _RESERVATIONS_COLLECTION, `BLOCK_${op.dateStr}_${op.hour}`);
+    if (action === 'block') batch.set(ref, { date: op.dateStr, hour: op.hour, status: 'blocked', userId: 'ADMIN', type: 'recurring', createdAt: serverTimestamp() });
+    else batch.delete(ref);
+  });
+
   await batch.commit();
-  notifyAlert(`Listo. ${count} bloques.`);
+  notifyAlert(`Listo. ${operations.length} bloques.`);
   document.getElementById('recurring-modal').classList.add('hidden');
 }

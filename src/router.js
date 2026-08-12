@@ -111,6 +111,8 @@ export function onBeforeLeave(cb) {
   };
 }
 
+let _lastSection = null;
+
 /**
  * Inicializa el router.
  * Idempotente: si se llama más veces, reemplaza el onRoute sin agregar
@@ -126,11 +128,34 @@ export function initRouter(onRoute) {
     return;
   }
   _hashHandler = () => {
-    if (_onRoute) _onRoute(parseHash());
+    const route = parseHash();
+    // Ejecutar hooks de onBeforeLeave si cambiamos de sección
+    if (_lastSection && _lastSection !== route.section && _beforeLeaveCbs.length > 0) {
+      for (const cb of _beforeLeaveCbs) {
+        try {
+          const result = cb(_lastSection, route.section);
+          if (result === false || typeof result === 'string') {
+            // Bloquear navegación: revertir hash al anterior
+            window.location.hash = `#/admin/${_lastSection}`;
+            if (typeof result === 'string') {
+              // Mostrar motivo al usuario
+              window.alert(result);
+            }
+            return;
+          }
+        } catch (e) {
+          console.error('onBeforeLeave callback error:', e);
+        }
+      }
+    }
+    _lastSection = route.section;
+    if (_onRoute) _onRoute(route);
   };
   window.addEventListener('hashchange', _hashHandler);
   // Disparar la ruta inicial (si hash vacío, parseHash retorna el default).
-  if (_onRoute) _onRoute(parseHash());
+  const initialRoute = parseHash();
+  _lastSection = initialRoute.section;
+  if (_onRoute) _onRoute(initialRoute);
 }
 
 /**
