@@ -31,8 +31,17 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - name: Encode service account key (base64 or raw JSON)
+        env:
+          SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_LAB_REDES_TURNOS }}
+        run: |
+          if [ "$(head -c 1 <<< "$SA_KEY")" = "{" ]; then
+            echo "FIREBASE_SA_B64=$(printf '%s' "$SA_KEY" | base64 -w0)" >> "$GITHUB_ENV"
+          else
+            echo "FIREBASE_SA_B64=$SA_KEY" >> "$GITHUB_ENV"
+          fi
       - uses: w9jds/firebase-action@v15.22.4
         with:
           args: deploy --only hosting,firestore:rules
         env:
-          GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_LAB_REDES_TURNOS }}
+          GCP_SA_KEY: ${{ env.FIREBASE_SA_B64 }}
