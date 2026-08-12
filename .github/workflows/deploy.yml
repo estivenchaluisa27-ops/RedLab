@@ -31,19 +31,19 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - name: Encode service account key (base64 or raw JSON)
+      - name: Prepare Firebase credentials (SA key JSON, base64, or CI token)
         env:
-          SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_LAB_REDES_TURNOS }}
+          RAW_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_LAB_REDES_TURNOS }}
         run: |
-          TRIMMED="$(printf '%s' "$SA_KEY" | sed 's/^[[:space:]]*//')"
-          echo "first-byte: $(printf '%s' "$TRIMMED" | head -c 1 | od -An -tu1 | tr -d ' ')"
-          if [ "$(printf '%s' "$TRIMMED" | head -c 1)" = "{" ]; then
-            echo "FIREBASE_SA_B64=$(printf '%s' "$TRIMMED" | base64 -w0)" >> "$GITHUB_ENV"
+          TRIMMED="$(printf '%s' "$RAW_KEY" | sed 's/^[[:space:]]*//')"
+          if printf '%s' "$TRIMMED" | grep -q '^1//'; then
+            echo "FIREBASE_CI_TOKEN=$TRIMMED" >> "$GITHUB_ENV"
           else
-            echo "FIREBASE_SA_B64=$TRIMMED" >> "$GITHUB_ENV"
+            echo "FIREBASE_SA_KEY=$TRIMMED" >> "$GITHUB_ENV"
           fi
       - uses: w9jds/firebase-action@v15.22.4
         with:
           args: deploy --only hosting,firestore:rules
         env:
-          GCP_SA_KEY: ${{ env.FIREBASE_SA_B64 }}
+          GCP_SA_KEY: ${{ env.FIREBASE_SA_KEY }}
+          FIREBASE_TOKEN: ${{ env.FIREBASE_CI_TOKEN }}
