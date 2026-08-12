@@ -41,10 +41,6 @@ jobs:
           else
             echo "FIREBASE_SA_KEY=$TRIMMED" >> "$GITHUB_ENV"
           fi
-      - name: Diagnose token validity (temp)
-        env:
-          FIREBASE_TOKEN: ${{ env.FIREBASE_CI_TOKEN }}
-        run: npx firebase-tools projects:list --json || true
       - uses: w9jds/firebase-action@v15.22.4
         with:
           args: deploy --only hosting,firestore:rules
