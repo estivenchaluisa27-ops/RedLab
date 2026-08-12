@@ -35,10 +35,12 @@ jobs:
         env:
           SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_LAB_REDES_TURNOS }}
         run: |
-          if [ "$(head -c 1 <<< "$SA_KEY")" = "{" ]; then
-            echo "FIREBASE_SA_B64=$(printf '%s' "$SA_KEY" | base64 -w0)" >> "$GITHUB_ENV"
+          TRIMMED="$(printf '%s' "$SA_KEY" | sed 's/^[[:space:]]*//')"
+          echo "first-byte: $(printf '%s' "$TRIMMED" | head -c 1 | od -An -tu1 | tr -d ' ')"
+          if [ "$(printf '%s' "$TRIMMED" | head -c 1)" = "{" ]; then
+            echo "FIREBASE_SA_B64=$(printf '%s' "$TRIMMED" | base64 -w0)" >> "$GITHUB_ENV"
           else
-            echo "FIREBASE_SA_B64=$SA_KEY" >> "$GITHUB_ENV"
+            echo "FIREBASE_SA_B64=$TRIMMED" >> "$GITHUB_ENV"
           fi
       - uses: w9jds/firebase-action@v15.22.4
         with:
