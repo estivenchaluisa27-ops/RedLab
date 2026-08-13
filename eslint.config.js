@@ -16,6 +16,7 @@ export default [
         ...globals.es2022,
         Swal: 'readonly',
         XLSX: 'readonly',
+        Sentry: 'readonly',
       },
     },
     rules: {

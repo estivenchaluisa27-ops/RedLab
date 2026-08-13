@@ -19,7 +19,8 @@
       "package.json",
       "package-lock.json",
       "tailwind.config.js",
-      "tests/**"
+      "tests/**",
+      "**/*.exe"
     ],
     "headers": [
       { "regex": "(^/index\\.html$)|(^/$)", "headers": [{ "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }] },
