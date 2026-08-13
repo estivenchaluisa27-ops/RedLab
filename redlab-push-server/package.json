@@ -1,0 +1,19 @@
+﻿{
+  "name": "redlab-push-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Mini-server Fly.io: escucha reservas de RedLab y envia FCM push notifications",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "firebase-admin": "^12.6.0"
+  }
+}

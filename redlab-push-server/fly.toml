@@ -1,0 +1,25 @@
+﻿# fly.toml — Config del mini-server RedLab push en Fly.io
+# Deploy: fly deploy (desde el directorio redlab-push-server/)
+# Secrets: fly secrets set FIREBASE_SERVICE_ACCOUNT=@service-account.json FIREBASE_PROJECT_ID=lab-redes-turnos
+
+app = "redlab-push-server"
+primary_region = "qro"
+
+[build]
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [http_service.concurrency]
+    type = "requests"
+    hard_limit = 25
+    soft_limit = 20
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory = 256

@@ -12,6 +12,7 @@ import { setSentryUser, clearSentryUser } from '../utils/sentry.js';
 import { loadAdminDashboard } from '../courses/courses-list.js';
 import { setupStudentView } from '../calendar/calendar.js';
 import { goAdminSection } from '../admin-router-controller.js';
+import { initPushNotifications } from '../notifications/push.js';
 
 let unsubscribeAuth = null;
 
@@ -28,6 +29,7 @@ export function initAuthListener(auth, db, state, resetState, setupSessionFn) {
   unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
     if (user) {
       state.user = user;
+      initPushNotifications();
       let adminSnap = null;
       let profSnap = null;
       let studentSnap = null;
@@ -62,6 +64,10 @@ export function initAuthListener(auth, db, state, resetState, setupSessionFn) {
       resetState(); clearGroupUtilsCache(); clearSentryUser(); showView('login');
       const btn = document.getElementById('login-submit-btn');
       if (btn) { btn.disabled = false; btn.innerHTML = 'INGRESAR'; }
+      // Limpiar query string y hash residuales de la URL (ej: /?#/admin/calendario)
+      if (window.location.search || window.location.hash) {
+        window.history.replaceState(null, '', window.location.pathname);
+      }
     }
   });
 }

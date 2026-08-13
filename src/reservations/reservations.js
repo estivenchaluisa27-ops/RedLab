@@ -91,6 +91,7 @@ export async function submitReservation() {
         date: d, hour: parseInt(h), status: 'pending', userId: _state.user.uid,
         groupName: _state.groupName,
         courseId: _state.courseId,
+        attendanceDetail: null,
         createdAt: serverTimestamp()
       });
     });
@@ -108,7 +109,7 @@ export async function submitReservation() {
             El turno será confirmado cuando un encargado del laboratorio acepte dicha solicitud.
         </p>
       `,
-      confirmButtonColor: '#004274',
+      confirmButtonColor: '#3B82F6',
       confirmButtonText: 'ENTENDIDO',
       customClass: {
         popup: 'rounded-2xl shadow-2xl',

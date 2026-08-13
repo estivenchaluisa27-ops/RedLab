@@ -158,6 +158,14 @@ service cloud.firestore {
     }
 
     // ==============================
+    // TOKENES DE DISPOSITIVO FCM
+    // ==============================
+    // Cada usuario autenticado puede leer/escribir solo su propio token
+    match /device_tokens/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // ==============================
     // DENEGAR TODO LO DEMÁS
     // ==============================
     match /{document=**} {

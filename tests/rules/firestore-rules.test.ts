@@ -614,3 +614,79 @@ describe('Firestore Rules — Bug fixes', () => {
     );
   });
 });
+
+// ==================================================================//
+// NUEVA SECCIÓN: Tests de la colección device_tokens             //
+// Reusa el testEnv module-level (inicializado en beforeAll con    //
+// host/port del emulador). Requiere el emulador arriba como las  //
+// demás secciones. Verifica que un usuario autenticado puede     //
+// leer/escribir SOLO su propio doc device_tokens/{uid}.          //
+// ==================================================================//
+describe('Firestore Rules — device_tokens (NUEVO)', () => {
+  if (!emulatorAvailable) {
+    it.skip('Firestore emulator not available — device_tokens tests skipped', () => {});
+    return;
+  }
+
+  it('Usuario autenticado puede escribir su propio doc device_tokens', async () => {
+    const student = testEnv.authenticatedContext(STUDENT_UID, { email: STUDENT_EMAIL });
+    await assertSucceeds(
+      student.firestore()
+        .collection('device_tokens')
+        .doc(STUDENT_UID)
+        .set({ tokens: ['test-fcm-token-123'], platform: 'android' })
+    );
+  });
+
+  it('Usuario autenticado puede leer su propio doc device_tokens', async () => {
+    const student = testEnv.authenticatedContext(STUDENT_UID, { email: STUDENT_EMAIL });
+    // Seed con rules deshabilitadas para asegurar existencia
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().collection('device_tokens').doc(STUDENT_UID).set({
+        tokens: ['seed-token'], platform: 'android',
+      });
+    });
+    const docSnap = await assertSucceeds(
+      student.firestore().collection('device_tokens').doc(STUDENT_UID).get()
+    );
+    expect(docSnap.exists).toBe(true);
+    expect(docSnap.data()?.tokens).toEqual(['seed-token']);
+  });
+
+  it('Usuario NO autenticado NO puede leer device_tokens', async () => {
+    const unauth = testEnv.unauthenticatedContext();
+    await assertFails(
+      unauth.firestore().collection('device_tokens').doc(STUDENT_UID).get()
+    );
+  });
+
+  it('Un usuario NO puede escribir en el device_tokens de OTRO usuario', async () => {
+    const student = testEnv.authenticatedContext(STUDENT_UID, { email: STUDENT_EMAIL });
+    const other = testEnv.authenticatedContext('other-student-uid', { email: 'other@test.com' });
+    // Primer usuario escribe su propio token — OK
+    await assertSucceeds(
+      student.firestore().collection('device_tokens').doc(STUDENT_UID)
+        .set({ tokens: ['token-student'], platform: 'android' })
+    );
+    // Segundo usuario intenta escribir en el doc del primero — debe FALLAR
+    await assertFails(
+      other.firestore().collection('device_tokens').doc(STUDENT_UID)
+        .set({ tokens: ['token-other'], platform: 'android' })
+    );
+  });
+
+  it('Un usuario NO puede leer el device_tokens de OTRO usuario', async () => {
+    const student = testEnv.authenticatedContext(STUDENT_UID, { email: STUDENT_EMAIL });
+    const other = testEnv.authenticatedContext('other-student-uid', { email: 'other@test.com' });
+    // Seed del doc del student
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().collection('device_tokens').doc(STUDENT_UID).set({
+        tokens: ['seed'], platform: 'android',
+      });
+    });
+    // El otro usuario no puede leer el doc del student
+    await assertFails(
+      other.firestore().collection('device_tokens').doc(STUDENT_UID).get()
+    );
+  });
+});

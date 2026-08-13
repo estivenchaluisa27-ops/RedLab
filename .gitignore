@@ -34,6 +34,25 @@ lib-cov
 # Coverage directory used by tools like istanbul
 coverage
 
+# RedLab web SPA assets (copiados por build:app → Capacitor www/)
+www/
+
+# Android native project — generado por `npx cap add android && npm run cap:sync`
+# No commitear: reproducible desde capacitor.config.json + package.json
+/android/
+
+# Android Firebase config — contiene API keys, no commitear
+android/app/google-services.json
+
+# RedLab push server (subdirectorio del repo)
+redlab-push-server/node_modules/
+redlab-push-server/.env
+redlab-push-server/service-account*.json
+
+# Binarios instaladores (nunca commitear ejecutables >100MB)
+*.exe
+Antigravity*
+
 # nyc test coverage
 .nyc_output
 

@@ -40,6 +40,8 @@ export async function handleLogin(e, auth) {
 export async function handleLogout(clearListeners, auth) {
   clearListeners();
   await signOut(auth);
+  // Limpiar URL antes de recargar para evitar /?#/admin/... residual
+  window.history.replaceState(null, '', window.location.pathname);
   window.location.reload();
 }
 

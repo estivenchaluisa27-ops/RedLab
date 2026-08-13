@@ -144,6 +144,18 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
     }
 }
 
+/* 9. Calendar horizontal scroll en pantallas muy angostas (mobile/Capacitor)
+   Evita que las celdas se compriman demasiado en phones <640px */
+@media (max-width: 639px) {
+    .calendar-wrapper {
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+    .calendar-table {
+        min-width: 640px;
+    }
+}
+
 /* ===== AUTH: TARJETA DARK GLASS NAVY (estilo TutoMatch adaptado) ===== */
 .auth-card {
     background: rgba(13, 32, 54, 0.92);

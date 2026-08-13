@@ -96,8 +96,6 @@ function renderAdminCalendar(weekDays) {
   tbody.innerHTML = '';
   const slotMap = new Map();
 
-  const td = document.createElement('td');
-
   for (let h = 7; h <= 19; h++) {
     const tr = document.createElement('tr');
     tr.innerHTML = `<td><div class="time-cell-content">${h}:00 - ${h+1}:00</div></td>`;
@@ -105,6 +103,7 @@ function renderAdminCalendar(weekDays) {
       const id = `${formatDateYYYYMMDD(d)}_${h}`;
       const slotPast = isPastDate(formatDateYYYYMMDD(d), h);
       const slotClass = slotPast ? 'slot-past' : 'slot-free';
+      const td = document.createElement('td');
       td.innerHTML = `<div class="slot-container"><button id="${id}" class="slot ${slotClass}"></button></div>`;
       tr.appendChild(td);
       const btn = td.querySelector('button');
@@ -316,7 +315,6 @@ function renderStudentCalendar(weekDays) {
   const tbody = document.getElementById('student-calendar-body');
   tbody.innerHTML = '';
   const map = new Map();
-  const td = document.createElement('td');
 
   for (let h = 7; h <= 19; h++) {
     const tr = document.createElement('tr');
@@ -326,6 +324,7 @@ function renderStudentCalendar(weekDays) {
       const slotPast = isPastDate(formatDateYYYYMMDD(d), h);
       const slotClass = slotPast ? 'slot-past' : 'slot-free';
       const slotLabel = slotPast ? 'Cerrado' : 'Disponible';
+      const td = document.createElement('td');
       td.innerHTML = `<div class="slot-container"><button id="${id}" class="slot ${slotClass}"><span class="opacity-50">${slotLabel}</span></button></div>`;
       tr.appendChild(td);
       const btn = td.querySelector('button');
@@ -351,12 +350,15 @@ function renderStudentCalendar(weekDays) {
   _unsubscribeStudentBlocked = onSnapshot(
     query(collection(_db, _RESERVATIONS_COLLECTION),
       where("status", "==", "blocked"),
-      where("courseId", "==", state.courseId),
       where("date", ">=", formatDateYYYYMMDD(weekDays[0])),
       where("date", "<=", formatDateYYYYMMDD(weekDays[4]))),
     (s) => {
       blockedDocs.clear();
       s.forEach(d => blockedDocs.set(d.id, { id: d.id, ...d.data() }));
+      mergeAndRender(map);
+    },
+    (error) => {
+      console.error('Error en listener de bloqueados:', error);
       mergeAndRender(map);
     }
   );
@@ -369,6 +371,10 @@ function renderStudentCalendar(weekDays) {
     (s) => {
       courseDocs.clear();
       s.forEach(d => courseDocs.set(d.id, { id: d.id, ...d.data() }));
+      mergeAndRender(map);
+    },
+    (error) => {
+      console.error('Error en listener de curso:', error);
       mergeAndRender(map);
     }
   );

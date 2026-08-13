@@ -1,0 +1,42 @@
+﻿{
+  "appId": "edu.uce.redlab",
+  "appName": "RedLab",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false,
+    "webContentsDebuggingEnabled": true
+  },
+  "plugins": {
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    },
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_icon",
+      "iconColor": "#004274",
+      "sound": "beep.wav"
+    }
+  },
+  "ignore": [
+    "node_modules",
+    ".git",
+    "tests",
+    ".codebase-memory",
+    "android",
+    "functions",
+    "**/*.exe",
+    ".agents",
+    "*.md",
+    "vitest.config.js",
+    "eslint.config.js",
+    "tailwind.config.js",
+    "plan.md",
+    ".firebaserc",
+    "firebase.json",
+    "firestore.rules",
+    "firestore.indexes.json",
+    "AGENTS.md"
+  ]
+}
