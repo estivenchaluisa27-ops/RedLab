@@ -9,6 +9,7 @@
     }
   },
   "hosting": {
+    "site": "lab-redes-turnos",
     "public": ".",
     "ignore": [
       "firebase.json",
