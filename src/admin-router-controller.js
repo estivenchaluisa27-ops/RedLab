@@ -106,6 +106,10 @@ function showCursosSubview(subview) {
 }
 
 function showSection(section, params = {}) {
+  // No despachar setups si el panel admin está oculto (nadie logueado).
+  // Esto evita permission-denied al intentar leer Firestore antes de login.
+  const adminDash = document.getElementById('admin-dashboard');
+  if (adminDash?.classList.contains('hidden')) return;
   // Si venimos de la sección 'cursos' y vamos a otra sección, correr el
   // onLeave de la sub-vista activa (limpia listeners, ej: grupos).
   if (_currentSection === 'cursos' && section !== 'cursos' && _currentSubview && _subviewOnLeave[_currentSubview]) {

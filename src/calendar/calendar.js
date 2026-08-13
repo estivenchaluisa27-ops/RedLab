@@ -96,13 +96,16 @@ function renderAdminCalendar(weekDays) {
   tbody.innerHTML = '';
   const slotMap = new Map();
 
+  const td = document.createElement('td');
+
   for (let h = 7; h <= 19; h++) {
     const tr = document.createElement('tr');
     tr.innerHTML = `<td><div class="time-cell-content">${h}:00 - ${h+1}:00</div></td>`;
     weekDays.forEach(d => {
       const id = `${formatDateYYYYMMDD(d)}_${h}`;
-      const td = document.createElement('td');
-      td.innerHTML = `<div class="slot-container"><button id="${id}" class="slot slot-free"></button></div>`;
+      const slotPast = isPastDate(formatDateYYYYMMDD(d), h);
+      const slotClass = slotPast ? 'slot-past' : 'slot-free';
+      td.innerHTML = `<div class="slot-container"><button id="${id}" class="slot ${slotClass}"></button></div>`;
       tr.appendChild(td);
       const btn = td.querySelector('button');
       btn.onclick = (e) => handleAdminClick(e, btn);
@@ -135,7 +138,7 @@ function renderAdminCalendar(weekDays) {
         if (state.selectedSlots.includes(k)) b.classList.add('slot-selected');
       });
 
-      const map = new Map();
+const map = new Map();
       s.forEach(d => {
         const k = `${d.data().date}_${d.data().hour}`;
         if (!map.has(k)) map.set(k, []);
@@ -313,14 +316,17 @@ function renderStudentCalendar(weekDays) {
   const tbody = document.getElementById('student-calendar-body');
   tbody.innerHTML = '';
   const map = new Map();
+  const td = document.createElement('td');
 
   for (let h = 7; h <= 19; h++) {
     const tr = document.createElement('tr');
     tr.innerHTML = `<td><div class="time-cell-content">${h}:00 - ${h+1}:00</div></td>`;
     weekDays.forEach(d => {
       const id = `${formatDateYYYYMMDD(d)}_${h}`;
-      const td = document.createElement('td');
-      td.innerHTML = `<div class="slot-container"><button id="${id}" class="slot slot-free"><span class="opacity-50">Disponible</span></button></div>`;
+      const slotPast = isPastDate(formatDateYYYYMMDD(d), h);
+      const slotClass = slotPast ? 'slot-past' : 'slot-free';
+      const slotLabel = slotPast ? 'Cerrado' : 'Disponible';
+      td.innerHTML = `<div class="slot-container"><button id="${id}" class="slot ${slotClass}"><span class="opacity-50">${slotLabel}</span></button></div>`;
       tr.appendChild(td);
       const btn = td.querySelector('button');
       btn.onclick = () => handleStudentClick(btn);
@@ -345,6 +351,7 @@ function renderStudentCalendar(weekDays) {
   _unsubscribeStudentBlocked = onSnapshot(
     query(collection(_db, _RESERVATIONS_COLLECTION),
       where("status", "==", "blocked"),
+      where("courseId", "==", state.courseId),
       where("date", ">=", formatDateYYYYMMDD(weekDays[0])),
       where("date", "<=", formatDateYYYYMMDD(weekDays[4]))),
     (s) => {
