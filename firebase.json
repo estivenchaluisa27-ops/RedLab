@@ -21,7 +21,17 @@
       "package-lock.json",
       "tailwind.config.js",
       "tests/**",
-      "**/*.exe"
+      "**/*.exe",
+      "android/**",
+      "www/**",
+      "redlab-push-server/**",
+      "scripts/**",
+      "capacitor.config.json",
+      "AGENTS.md",
+      ".agents/**",
+      "plan.md",
+      ".codebase-memory/**",
+      ".github/**"
     ],
     "headers": [
       { "regex": "(^/index\\.html$)|(^/$)", "headers": [{ "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }] },
