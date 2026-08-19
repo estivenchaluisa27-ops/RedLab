@@ -92,3 +92,8 @@ node_modules/
 
 # dataconnect generated files
 .dataconnect
+
+# Bocetos locales (no subir a GitHub)
+AUDIT.md
+REPORT.md
+plan.md
