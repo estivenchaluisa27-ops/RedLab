@@ -148,13 +148,48 @@ service cloud.firestore {
             && get(/databases/$(database)/documents/courses/$(resource.data.courseId)).data.professorEmail == request.auth.token.email)
       );
 
-      // ELIMINACIÓN: Admin elimina cualquier; estudiante solo sus pendientes
+      // ELIMINACIÓN: Admin elimina cualquier; estudiante elimina sus propias reservas pendientes o aprobadas
       allow delete: if isSignedIn() && (
         isAdmin()
         || (isStudent()
             && resource.data.userId == request.auth.uid
-            && resource.data.status == 'pending')
+            && resource.data.status in ['pending', 'approved'])
       );
+    }
+
+    // ==============================
+    // NOTIFICACIONES IN-APP (historial del estudiante)
+    // ==============================
+    match /notifications/{notificationId} {
+
+      // LECTURA: el estudiante solo ve sus propias notificaciones.
+      // El motor exige que la query restrinja el conjunto potencial a userId == auth.uid
+      // (una query sin ese filtro o hacia otro userId falla automáticamente).
+      allow read: if isSignedIn()
+          && isStudent()
+          && resource.data.userId == request.auth.uid;
+
+      // CREACIÓN: la registra quien ejecuta la acción (admin/profesor para eventos del flujo; el estudiante solo las propias de tipo solicitada/cancelada)
+      allow create: if isSignedIn()
+          && (isAdmin() || isProfessor()
+              || (isStudent()
+                  && request.resource.data.userId == request.auth.uid
+                  && request.resource.data.type in ['solicitada', 'cancelada']))
+          && request.resource.data.keys().hasAll(['userId','type','date','hour','read','createdAt'])
+          && request.resource.data.type in ['solicitada','aprobada','rechazada','cancelada','bloqueada']
+          && request.resource.data.userId is string
+          && request.resource.data.date is string
+          && request.resource.data.hour is int
+          && request.resource.data.read == false;
+
+      // ACTUALIZACIÓN: el estudiante solo puede marcar como leída (diff valida que nada más cambie)
+      allow update: if isSignedIn()
+          && isStudent()
+          && resource.data.userId == request.auth.uid
+          && request.resource.data.read == true
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+
+      allow delete: if isSignedIn() && isAdmin();
     }
 
     // ==============================

@@ -96,7 +96,13 @@ async function showLocalNotification(LocalNotifications, notification) {
 function handleNotificationTap(data) {
   if (!data) return;
   const type = data.type;
-  if (type === "reservation_approved" || type === "reservation_pending" || type === "reservation_blocked") {
+  // El estudiante no tiene rutas de hash: su vista se monta sola al arrancar
+  // la app (setupStudentView), asi que el tap solo trae la app al frente.
+  if (type === "reservation_approved" || type === "reservation_rejected" || type === "reservation_canceled") {
+    console.log("[push] Notificacion de estudiante (sin navegacion por hash):", type);
+    return;
+  }
+  if (type === "reservation_pending" || type === "reservation_blocked") {
     const hash = "#/admin/calendario";
     if (window.location.hash !== hash) {
       window.location.hash = hash;

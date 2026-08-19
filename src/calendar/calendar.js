@@ -270,9 +270,12 @@ function handleStudentClick(btn) {
   const id = btn.id;
   const st = btn.dataset.status || '';
   if (st.includes('my')) {
+    const isApproved = st === 'my-approved';
     Swal.fire({
-      title: '¿Cancelar tu reserva?',
-      text: "Liberarás este horario y otro grupo podrá tomarlo.",
+      title: isApproved ? '¿Cancelar tu turno aprobado?' : '¿Cancelar tu reserva?',
+      text: isApproved
+        ? "Este turno ya fue confirmado. Al cancelarlo liberarás el horario y otro grupo podrá tomarlo."
+        : "Liberarás este horario y otro grupo podrá tomarlo.",
       icon: 'question',
       showCancelButton: true,
       confirmButtonColor: '#dc2626',

@@ -22,7 +22,7 @@ const ASSETS = [
   "index.html",
   "404.html",
   "styles.css",
-  "escudo2.png",
+  "assets",
   "src",
 ];
 

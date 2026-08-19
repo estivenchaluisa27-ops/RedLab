@@ -12,9 +12,14 @@ const PORT = process.env.PORT || 3000;
 // ==============================
 // Inicializar firebase-admin
 // ==============================
-// Prioridad: env var FIREBASE_SERVICE_ACCOUNT (Fly.io) > archivo service-account.json (local)
+// Prioridad: env var FIREBASE_SERVICE_ACCOUNT_B64 (base64, recomendada en Fly.io por espacios)
+//            > env var FIREBASE_SERVICE_ACCOUNT (JSON directo)
+//            > archivo service-account.json (local)
 let serviceAccount;
-if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+if (process.env.FIREBASE_SERVICE_ACCOUNT_B64) {
+  const raw = Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_B64, "base64").toString("utf8");
+  serviceAccount = JSON.parse(raw);
+} else if (process.env.FIREBASE_SERVICE_ACCOUNT) {
   serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 } else {
   // Desarrollo local: leer service-account.json del directorio del proyecto
@@ -42,6 +47,9 @@ const messaging = admin.messaging();
 // Evita enviar push duplicados al reconectar el listener o recibir snapshots redundantes
 // ==============================
 const statusCache = new Map();
+// La primera snapshot trae TODAS las reservas existentes como "added".
+// Solo poblar el cache sin disparar pushes (evita spam masivo al reiniciar la VM).
+let firstSnapshot = true;
 
 // ==============================
 // Helper: obtener tokens FCM de un usuario
@@ -143,6 +151,14 @@ function buildNotification(status, reservationData) {
 console.log("[init] Iniciando listener de Firestore en reservations...");
 db.collection("reservations").onSnapshot(
   (snapshot) => {
+    if (firstSnapshot) {
+      snapshot.docChanges().forEach((change) => {
+        statusCache.set(change.doc.id, change.doc.data().status);
+      });
+      firstSnapshot = false;
+      console.log(`[init] Warm-up completado: ${statusCache.size} reservas en cache`);
+      return;
+    }
     snapshot.docChanges().forEach(async (change) => {
       const doc = change.doc;
       const data = doc.data();
@@ -162,6 +178,12 @@ db.collection("reservations").onSnapshot(
         statusCache.set(reservationId, newStatus);
         await handleStatusChange(reservationId, data, oldStatus, newStatus);
       } else if (change.type === "removed") {
+        // Rechazo y cancelacion borran el doc: notificar al estudiante usando
+        // el ultimo status cacheado antes de limpiarlo.
+        const lastStatus = statusCache.get(reservationId);
+        if (lastStatus === "pending" || lastStatus === "approved") {
+          await handleReservationRemoved(data, lastStatus);
+        }
         statusCache.delete(reservationId);
       }
     });
@@ -195,6 +217,25 @@ async function handleStatusChange(reservationId, data, oldStatus, newStatus) {
     });
     await sendPush(allTokens, notif.title, notif.body, notif.data);
   }
+}
+
+// ==============================
+// Helper: push cuando se borra una reserva (rechazada o cancelada)
+// ==============================
+async function handleReservationRemoved(data, oldStatus) {
+  const { date, hour, userId } = data;
+  if (!userId || userId === "ADMIN") return;
+  const slot = `${date} ${hour}:00`;
+  const canceled = oldStatus === "approved";
+  const title = canceled ? "Reserva cancelada" : "Reserva rechazada";
+  const body = `Tu reserva del ${slot} fue ${canceled ? "cancelada" : "rechazada"}`;
+  console.log(`[removed] ${canceled ? "cancelada" : "rechazada"} para ${userId} (${slot})`);
+  const tokens = await getTokensForUser(userId);
+  await sendPush(tokens, title, body, {
+    type: canceled ? "reservation_canceled" : "reservation_rejected",
+    date: String(date),
+    hour: String(hour),
+  });
 }
 
 // ==============================

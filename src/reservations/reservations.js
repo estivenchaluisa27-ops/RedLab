@@ -1,9 +1,10 @@
 /**
  * src/reservations/reservations.js — Reservas, asistencia, bloqueos
  */
-import { collection, query, where, getDocs, doc, updateDoc, deleteDoc, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { collection, query, where, getDocs, getDoc, doc, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { escapeHtml, escapeAttr } from '../utils/escape.js';
 import { lookupMembersByGroupName } from '../groups/group-utils.js';
+import { buildNotificationData } from '../notifications/history.js';
 import { updateAdminActionBox, updateStudentUI } from '../calendar/calendar.js';
 import { alert as notifyAlert } from '../utils/notify.js';
 
@@ -23,7 +24,12 @@ export async function batchBlockAction(action) {
     const [d, h] = id.split('_');
     const blockId = `BLOCK_${d}_${h}`;
     const ref = doc(_db, _RESERVATIONS_COLLECTION, blockId);
-    if (action === 'block') batch.set(ref, { date: d, hour: parseInt(h), status: 'blocked', userId: 'ADMIN', createdAt: serverTimestamp() });
+    if (action === 'block') {
+      batch.set(ref, { date: d, hour: parseInt(h), status: 'blocked', userId: 'ADMIN', createdAt: serverTimestamp() });
+      batch.set(doc(collection(_db, 'notifications')), buildNotificationData({
+        userId: 'ADMIN', type: 'bloqueada', date: d, hour: parseInt(h)
+      }));
+    }
     else batch.delete(ref);
   });
   await batch.commit();
@@ -94,6 +100,10 @@ export async function submitReservation() {
         attendanceDetail: null,
         createdAt: serverTimestamp()
       });
+      batch.set(doc(collection(_db, 'notifications')), buildNotificationData({
+        userId: _state.user.uid, type: 'solicitada', date: d, hour: parseInt(h),
+        courseId: _state.courseId, groupName: _state.groupName
+      }));
     });
 
     await batch.commit();
@@ -131,7 +141,18 @@ export async function admAct(id, app, d, h, _gn) {
   const uniqueApproved = new Set(s.docs.filter(doc => doc.data().status === 'approved').map(doc => doc.data().groupName)).size;
   if (uniqueApproved >= 4) return notifyAlert("Horario lleno.");
   try {
-    await updateDoc(doc(_db, _RESERVATIONS_COLLECTION, id), { status: 'approved' });
+    const resRef = doc(_db, _RESERVATIONS_COLLECTION, id);
+    const resSnap = await getDoc(resRef);
+    const resData = resSnap.data();
+    const batch = writeBatch(_db);
+    batch.update(resRef, { status: 'approved' });
+    if (resData?.userId && resData.userId !== 'ADMIN') {
+      batch.set(doc(collection(_db, 'notifications')), buildNotificationData({
+        userId: resData.userId, type: 'aprobada', date: resData.date, hour: resData.hour,
+        courseId: resData.courseId, groupName: resData.groupName
+      }));
+    }
+    await batch.commit();
   } catch (error) {
     console.error('Error al aprobar reserva:', error);
     notifyAlert("Error al aprobar la solicitud: " + error.message);
@@ -150,16 +171,47 @@ export async function rejectReq(id) {
     cancelButtonText: 'Cancelar'
   });
   if (result.isConfirmed) {
-    await deleteDoc(doc(_db, _RESERVATIONS_COLLECTION, id));
+    try {
+      const resRef = doc(_db, _RESERVATIONS_COLLECTION, id);
+      const resSnap = await getDoc(resRef);
+      const resData = resSnap.data();
+      const batch = writeBatch(_db);
+      batch.delete(resRef);
+      if (resData?.userId && resData.userId !== 'ADMIN') {
+        batch.set(doc(collection(_db, 'notifications')), buildNotificationData({
+          userId: resData.userId, type: 'rechazada', date: resData.date, hour: resData.hour,
+          courseId: resData.courseId, groupName: resData.groupName
+        }));
+      }
+      await batch.commit();
+    } catch (error) {
+      console.error('Error al rechazar solicitud:', error);
+      notifyAlert("Error al rechazar la solicitud: " + error.message);
+    }
   }
 }
 
 export async function deleteReservation(id) {
   try {
-    await deleteDoc(doc(_db, _RESERVATIONS_COLLECTION, id));
+    const resRef = doc(_db, _RESERVATIONS_COLLECTION, id);
+    const resSnap = await getDoc(resRef);
+    const resData = resSnap.data();
+    const batch = writeBatch(_db);
+    batch.delete(resRef);
+    if (resData?.userId && resData.userId !== 'ADMIN') {
+      const isMine = resData.userId === _state.user.uid;
+      batch.set(doc(collection(_db, 'notifications')), buildNotificationData({
+        userId: resData.userId,
+        type: isMine ? 'cancelada' : 'rechazada',
+        date: resData.date, hour: resData.hour,
+        courseId: resData.courseId, groupName: resData.groupName
+      }));
+    }
+    await batch.commit();
     document.getElementById('attendance-modal').classList.add('hidden');
   } catch (e) {
-    notifyAlert("Error eliminando");
+    console.error('Error eliminando reserva:', e);
+    notifyAlert(`Error eliminando: ${e.message}`);
   }
 }
 
@@ -253,15 +305,20 @@ export async function executeRecurringBlock(e) {
     }
   }
 
-  // Validar ANTES de construir el batch (límite Firestore: 500 ops/batch)
-  if (operations.length > 490) return notifyAlert(`Rango muy grande (${operations.length} bloques). Máximo permitido: 490. Reduce el rango de fechas.`);
+  // Validar ANTES de construir el batch (límite Firestore: 500 ops/batch; cada bloque ocupa 2 ops con su notificación)
+  if (operations.length > 245) return notifyAlert(`Rango muy grande (${operations.length} bloques). Máximo permitido: 245. Reduce el rango de fechas.`);
   if (operations.length === 0) return notifyAlert("No se generaron bloques para el rango seleccionado.");
 
   // Fase 2: construir y enviar el batch
   const batch = writeBatch(_db);
   operations.forEach(op => {
     const ref = doc(_db, _RESERVATIONS_COLLECTION, `BLOCK_${op.dateStr}_${op.hour}`);
-    if (action === 'block') batch.set(ref, { date: op.dateStr, hour: op.hour, status: 'blocked', userId: 'ADMIN', type: 'recurring', createdAt: serverTimestamp() });
+    if (action === 'block') {
+      batch.set(ref, { date: op.dateStr, hour: op.hour, status: 'blocked', userId: 'ADMIN', type: 'recurring', createdAt: serverTimestamp() });
+      batch.set(doc(collection(_db, 'notifications')), buildNotificationData({
+        userId: 'ADMIN', type: 'bloqueada', date: op.dateStr, hour: op.hour
+      }));
+    }
     else batch.delete(ref);
   });
 

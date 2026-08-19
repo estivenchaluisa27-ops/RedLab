@@ -451,7 +451,7 @@ describe('Firestore Rules — Security (P0-1, P0-2)', () => {
     await assertSucceeds(student.firestore().doc(`reservations/${reservationRef.id}`).delete());
   });
 
-  it('Student CANNOT delete approved reservation', async () => {
+  it('Student CAN delete their own approved reservation', async () => {
     const student = testEnv.authenticatedContext(STUDENT_UID, { email: STUDENT_EMAIL });
     let reservationRef;
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
@@ -466,7 +466,7 @@ describe('Firestore Rules — Security (P0-1, P0-2)', () => {
       });
       reservationRef = ref;
     });
-    await assertFails(student.firestore().doc(`reservations/${reservationRef.id}`).delete());
+    await assertSucceeds(student.firestore().doc(`reservations/${reservationRef.id}`).delete());
   });
 
   it('Student CANNOT delete another student\'s pending reservation', async () => {
@@ -688,5 +688,161 @@ describe('Firestore Rules — device_tokens (NUEVO)', () => {
     await assertFails(
       other.firestore().collection('device_tokens').doc(STUDENT_UID).get()
     );
+  });
+});
+
+describe('Firestore Rules — Notificaciones in-app (historial estudiante)', () => {
+  if (!emulatorAvailable) {
+    it.skip('Firestore emulator not available — start with: npx firebase emulators:start --only firestore', () => {});
+    return;
+  }
+
+  function seedNotification(extra = {}, id = 'seed-notif') {
+    return testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc(`notifications/${id}`).set({
+        userId: STUDENT_UID,
+        type: 'aprobada',
+        date: '2026-08-15',
+        hour: 10,
+        read: false,
+        createdAt: new Date(),
+        groupName: 'Grupo Test',
+        courseId: COURSE_ID,
+        ...extra,
+      });
+    });
+  }
+
+  it('Student CAN list their own notifications (query restricted to own userId)', async () => {
+    const student = testEnv.authenticatedContext(STUDENT_UID, { email: STUDENT_EMAIL });
+    await seedNotification();
+    const q = student.firestore().collection('notifications')
+      .where('userId', '==', STUDENT_UID)
+      .orderBy('createdAt', 'desc');
+    const snap = await assertSucceeds(q.get());
+    expect(snap.docs.length).toBe(1);
+  });
+
+  it('Student CANNOT list another student\'s notifications', async () => {
+    const student = testEnv.authenticatedContext(STUDENT_UID, { email: STUDENT_EMAIL });
+    await seedNotification();
+    const q = student.firestore().collection('notifications')
+      .where('userId', '==', 'other-student-uid')
+      .orderBy('createdAt', 'desc');
+    await assertFails(q.get());
+  });
+
+  it('Student CANNOT list all notifications (query without userId filter)', async () => {
+    const student = testEnv.authenticatedContext(STUDENT_UID, { email: STUDENT_EMAIL });
+    await seedNotification();
+    const q = student.firestore().collection('notifications')
+      .orderBy('createdAt', 'desc');
+    await assertFails(q.get());
+  });
+
+  it('Student CAN get their own notification doc', async () => {
+    const student = testEnv.authenticatedContext(STUDENT_UID, { email: STUDENT_EMAIL });
+    await seedNotification();
+    await assertSucceeds(student.firestore().doc('notifications/seed-notif').get());
+  });
+
+  it('Student CANNOT get another student\'s notification doc', async () => {
+    const student = testEnv.authenticatedContext(STUDENT_UID, { email: STUDENT_EMAIL });
+    await seedNotification({ userId: 'other-student-uid' }, 'seed-notif-other');
+    await assertFails(student.firestore().doc('notifications/seed-notif-other').get());
+  });
+
+  it('Student CAN mark own notification as read (update only read field)', async () => {
+    const student = testEnv.authenticatedContext(STUDENT_UID, { email: STUDENT_EMAIL });
+    await seedNotification();
+    await assertSucceeds(
+      student.firestore().doc('notifications/seed-notif').update({ read: true })
+    );
+  });
+
+  it('Student CANNOT update own notification beyond the read field', async () => {
+    const student = testEnv.authenticatedContext(STUDENT_UID, { email: STUDENT_EMAIL });
+    await seedNotification();
+    await assertFails(
+      student.firestore().doc('notifications/seed-notif').update({ read: true, type: 'cancelada' })
+    );
+  });
+
+  it('Student CAN create their own notification', async () => {
+    const student = testEnv.authenticatedContext(STUDENT_UID, { email: STUDENT_EMAIL });
+    await assertSucceeds(
+      student.firestore().collection('notifications').add({
+        userId: STUDENT_UID,
+        type: 'solicitada',
+        date: '2026-08-15',
+        hour: 10,
+        read: false,
+        createdAt: new Date(),
+      })
+    );
+  });
+
+  it('Student CANNOT create a notification for another student', async () => {
+    const student = testEnv.authenticatedContext(STUDENT_UID, { email: STUDENT_EMAIL });
+    await assertFails(
+      student.firestore().collection('notifications').add({
+        userId: 'other-student-uid',
+        type: 'solicitada',
+        date: '2026-08-15',
+        hour: 10,
+        read: false,
+        createdAt: new Date(),
+      })
+    );
+  });
+
+  it('Admin CAN create notifications for any student', async () => {
+    const admin = testEnv.authenticatedContext(ADMIN_UID, { email: ADMIN_EMAIL });
+    await assertSucceeds(
+      admin.firestore().collection('notifications').add({
+        userId: STUDENT_UID,
+        type: 'aprobada',
+        date: '2026-08-15',
+        hour: 10,
+        read: false,
+        createdAt: new Date(),
+      })
+    );
+  });
+
+  it('Student CANNOT create notification with invalid type', async () => {
+    const student = testEnv.authenticatedContext(STUDENT_UID, { email: STUDENT_EMAIL });
+    await assertFails(
+      student.firestore().collection('notifications').add({
+        userId: STUDENT_UID,
+        type: 'hacked',
+        date: '2026-08-15',
+        hour: 10,
+        read: false,
+        createdAt: new Date(),
+      })
+    );
+  });
+
+  it('Student CANNOT create notification with admin-only type (aprobada)', async () => {
+    const student = testEnv.authenticatedContext(STUDENT_UID, { email: STUDENT_EMAIL });
+    await assertFails(
+      student.firestore().collection('notifications').add({
+        userId: STUDENT_UID,
+        type: 'aprobada',
+        date: '2026-08-15',
+        hour: 10,
+        read: false,
+        createdAt: new Date(),
+      })
+    );
+  });
+
+  it('Unauthenticated CANNOT read notifications', async () => {
+    const unauth = testEnv.unauthenticatedContext();
+    const q = unauth.firestore().collection('notifications')
+      .where('userId', '==', STUDENT_UID)
+      .orderBy('createdAt', 'desc');
+    await assertFails(q.get());
   });
 });

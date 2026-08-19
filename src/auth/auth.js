@@ -8,6 +8,7 @@ import { escapeHtml } from '../utils/escape.js';
 import { showView } from '../utils/dom.js';
 import { alert as notifyAlert } from '../utils/notify.js';
 import { clearGroupUtilsCache } from '../groups/group-utils.js';
+import { startNotificationsListener } from '../notifications/history.js';
 import { setSentryUser, clearSentryUser } from '../utils/sentry.js';
 import { loadAdminDashboard } from '../courses/courses-list.js';
 import { setupStudentView } from '../calendar/calendar.js';
@@ -119,6 +120,7 @@ export async function setupSession(role, userData, studentData, state, db) {
         if (nameEl) nameEl.innerHTML = `<div class="text-right leading-tight"><div class="font-bold text-white text-sm">${escapeHtml(gData.name)}</div><div class="text-xs text-blue-200">${escapeHtml(state.user.email)}</div><span class="course-badge mt-1">${escapeHtml(cData.subject)} (${escapeHtml(cData.parallel)})</span></div><div class="ml-3 bg-white/10 p-2 rounded-full"><i class="fas fa-user text-white"></i></div>`;
         showView('student');
         setupStudentView();
+        startNotificationsListener();
       }
     } catch (error) {
       console.error("Error cargando perfil:", error);

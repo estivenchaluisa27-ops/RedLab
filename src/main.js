@@ -12,6 +12,7 @@ import { initCourses, createCourse, saveCourseChanges, setupEditCourseView } fro
 import { initGroups, addGroup, deleteGroup, setupCourseGroupsView, clearGroupsListener } from './groups/groups.js';
 import { initGroupDetails, setupGroupDetailsView, destroyGroupDetailsView, saveGroupBasicInfo, saveLeaderInfo } from './groups/group-details.js';
 import { initReservations, submitReservation, admAct, rejectReq, deleteReservation, setAttendance, executeRecurringBlock } from './reservations/reservations.js';
+import { initNotifications, stopNotificationsListener, openNotificationsModal } from './notifications/history.js';
 import { initReports, setupReportesView, executeReport } from './reports/reports.js';
 import { initCalendar, clearCalendarListeners, setupAdminCalendarLogic } from './calendar/calendar.js';
 import { initMotionObserver, handlePress } from './utils/motion.js';
@@ -33,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initReservations(db, state, RESERVATIONS_COLLECTION);
   initReports(db, state);
   initCalendar(db, RESERVATIONS_COLLECTION);
+  initNotifications(db, state);
 
   // Router admin — registro de setups por sección y sub-vista
   registerSectionSetup('calendario', () => setupAdminCalendarLogic(), { rerunOnEveryEnter: true });
@@ -54,7 +56,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Event delegation — all data-action handlers
   const clickActions = {
-    'handle-logout': () => handleLogout(() => { unsubscribeAuthListener(); clearListeners(); clearCalendarListeners(); clearCoursesListener(); }, auth),
+    'handle-logout': () => handleLogout(() => { unsubscribeAuthListener(); clearListeners(); clearCalendarListeners(); stopNotificationsListener(); clearCoursesListener(); }, auth),
+    'open-notifications-modal': () => openNotificationsModal(),
     'open-change-password-modal': () => openChangePasswordModal(),
     'close-change-password-modal': () => closeChangePasswordModal(),
     'open-reset-modal': () => openResetModal(),
