@@ -1,6 +1,6 @@
 # RedLab — Arquitectura
 
-Sistema de laboratorio de idiomas (red de salas): gestión de cursos, grupos, reservas de salas, calendario y **notificaciones push** en Android, con backend serverless en Firebase y un push server Node en Fly.io.
+Sistema de gestión para **laboratorio de redes**: cursos, grupos, reservas de salas con calendario, notificaciones push en Android y panel de administración. Backend serverless en Firebase + push server Node en Fly.io.
 
 ## Stack
 
