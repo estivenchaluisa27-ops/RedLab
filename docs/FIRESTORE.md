@@ -21,7 +21,7 @@ Modelo de datos y matriz de acceso de `firestore.rules`. Rol derivado por existe
 | `courses/{courseId}/groups/{groupId}` | `name`, ... | Grupos dentro del curso | admin; profesor del curso |
 | `reservations/{reservationId}` | `userId`, `date`, `hour`, `status`, `courseId`, `groupName`, `attendanceDetail` | Reservas de sala | estudiantes (crear `pending`); admin/profesor (cambiar status) |
 | `notifications/{notificationId}` | `userId`, `type`, `date`, `hour`, `read`, `createdAt` | Historial de notificaciones | flujo del sistema; estudiante solo `solicitada`/`cancelada` propias |
-| `device_tokens/{uid}` | token FCM | Tokens de dispositivos | solo el dueño del `uid` |
+| `device_tokens/{uid}` | `tokens` (array FCM), `email`, `platform` | Tokens de dispositivos | solo el dueño del `uid` |
 
 ## Ciclo de vida de una reserva (`status`)
 

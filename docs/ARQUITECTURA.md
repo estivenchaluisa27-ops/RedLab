@@ -10,7 +10,7 @@ Sistema de laboratorio de idiomas (red de salas): gestión de cursos, grupos, re
 | Cliente móvil | Capacitor 8 (Android), notificaciones push locales y remotas |
 | Backend | Firebase: Hosting + Firestore (rules), Auth |
 | Push server | Node.js + FCM en Fly.io (`redlab-push-server/`) |
-| Tests | Vitest + Testing Library (`tests/`) |
+| Tests | Vitest + jsdom y `@firebase/rules-unit-testing` (tests de reglas) |
 | Lint | ESLint (`npm run lint`) |
 
 ## Componentes
@@ -61,8 +61,8 @@ Sistema de laboratorio de idiomas (red de salas): gestión de cursos, grupos, re
 
 ## Notificaciones push
 
-1. El cliente registra su dispositivo en FCM y guarda el token en `device_tokens/{uid}`.
-2. El **push server** (Node + FCM, `redlab-push-server/`) lee los tokens y envía notificaciones.
+1. El cliente registra su dispositivo en FCM y guarda el token en el **array `tokens`** del documento `device_tokens/{uid}` (junto a `email`).
+2. El **push server** (Node + FCM, `redlab-push-server/`) escucha cambios en `reservations` (Firestore `onSnapshot`) y envía las notificaciones.
 3. Android muestra notificaciones locales (agenda) y remotas (push).
 4. El historial se guarda en Firestore (`notifications/`).
 

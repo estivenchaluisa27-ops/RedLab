@@ -25,8 +25,12 @@
 ## 4. Notificaciones push (Android)
 
 1. En el arranque móvil, `notifications/push.js` solicita permiso y obtiene el **token FCM** del dispositivo.
-2. El token se guarda en `device_tokens/{uid}`.
-3. **Push server** (`redlab-push-server/`, Node + FCM en Fly.io): recibe el evento (reserva aprobada, rechazada, bloqueada), consulta `device_tokens/` del destinatario y envía la notificación push.
+2. El token se **agrega al array `tokens`** del documento `device_tokens/{uid}` (junto a `email`).
+3. **Push server** (`redlab-push-server/`, Node + FCM en Fly.io): **escucha cambios en `reservations`** (Firestore `onSnapshot`) y envía push según el caso:
+   - **nueva solicitud** (`pending`) → a los profesores del curso;
+   - **aprobada** → al estudiante;
+   - **bloqueada** → a todos los involucrados;
+   - **rechazada/cancelada** → al estudiante (cuando se borra la reserva).
 4. El dispositivo Android la muestra; la notificación también queda en el **historial** (`notifications/`, visible en la app).
 
 > Requisito de despliegue: `redlab-push-server/.env` con credenciales FCM y `service-account.json` de Firebase (ver `.env.example`).
