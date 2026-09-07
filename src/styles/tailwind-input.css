@@ -253,7 +253,7 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
     width: 100%;
     padding: 0.875rem 1rem;
     background: rgba(255, 255, 255, 0.06);
-    border: 2px solid rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 2px;
     color: #f1f5f9;
     font-size: 0.95rem;
@@ -264,8 +264,8 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
 
 .auth-input:focus {
     outline: none;
-    border-color: rgba(255, 255, 255, 0.22) !important;
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06) !important;
+    border-color: rgba(255, 255, 255, 0.16) !important;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.04) !important;
     background: rgba(255, 255, 255, 0.08);
 }
 

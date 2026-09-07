@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RedLab — Prototipo de Rediseño Editorial</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        uce: { 50: '#eef6fc', 100: '#d9ebf8', 200: '#b5d7f0', 300: '#7ab6e2', 400: '#3d8fd0', 500: '#0a67b3', 600: '#00538f', 700: '#004274', 800: '#003366', 900: '#002244', 950: '#001a33' },
+                        gold: { 400: '#f0c44e', 500: '#e1ad01', 600: '#c99500' },
+                    },
+                    fontFamily: {
+                        display: ['"Space Grotesk"', 'system-ui', '-apple-system', '"Segoe UI"', 'Roboto', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+                        sans: ['Archivo', 'system-ui', '-apple-system', '"Segoe UI"', 'Roboto', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+                    },
+                },
+            },
+        };
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css">
+
+    <style>
+        body { font-family: 'Archivo', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f8fafc; }
+        h1, h2, h3 { font-family: 'Space Grotesk', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-weight: 700; letter-spacing: -0.015em; }
+
+        .fade-in { animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .uce-header { background-color: #004274 !important; border-bottom: 4px solid #e1ad01; box-shadow: 0 1px 0 rgba(255, 255, 255, 0.07), 0 8px 24px -16px rgba(0, 20, 40, 0.45); }
+        .uce-header button[data-action='handle-logout'] { min-height: 32px; }
+        .uce-header button[data-action='handle-logout']:hover { box-shadow: none !important; transform: none !important; }
+
+        #login-view { background-image: linear-gradient(rgba(0, 66, 116, 0.85), rgba(0, 51, 102, 0.95)), url('https://ecuadoruniversitario.com/wp-content/uploads/2015/03/uce.jpg'); background-color: #003366; background-size: cover; background-position: center; background-attachment: fixed; }
+
+        .calendar-wrapper { background: white; border-radius: 2px; box-shadow: 0 2px 4px rgba(0, 34, 68, 0.04), 0 12px 32px -18px rgba(0, 66, 116, 0.22); overflow: hidden; border: 1px solid #e2e8f0; }
+        .calendar-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        .calendar-table th, .calendar-table td { border: 1px solid #e2e8f0; padding: 0; vertical-align: top; height: 85px; }
+        .calendar-table th { background-color: #f8fafc; color: #475569; padding: 0.8rem; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.09em; border-bottom: 2px solid #94a3b8; }
+
+        .time-cell-content { background-color: #f1f5f9; color: #475569; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; height: 100%; width: 100%; text-align: center; }
+        .slot-container { width: 100%; height: 100%; padding: 3px; position: relative; }
+        .slot { width: 100%; height: 100%; border-radius: 2px; border: 1px solid transparent; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-size: 0.75rem; font-weight: 600; line-height: 1.2; overflow: hidden; }
+        .occupancy-badge { font-size: 0.65rem; margin-top: 3px; padding: 2px 8px; border-radius: 3px; background-color: rgba(255,255,255,0.95); color: #1e293b; font-weight: 800; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+
+        .slot-free { background-color: #ffffff; border-color: #e2e8f0; color: #64748b; }
+        .slot-free:hover { background-color: #f8fafc; border-color: #cbd5e1; color: #3b82f6; }
+        .slot-blocked, .slot-past { background-color: #f1f5f9 !important; color: #cbd5e1 !important; border-color: #e2e8f0 !important; cursor: not-allowed; background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, #e2e8f0 5px, #e2e8f0 10px); }
+        .slot-partial { background-color: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+        .slot-full { background-color: #fef2f2; border-color: #fecaca; color: #991b1b; cursor: not-allowed; }
+        .slot-selected { background-color: #3b82f6 !important; color: white !important; border-color: #1d4ed8 !important; box-shadow: inset 0 0 0 2px white, 0 4px 6px rgba(59, 130, 246, 0.3); }
+        .slot-pending { background-color: #fffbeb; border-color: #fde68a; color: #b45309; }
+        .slot-approved-self { background-color: #22c55e; border-color: #16a34a; color: white; box-shadow: 0 2px 4px rgba(34, 197, 94, 0.2); }
+
+        /* Prototipo: rail dorado del ítem activo del sidebar */
+        #admin-sidebar .sidebar-item { border-left: 2px solid transparent; border-radius: 0; }
+        #admin-sidebar .sidebar-item[aria-current='page'] { border-left-color: #e1ad01; background-color: rgba(0, 51, 102, 0.92); }
+        #admin-sidebar .sidebar-item[aria-current='page'] i { color: #f0c44e; }
+
+        .card-panel { border-top: 3px solid #e1ad01; }
+
+        input:not([type='checkbox']):not([type='radio']), select, textarea { border-radius: 2px; }
+
+        /* Micro-interacciones (versión editorial: elevación moderada) */
+        button, a { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important; }
+        button:active:not(:disabled) { transform: scale(0.95) !important; }
+        button[class*="bg-"]:hover:not(:disabled):not(.matrix-cell) { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.10) !important; transform: translateY(-1px); }
+        button:disabled { opacity: 0.5 !important; cursor: not-allowed !important; transform: none !important; box-shadow: none !important; }
+        .slot, .matrix-cell { transform: none !important; box-shadow: none !important; }
+
+        input, select, textarea { transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+        input:focus, select:focus, textarea:focus { border-color: #004274 !important; box-shadow: 0 0 0 3px rgba(0, 66, 116, 0.12) !important; outline: none; }
+        tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
+
+        /* ===== AUTH (ya editorial: esquinas 2px + borde dorado) ===== */
+        .auth-card {
+            background: rgba(13, 32, 54, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 2px solid rgba(255, 255, 255, 0.14);
+            border-top: 4px solid #e1ad01;
+            border-radius: 2px;
+            padding: 3rem;
+            box-shadow: 0 25px 60px -15px rgba(0, 20, 40, 0.6);
+        }
+        .auth-label { display: block; font-size: 0.8rem; font-weight: 700; color: #cbd5e1; margin-bottom: 0.5rem; }
+        .auth-input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            background: rgba(255, 255, 255, 0.06);
+            border: 2px solid rgba(255, 255, 255, 0.14);
+            border-radius: 2px;
+            color: #f1f5f9;
+            font-size: 0.95rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        }
+        .auth-input::placeholder { color: rgba(148, 163, 184, 0.55); }
+        .auth-input:focus { outline: none; border-color: #e1ad01 !important; box-shadow: 0 0 0 3px rgba(225, 173, 1, 0.15) !important; background: rgba(255, 255, 255, 0.08); }
+
+        .auth-btn {
+            padding: 1rem;
+            background: #e1ad01;
+            border: none;
+            border-radius: 2px;
+            color: #002244;
+            font-size: 1rem;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            font-family: 'Space Grotesk', system-ui, sans-serif;
+        }
+        .auth-btn:hover:not(:disabled) { background: #f0c44e; }
+        .auth-btn:active:not(:disabled) { background: #c99500; }
+
+        .auth-checkbox { appearance: none; -webkit-appearance: none; width: 18px; height: 18px; border: 2px solid rgba(255, 255, 255, 0.18); border-radius: 4px; cursor: pointer; transition: all 0.2s ease; position: relative; flex-shrink: 0; }
+        .auth-checkbox:checked { background: #e1ad01; border-color: #e1ad01; }
+        .auth-checkbox:checked::after { content: '✓'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #003366; font-size: 11px; font-weight: bold; }
+        .auth-checkbox:focus-visible, .auth-link:focus-visible { outline: 2px solid #e1ad01; outline-offset: 2px; }
+        .auth-checkbox-label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.85rem; color: #cbd5e1; user-select: none; }
+        .auth-link { font-size: 0.85rem; color: #e1ad01; font-weight: 600; text-decoration: none; transition: color 0.2s ease; background: none; border: none; cursor: pointer; font-family: inherit; padding: 0; }
+        .auth-link:hover { color: #ffffff; }
+
+        .watermark { position: fixed; bottom: 1rem; left: 1rem; font-size: 0.7rem; font-weight: 700; pointer-events: none; user-select: none; z-index: 100; }
+        #login-view .watermark { color: rgba(255, 255, 255, 0.4); }
+
+        .password-container { position: relative; }
+        .toggle-password { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #64748b; }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+        }
+    </style>
+</head>
+
+<body class="min-h-screen text-slate-800 flex flex-col">
+
+    <!-- Barra del prototipo (solo para esta vista previa) -->
+    <div class="fixed top-0 inset-x-0 z-50 flex items-center gap-2 px-4 py-2 bg-slate-900 text-slate-200 text-xs shadow-lg">
+        <i class="fas fa-pen-ruler text-gold-500"></i>
+        <span class="font-display font-bold tracking-tight">Prototipo de rediseño — RedLab</span>
+        <span class="text-slate-400">editorial-híbrido (navy + dorado)</span>
+        <div class="ml-auto flex gap-1.5">
+            <button data-proto-view="login" class="px-3 py-1 rounded-[2px] bg-gold-500 text-uce-900 font-bold">Login</button>
+            <button data-proto-view="admin" class="px-3 py-1 rounded-[2px] bg-slate-700 hover:bg-slate-600 text-white font-bold">Panel Admin</button>
+        </div>
+    </div>
+
+    <!-- ============ VISTA 1: LOGIN (split-screen asimétrico) ============ -->
+    <div id="proto-login" class="min-h-screen flex items-stretch pt-9">
+        <div class="hidden lg:flex lg:w-1/2 bg-uce-800 relative border-r-[3px] border-gold-500 flex-col justify-center p-12 xl:p-16">
+            <div class="max-w-md">
+                <img src="https://redi.cedia.edu.ec/members/UCE.png" alt="UCE" class="h-20 mb-10 object-contain">
+                <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-gold-500 mb-4">Sistema de Reservas</p>
+                <h1 class="text-4xl xl:text-5xl font-display text-white tracking-tight leading-[1.05]">Laboratorio de Redes y Telecomunicaciones</h1>
+                <p class="text-slate-300 text-sm mt-6 max-w-sm leading-relaxed">Universidad Central del Ecuador</p>
+                <div class="border-t border-uce-700 mt-10 pt-6 flex gap-6 text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
+                    <span>Control de turnos</span><span>Capacidad 4 / slot</span><span>Acceso UCE</span>
+                </div>
+            </div>
+        </div>
+        <div class="flex-1 bg-slate-50 flex items-center justify-center p-6 lg:p-12">
+            <div class="w-full max-w-md">
+                <div class="lg:hidden mb-8 text-center">
+                    <img src="https://redi.cedia.edu.ec/members/UCE.png" alt="UCE" class="h-20 mx-auto mb-3 object-contain">
+                    <p class="text-[10px] uppercase tracking-[0.22em] text-gold-600 font-bold">Sistema de Reservas</p>
+                </div>
+                <div class="bg-white border border-slate-200 rounded-[2px] p-8">
+                    <h2 class="text-xl font-display font-bold text-uce-900 tracking-tight">Iniciar sesión</h2>
+                    <p class="text-sm text-slate-500 mt-1 mb-6">Usa tu correo institucional UCE.</p>
+                    <form id="login-form" action="javascript:void(0)" class="space-y-5">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Correo Institucional</label>
+                            <input type="email" placeholder="tu@uce.edu.ec" class="w-full px-3.5 py-3 border border-slate-300 rounded-none text-sm placeholder-slate-400 focus:outline-none focus:border-gold-500 focus:ring-0 transition-colors duration-150" required>
+                        </div>
+                        <div class="password-container">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Contraseña</label>
+                            <div class="relative">
+                                <input type="password" placeholder="Tu contraseña" class="w-full px-3.5 py-3 border border-slate-300 rounded-none text-sm placeholder-slate-400 focus:outline-none focus:border-gold-500 focus:ring-0 transition-colors duration-150 pr-10" required>
+                                <i class="fas fa-eye toggle-password absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 cursor-pointer"></i>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <label class="flex items-center gap-2 text-sm text-slate-600 cursor-pointer select-none"><input type="checkbox" class="w-4 h-4 accent-uce-700 rounded-none"><span>Recordarme</span></label>
+                            <button type="button" class="text-xs font-semibold text-uce-700 hover:text-uce-900 transition-colors">¿Olvidaste tu contraseña?</button>
+                        </div>
+                        <button type="submit" class="w-full h-12 bg-gold-500 text-uce-700 font-bold uppercase tracking-wide text-sm rounded-[2px] border-l-[3px] border-uce-700 hover:bg-gold-400 transition-colors duration-150">Ingresar</button>
+                        <div class="text-center text-sm"><span class="text-slate-500">¿No tienes cuenta? </span><button type="button" class="font-semibold text-uce-700 hover:text-uce-900 transition-colors">Créala aquí</button></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="watermark">RedLab v4.1 · Prototipo</div>
+    </div>
+
+    <!-- ============ VISTA 2: PANEL ADMIN ============ -->
+    <div id="proto-admin" class="hidden min-h-screen flex flex-col pt-9">
+        <header class="uce-header text-white sticky top-0 z-30" style="top:36px;">
+            <div class="flex justify-between items-center px-4 py-3">
+                <div class="flex items-center gap-3">
+                    <button type="button" aria-label="Abrir menú" class="md:hidden text-white text-xl px-2 py-1 rounded-[2px] hover:bg-white/10 transition"><i class="fas fa-bars"></i></button>
+                    <img src="/assets/escudo2.png" class="h-[47px] object-contain" alt="UCE" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 640 512%27%3E%3Cpath fill=%27white%27 d=%27M0 336c0 79.5 64.5 144 144 144h368c70.7 0 128 57.3 128 128 0 61.9 44 113.6 102.4 125.4C514.3 81.3 425 0 320 0 217.6 0 130.7 77.8 120 177.3 51.6 188.4 0 249.6 0 320zm144 96c-53 0-96 43-96 96s43 96 96 96h32c13.3 0 24 10.7 24 24V80c0 26.5 21.5 48 48 48h128c26.5 0 48 21.5 48 48v16c0 13.3 10.7 24 24 24h32c53 0 96 43 96 96s43 96 96 96H144z/%3E%3C/svg%3E'">
+                    <div>
+                        <h1 class="font-display font-bold text-base leading-tight tracking-tight">RedLab <span class="text-slate-200/90 text-sm font-medium">· Lab de Redes</span></h1>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="hidden md:flex items-center bg-white/10 px-3 py-2 rounded-[2px] border border-white/15 backdrop-blur-md text-sm"><i class="fas fa-user-shield mr-2 text-gold-400"></i>Admin · Ing. Torres</div>
+                    <button data-action="open-change-password-modal" class="text-xs text-slate-300/90 hover:text-gold-400" title="Cambiar contraseña">Clave</button>
+                    <button data-action="handle-logout" class="text-xs bg-transparent border border-gold-400/70 text-gold-400 font-bold hover:bg-gold-500 hover:text-uce-900 px-4 py-2 rounded-[2px] transition" title="Cerrar sesión">Salir</button>
+                </div>
+            </div>
+        </header>
+
+        <div class="flex flex-col md:flex-row">
+            <aside id="admin-sidebar" class="bg-uce-800 text-uce-100 w-full md:w-56 md:min-h-[calc(100vh-60px)] md:sticky md:top-[60px] shrink-0 shadow-lg">
+                <nav class="p-3 space-y-1" aria-label="Navegación principal">
+                    <a href="#/admin/calendario" class="sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-none border-l-2 border-transparent text-sm font-medium hover:bg-uce-700/60 transition" aria-current="page">
+                        <i class="fas fa-calendar-alt w-5 text-center"></i><span>Calendario</span>
+                    </a>
+                    <a href="#/admin/cursos" class="sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-none border-l-2 border-transparent text-sm font-medium hover:bg-uce-700/60 transition">
+                        <i class="fas fa-book w-5 text-center"></i><span>Cursos</span>
+                    </a>
+                    <a href="#/admin/reportes" class="sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-none border-l-2 border-transparent text-sm font-medium hover:bg-uce-700/60 transition">
+                        <i class="fas fa-file-excel w-5 text-center"></i><span>Reportes</span>
+                    </a>
+                </nav>
+            </aside>
+
+            <main id="admin-section" class="flex-1 w-full p-4 lg:p-8">
+                <section class="fade-in grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-8">
+                    <div class="lg:col-span-1">
+                        <div class="calendar-wrapper mb-4">
+                            <div class="p-4 bg-white border-b flex justify-between items-center">
+                                <button class="text-slate-500 px-3 py-2"><i class="fas fa-chevron-left"></i></button>
+                                <h2 class="font-bold text-lg text-slate-700">Semana del 08 al 14 de septiembre</h2>
+                                <button class="text-slate-500 px-3 py-2"><i class="fas fa-chevron-right"></i></button>
+                            </div>
+                            <table class="calendar-table">
+                                <thead>
+                                    <tr>
+                                        <th></th><th>Lunes</th><th>Martes</th><th>Miércoles</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><div class="time-cell-content">07:00<br>08:00</div></td>
+                                        <td><div class="slot-container"><button class="slot slot-free">Libre</button></div></td>
+                                        <td><div class="slot-container"><div class="slot slot-blocked">Bloqueado</div></div></td>
+                                        <td><div class="slot-container"><button class="slot slot-partial">2 / 4<span class="occupancy-badge">2/4</span></button></div></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="time-cell-content">08:00<br>09:00</div></td>
+                                        <td><div class="slot-container"><div class="slot slot-full">Lleno</div></div></td>
+                                        <td><div class="slot-container"><button class="slot slot-pending">Pendiente</button></div></td>
+                                        <td><div class="slot-container"><button class="slot slot-approved-self">Tú</button></div></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="time-cell-content">09:00<br>10:00</div></td>
+                                        <td><div class="slot-container"><button class="slot slot-free">Libre</button></div></td>
+                                        <td><div class="slot-container"><div class="slot slot-full">Lleno</div></div></td>
+                                        <td><div class="slot-container"><button class="slot slot-free">Libre</button></div></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="hidden bg-uce-700 text-white p-4 rounded-[2px] flex justify-between items-center shadow-lg fade-in border border-uce-900 border-l-4 border-l-gold-500">
+                            <span class="font-bold text-lg">3 horarios seleccionados</span>
+                            <div class="flex gap-3">
+                                <button class="bg-red-500 hover:bg-red-600 px-5 py-2 rounded-lg font-bold">Bloquear</button>
+                                <button class="bg-emerald-500 hover:bg-emerald-600 px-5 py-2 rounded-lg font-bold">Desbloquear</button>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 flex justify-end gap-2">
+                            <button class="bg-green-600 text-white h-10 px-4 rounded-[2px] shadow-sm hover:bg-green-700 flex items-center gap-2 font-bold text-sm transition-all active:scale-95">
+                                <i class="fas fa-file-excel"></i> Reportes
+                            </button>
+                            <button class="bg-uce-700 text-white h-10 px-4 rounded-[2px] shadow-sm hover:opacity-90 flex items-center gap-2 font-bold text-sm transition-all active:scale-95">
+                                <i class="fas fa-calendar-alt"></i> Gestión Clases
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-1 bg-white p-5 rounded-[2px] border border-slate-200 card-panel h-fit max-h-[calc(100vh-160px)] overflow-y-auto custom-scrollbar">
+                        <h3 class="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-4 text-xs uppercase tracking-wider">Solicitudes Pendientes</h3>
+                        <div class="space-y-2">
+                            <div class="bg-slate-50 border border-slate-200 rounded-[2px] p-3">
+                                <p class="font-bold text-xs text-uce-800">Luis Andrade</p>
+                                <p class="text-[0.7rem] text-slate-500 mt-0.5">Redes II · Grupo A</p>
+                                <p class="text-[0.7rem] text-slate-500">Lun 07:00 — 2 slots</p>
+                                <div class="flex gap-1.5 mt-2">
+                                    <button class="bg-green-600 text-white text-[0.65rem] font-bold px-2 py-1 rounded-[2px]">Aprobar</button>
+                                    <button class="border border-slate-300 text-slate-600 text-[0.65rem] font-bold px-2 py-1 rounded-[2px]">Rechazar</button>
+                                </div>
+                            </div>
+                            <div class="bg-slate-50 border border-slate-200 rounded-[2px] p-3">
+                                <p class="font-bold text-xs text-uce-800">María Pérez</p>
+                                <p class="text-[0.7rem] text-slate-500 mt-0.5">Seguridad en Redes · Grupo B</p>
+                                <p class="text-[0.7rem] text-slate-500">Mar 08:00 — 1 slot</p>
+                                <div class="flex gap-1.5 mt-2">
+                                    <button class="bg-green-600 text-white text-[0.65rem] font-bold px-2 py-1 rounded-[2px]">Aprobar</button>
+                                    <button class="border border-slate-300 text-slate-600 text-[0.65rem] font-bold px-2 py-1 rounded-[2px]">Rechazar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="hidden fade-in mt-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-uce-900 tracking-tight">Cursos Activos</h2>
+                        <a href="#/admin/cursos/nuevo" class="bg-uce-700 text-white h-10 px-4 rounded-[2px] shadow-sm hover:opacity-90 font-bold text-sm flex items-center"><i class="fas fa-plus mr-2"></i>Nuevo Curso</a>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('[data-proto-view]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var target = btn.getAttribute('data-proto-view');
+                document.getElementById('proto-login').classList.toggle('hidden', target !== 'login');
+                document.getElementById('proto-admin').classList.toggle('hidden', target !== 'admin');
+                document.querySelectorAll('[data-proto-view]').forEach(function (b) {
+                    b.classList.toggle('bg-gold-500', b === btn);
+                    b.classList.toggle('text-uce-900', b === btn);
+                    b.classList.toggle('font-bold', b === btn);
+                    if (b !== btn) { b.classList.add('bg-slate-700'); b.classList.add('hover:bg-slate-600'); b.classList.add('text-white'); }
+                });
+                if (btn === document.querySelector('[data-proto-view="login"]')) {
+                    btn.classList.remove('bg-slate-700');
+                }
+            });
+        });
+        document.querySelector('.toggle-password').addEventListener('click', function () {
+            var inp = this.previousElementSibling;
+            inp.type = inp.type === 'password' ? 'text' : 'password';
+        });
+    </script>
+</body>
+
+</html>
