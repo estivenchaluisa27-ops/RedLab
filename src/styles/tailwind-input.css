@@ -264,8 +264,8 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
 
 .auth-input:focus {
     outline: none;
-    border-color: rgba(255, 255, 255, 0.55) !important;
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(255, 255, 255, 0.22) !important;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06) !important;
     background: rgba(255, 255, 255, 0.08);
 }
 
@@ -275,13 +275,13 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
     -webkit-box-shadow: 0 0 0 1000px rgba(13, 32, 54, 0.92) inset !important;
     -webkit-text-fill-color: #f1f5f9 !important;
     caret-color: #f1f5f9;
-    border-color: rgba(255, 255, 255, 0.45);
+    border-color: rgba(255, 255, 255, 0.20);
 }
 
 .auth-btn {
     padding: 1rem;
-    background: rgba(255, 255, 255, 0.18);
-    border: 1.5px solid rgba(255, 255, 255, 0.45);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1.5px solid rgba(255, 255, 255, 0.22);
     border-radius: 2px;
     color: #ffffff;
     font-family: 'Space Grotesk', 'Archivo', sans-serif;
@@ -293,8 +293,8 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
     transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
-.auth-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.28); border-color: rgba(255, 255, 255, 0.7); }
-.auth-btn:active:not(:disabled) { background: rgba(255, 255, 255, 0.22); transform: translateY(1px); }
+.auth-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.14); border-color: rgba(255, 255, 255, 0.35); }
+.auth-btn:active:not(:disabled) { background: rgba(255, 255, 255, 0.12); transform: translateY(1px); }
 
 .auth-checkbox {
     appearance: none;
