@@ -21,7 +21,7 @@ import { createClickDispatcher, createSubmitDispatcher } from './utils/dispatche
 import { initAdminRouter, registerSectionSetup, registerSubviewSetup, registerSubviewOnLeave } from './admin-router-controller.js';
 import { navigate } from './router.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   initSentry();
   initMotionObserver();
   document.addEventListener('pointerdown', handlePress, true);
@@ -155,10 +155,49 @@ document.addEventListener('DOMContentLoaded', () => {
     // Cerrar sidebar al navegar (cualquier click en un sidebar-item)
     sidebar.addEventListener('click', (e) => {
       const item = e.target.closest('.sidebar-item');
-      if (item && window.matchMedia('(max-width: 767px)').matches) {
+      if (item && window.matchMedia('(max-width: 1023px)').matches) {
         sidebar.classList.remove('admin-sidebar-open');
         burger?.setAttribute('aria-expanded', 'false');
       }
     });
   }
+
+  // Sidebar colapsable (desktop): toggle icon-only con persistencia en localStorage
+  const collapseBtn = document.getElementById('sidebar-collapse-btn');
+  if (collapseBtn && sidebar) {
+    const STORAGE_KEY = 'redlab.sidebar.collapsed';
+    const isCollapsed = localStorage.getItem(STORAGE_KEY) === '1';
+    if (isCollapsed) {
+      sidebar.classList.add('admin-sidebar-collapsed');
+      collapseBtn.querySelector('i')?.classList.replace('fa-angles-left', 'fa-angles-right');
+    }
+    collapseBtn.addEventListener('click', () => {
+      const nowCollapsed = sidebar.classList.toggle('admin-sidebar-collapsed');
+      localStorage.setItem(STORAGE_KEY, nowCollapsed ? '1' : '0');
+      const icon = collapseBtn.querySelector('i');
+      if (icon) {
+        icon.classList.toggle('fa-angles-left', !nowCollapsed);
+        icon.classList.toggle('fa-angles-right', nowCollapsed);
+      }
+    });
+  }
+
+  // Poblar avatar + nombre + rol del usuario actual en el footer del sidebar
+  try {
+    const { state } = await import('./state.js');
+    const avatarEl = document.getElementById('sidebar-user-avatar');
+    const nameEl = document.getElementById('sidebar-user-name');
+    const roleEl = document.getElementById('sidebar-user-role');
+    if (state?.user) {
+      const displayName = state.user.displayName || state.user.email?.split('@')[0] || 'Usuario';
+      const initials = (state.user.displayName || state.user.email || 'U')
+        .split(/\s+|@/).filter(Boolean).slice(0, 2).map(s => s[0]?.toUpperCase()).join('') || 'U';
+      if (avatarEl) avatarEl.textContent = initials;
+      if (nameEl) nameEl.textContent = displayName;
+      if (roleEl) {
+        const role = state.role || 'admin';
+        roleEl.textContent = role.toUpperCase();
+      }
+    }
+  } catch (_) { /* state.js no listo o sidebar ausente — no-op */ }
 });

@@ -34,7 +34,7 @@ export function loadAdminDashboard() {
       _state.coursesCache[d.id] = c;
 
       grid.innerHTML += `
-        <div class="bg-white p-5 rounded-xl card-lift border-l-4 border-uce-700 hover:border-uce-500 relative group">
+        <div class="bg-white p-5 rounded-[2px] border border-slate-200 card-lift relative group">
           <div class="flex justify-between items-start">
             <div>
               <h3 class="font-bold text-lg text-slate-800">${escapeHtml(c.subject)}</h3>

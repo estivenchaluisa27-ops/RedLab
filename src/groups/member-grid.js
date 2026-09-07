@@ -152,7 +152,7 @@ export function mountMemberGrid(container, opts = {}) {
               <td class="px-3 py-2"><input type="text" data-mg-new="cedula" placeholder="Cédula" aria-label="Cédula nuevo integrante" class="w-full p-1.5 border border-slate-200 rounded text-xs"></td>
               <td class="px-3 py-2"><input type="text" data-mg-new="nombre" placeholder="Nombre Completo" aria-label="Nombre nuevo integrante" class="w-full p-1.5 border border-slate-200 rounded text-xs"></td>
               <td class="px-3 py-2 text-center text-xs text-slate-500">Estudiante</td>
-              <td class="px-3 py-2 text-right"><button type="button" data-mg-add aria-label="Agregar integrante" class="bg-green-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-green-700 shadow-sm"><i class="fas fa-plus"></i></button></td>
+              <td class="px-3 py-2 text-right"><button type="button" data-mg-add aria-label="Agregar integrante" class="btn-navy text-xs"><i class="fas fa-plus"></i></button></td>
             </tr>
           </tfoot>
         </table>

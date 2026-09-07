@@ -234,7 +234,7 @@ function listenAdminPending() {
         }
 
         const el = document.createElement('div');
-        el.className = 'bg-white p-3 rounded-xl card-lift mb-2 flex justify-between items-center fade-in hover:border-uce-700/30';
+        el.className = 'bg-white p-3 rounded-[2px] border border-slate-200 card-lift mb-2 flex justify-between items-center fade-in';
         el.innerHTML = `
         <div>
             <div class="font-bold text-sm text-slate-700">${escapeHtml(r.groupName)}</div>

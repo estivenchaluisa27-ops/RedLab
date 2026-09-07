@@ -72,41 +72,58 @@
 
     <div id="admin-dashboard" class="hidden min-h-screen flex flex-col">
         <!-- Topbar (full-width) -->
-        <header class="uce-header text-white shadow-lg sticky top-0 z-30">
+        <header class="uce-header text-white sticky top-0 z-30">
             <div class="flex justify-between items-center px-4 py-3">
                 <div class="flex items-center gap-3">
                     <button id="admin-burger" type="button" aria-label="Abrir menú" class="md:hidden text-white text-xl px-2 py-1 rounded hover:bg-white/10 transition"><i class="fas fa-bars"></i></button>
                     <img src="/assets/escudo2.png" class="h-[47px] object-contain" alt="UCE">
                     <div>
-                        <h1 class="font-bold text-base leading-tight">RedLab <span class="text-blue-200 text-sm font-medium">· Lab de Redes</span></h1>
+                        <h1 class="font-bold text-base leading-tight" style="font-family: 'Space Grotesk', sans-serif;">RedLab <span class="text-blue-200 text-sm font-medium">· Lab de Redes</span></h1>
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
                     <div id="admin-header-user-info" class="hidden md:flex items-center bg-white/10 px-3 py-2 rounded-lg backdrop-blur-md text-sm"></div>
                     <button data-action="open-change-password-modal" class="text-xs text-blue-200 hover:text-white underline" title="Cambiar contraseña">Clave</button>
-                    <button data-action="handle-logout" class="text-xs bg-gold-500 text-uce-900 font-bold hover:bg-gold-400 px-4 py-2 rounded-full shadow-md transition" title="Cerrar sesión">Salir</button>
+                    <button data-action="handle-logout" class="btn-ghost" title="Cerrar sesión"><i class="fas fa-sign-out-alt"></i> Salir</button>
                 </div>
             </div>
         </header>
 
         <!-- Contenedor interno: sidebar + main -->
-        <div class="flex flex-col md:flex-row">
+        <div class="flex flex-col lg:flex-row">
             <!-- Sidebar -->
-            <aside id="admin-sidebar" class="bg-uce-800 text-uce-100 w-full md:w-56 md:min-h-[calc(100vh-60px)] md:sticky md:top-[60px] shrink-0 shadow-lg">
-                <nav class="p-3 space-y-1" aria-label="Navegación principal">
-                    <a href="#/admin/calendario" data-route="calendario" class="sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-uce-700/60 transition" aria-current="page">
-                        <i class="fas fa-calendar-alt w-5 text-center"></i><span>Calendario</span>
+            <aside id="admin-sidebar" class="bg-uce-800 text-uce-100 w-60 min-h-[calc(100vh-60px)] sticky top-[60px] shrink-0 flex flex-col">
+                <div class="sidebar-brand">
+                    <img src="/assets/escudo2.png" alt="UCE" class="h-8 w-8 object-contain shrink-0">
+                    <div class="sidebar-brand-text">
+                        <div>RedLab</div>
+                        <div class="sidebar-brand-sub">Lab. Redes UCE</div>
+                    </div>
+                </div>
+                <nav class="p-3 space-y-1 flex-1" aria-label="Navegación principal">
+                    <a href="#/admin/calendario" data-route="calendario" class="sidebar-item flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition" aria-current="page">
+                        <i class="fas fa-calendar-alt w-5 text-center text-base"></i><span class="sidebar-label">Calendario</span>
                     </a>
-                    <a href="#/admin/cursos" data-route="cursos" class="sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-uce-700/60 transition">
-                        <i class="fas fa-book w-5 text-center"></i><span>Cursos</span>
+                    <a href="#/admin/cursos" data-route="cursos" class="sidebar-item flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition">
+                        <i class="fas fa-book w-5 text-center text-base"></i><span class="sidebar-label">Cursos</span>
                     </a>
-                    <a href="#/admin/reportes" data-route="reportes" class="sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-uce-700/60 transition" data-fase="B">
-                        <i class="fas fa-file-excel w-5 text-center"></i><span>Reportes</span>
+                    <a href="#/admin/reportes" data-route="reportes" class="sidebar-item flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition" data-fase="B">
+                        <i class="fas fa-file-excel w-5 text-center text-base"></i><span class="sidebar-label">Reportes</span>
                     </a>
-                    <a href="#/admin/ajustes" data-route="ajustes" class="sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-uce-700/60 transition hidden" data-fase="B">
-                        <i class="fas fa-cog w-5 text-center"></i><span>Ajustes</span>
+                    <a href="#/admin/ajustes" data-route="ajustes" class="sidebar-item flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition hidden" data-fase="B">
+                        <i class="fas fa-cog w-5 text-center text-base"></i><span class="sidebar-label">Ajustes</span>
                     </a>
                 </nav>
+                <div class="sidebar-user">
+                    <div class="sidebar-avatar" id="sidebar-user-avatar">--</div>
+                    <div class="sidebar-user-info overflow-hidden">
+                        <div class="sidebar-user-name" id="sidebar-user-name">Usuario</div>
+                        <div class="sidebar-user-role" id="sidebar-user-role">Admin</div>
+                    </div>
+                </div>
+                <button type="button" id="sidebar-collapse-btn" class="sidebar-collapse-btn" aria-label="Colapsar panel">
+                    <i class="fas fa-angles-left"></i><span class="sidebar-collapse-label">Colapsar</span>
+                </button>
             </aside>
 
             <!-- Main content — el router renderiza aquí -->
@@ -114,17 +131,17 @@
 
             <!-- Sección: Calendario (FASE A — contenido existente, movido aquí como <section> -->
             <section id="section-calendario" data-section="calendario" class="fade-in grid grid-cols-1 lg:grid-cols-4 gap-8">
-                <div class="lg:col-span-3"><div class="calendar-wrapper mb-4"><div class="p-4 bg-white border-b flex justify-between items-center"><button id="admin-prev-week" class="text-slate-500 px-3 py-2"><i class="fas fa-chevron-left"></i></button><h2 id="admin-week-title" class="font-bold text-lg text-slate-700"></h2><button id="admin-next-week" class="text-slate-500 px-3 py-2"><i class="fas fa-chevron-right"></i></button></div><table class="calendar-table"><thead id="admin-calendar-head"></thead><tbody id="admin-calendar-body"></tbody></table></div>                <div id="admin-action-box" class="hidden bg-uce-700 text-white p-4 rounded-xl flex justify-between items-center shadow-xl fade-in border border-uce-900"><span id="admin-selection-count" class="font-bold text-lg"></span><div class="flex gap-3"><button id="admin-block-btn" class="bg-red-500 hover:bg-red-600 px-5 py-2 rounded-lg font-bold">Bloquear</button><button id="admin-unblock-btn" class="bg-emerald-500 hover:bg-emerald-600 px-5 py-2 rounded-lg font-bold">Desbloquear</button></div></div>
+                <div class="lg:col-span-3"><div class="calendar-wrapper mb-4"><div class="p-4 bg-white border-b flex justify-between items-center"><button id="admin-prev-week" class="text-slate-500 px-3 py-2"><i class="fas fa-chevron-left"></i></button><h2 id="admin-week-title" class="font-bold text-lg text-slate-700"></h2><button id="admin-next-week" class="text-slate-500 px-3 py-2"><i class="fas fa-chevron-right"></i></button></div><table class="calendar-table"><thead id="admin-calendar-head"></thead><tbody id="admin-calendar-body"></tbody></table></div>                <div id="admin-action-box" class="hidden bg-uce-700 text-white p-4 flex justify-between items-center fade-in border border-uce-900"><span id="admin-selection-count" class="font-bold text-lg" style="font-family: 'Space Grotesk', sans-serif;"></span><div class="flex gap-3"><button id="admin-block-btn">Bloquear</button><button id="admin-unblock-btn">Desbloquear</button></div></div>
                     <div class="mt-4 flex justify-end gap-2">
-                        <button data-action="open-report-modal" class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 flex items-center gap-2 font-bold text-sm transition-all active:scale-95">
+                        <button data-action="open-report-modal" class="btn-outline-navy">
                             <i class="fas fa-file-excel"></i> Reportes
                         </button>
-                        <button id="admin-recurring-btn" data-action="open-recurring-modal" class="bg-uce-700 text-white px-4 py-2 rounded shadow hover:opacity-90 flex items-center gap-2 font-bold text-sm transition-all active:scale-95">
+                        <button id="admin-recurring-btn" data-action="open-recurring-modal" class="btn-navy">
                             <i class="fas fa-calendar-alt"></i> Gestión Clases
                         </button>
                     </div>
                 </div>
-                <div class="lg:col-span-1 bg-white p-5 rounded-xl card-lift h-fit max-h-[calc(100vh-100px)] overflow-y-auto custom-scrollbar"><h3 class="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-4 text-xs uppercase tracking-wider">Solicitudes Pendientes</h3><div id="admin-requests-list" class="space-y-2"></div></div>
+                <div class="lg:col-span-1 bg-white p-5 rounded-[2px] border border-slate-200 card-lift h-fit max-h-[calc(100vh-100px)] overflow-y-auto custom-scrollbar"><h3 class="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-4 text-xs uppercase tracking-wider" style="font-family: 'Space Grotesk', sans-serif;">Solicitudes Pendientes</h3><div id="admin-requests-list" class="space-y-2"></div></div>
             </section>
 
             <!-- Sección: Cursos — sub-view 'curso-lista' (visible por default) -->
@@ -211,7 +228,7 @@
                         <input type="email" id="new-group-leader" placeholder="Email Líder" class="p-2 border rounded">
                         <input type="text" id="new-group-cedula" placeholder="Cédula Líder" class="p-2 border rounded">
                         <input type="text" id="new-group-fullname" placeholder="Nombre Completo Líder" class="p-2 border rounded">
-                        <button data-action="add-group" class="bg-green-600 text-white px-2 py-2 rounded font-bold hover:bg-green-700 md:col-span-4"><i class="fas fa-plus mr-1"></i> Agregar Grupo</button>
+                        <button data-action="add-group" class="btn-outline-navy md:col-span-4"><i class="fas fa-plus mr-1"></i> Agregar Grupo</button>
                     </div>
                     <div class="overflow-y-auto border rounded p-4 max-h-[60vh]">
                         <table class="w-full text-sm text-left">
@@ -304,7 +321,7 @@
                             <div id="rep-courses-list" class="max-h-48 overflow-y-auto border border-slate-200 rounded p-2 bg-slate-50 space-y-1 text-sm custom-scrollbar"></div>
                         </div>
                         <div class="flex justify-end pt-3 mt-4 border-t border-slate-100">
-                            <button type="submit" class="bg-green-600 text-white px-5 py-2 rounded font-bold hover:bg-green-700 transition-all active:scale-95 shadow-md flex items-center gap-2 text-sm">
+                            <button type="submit" class="btn-navy">
                                 Descargar <i class="fas fa-download"></i>
                             </button>
                         </div>
@@ -326,12 +343,12 @@
 
     <div id="recurring-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-6 fade-in"><h3 class="font-bold text-lg text-uce-700 mb-4 border-b pb-2">Gestión de Clases</h3><form data-action="execute-recurring-block"> <div class="grid grid-cols-2 gap-4 mb-4"><div><label class="block text-xs font-bold text-slate-500 mb-1">Inicio</label><input type="date" id="rec-start" class="w-full p-2 border rounded" required></div><div><label class="block text-xs font-bold text-slate-500 mb-1">Fin</label><input type="date" id="rec-end" class="w-full p-2 border rounded" required></div></div><div class="mb-4"><p class="text-xs font-bold text-slate-500 mb-2">Seleccione bloques:</p><div id="matrix-container" class="border rounded p-2 bg-slate-50"></div></div><div class="mb-6"><label class="block text-xs font-bold text-slate-500 mb-1">Acción</label><select id="rec-action" class="w-full p-2 border rounded font-bold"><option value="block">Bloquear</option><option value="unblock">Desbloquear</option></select></div><div class="flex justify-end gap-2"><button type="button" data-action="close-modal" data-target="recurring-modal" class="px-4 py-2 text-slate-500 hover:bg-slate-100 rounded">Cancelar</button>                            <button type="submit" class="px-4 py-2 bg-uce-700 text-white rounded font-bold">Ejecutar</button></div></form></div></div>
     
-    <div id="attendance-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-xl flex flex-col max-h-[90vh] fade-in overflow-hidden border border-slate-200"><div class="uce-header text-white p-5 flex justify-between items-center shadow-md"><div><h3 class="font-bold text-lg">Control de Asistencia</h3><p id="att-title" class="text-xs text-blue-200 font-details mt-1"></p></div><button data-action="close-modal" data-target="attendance-modal" class="text-white/70 hover:text-white text-xl"><i class="fas fa-times"></i></button></div><div id="att-list" class="p-5 overflow-y-auto flex-1 bg-white space-y-4"></div></div></div>
+    <div id="attendance-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="bg-white rounded-[2px] border border-slate-200 w-full max-w-xl flex flex-col max-h-[90vh] fade-in overflow-hidden" style="box-shadow: 0 25px 60px -15px rgba(0,20,40,0.55);"><div class="uce-header text-white p-5 flex justify-between items-center"><div><h3 class="font-bold text-lg" style="font-family: 'Space Grotesk', sans-serif;">Control de Asistencia</h3><p id="att-title" class="text-xs text-blue-200 font-details mt-1"></p></div><button data-action="close-modal" data-target="attendance-modal" class="text-white/70 hover:text-white text-xl"><i class="fas fa-times"></i></button></div><div id="att-list" class="p-5 overflow-y-auto flex-1 bg-white space-y-4"></div></div></div>
 
-    <div id="notifications-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[85vh] fade-in overflow-hidden border border-slate-200"><div class="uce-header text-white p-5 flex justify-between items-center shadow-md"><h3 class="font-bold text-lg"><i class="fas fa-bell mr-2"></i>Notificaciones</h3><button data-action="close-modal" data-target="notifications-modal" class="text-white/70 hover:text-white text-xl"><i class="fas fa-times"></i></button></div><div id="notifications-list" class="p-4 overflow-y-auto flex-1 bg-slate-50 space-y-2"></div></div></div>
+    <div id="notifications-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="bg-white rounded-[2px] border border-slate-200 w-full max-w-lg flex flex-col max-h-[85vh] fade-in overflow-hidden" style="box-shadow: 0 25px 60px -15px rgba(0,20,40,0.55);"><div class="uce-header text-white p-5 flex justify-between items-center"><h3 class="font-bold text-lg" style="font-family: 'Space Grotesk', sans-serif;"><i class="fas fa-bell mr-2"></i>Notificaciones</h3><button data-action="close-modal" data-target="notifications-modal" class="text-white/70 hover:text-white text-xl"><i class="fas fa-times"></i></button></div><div id="notifications-list" class="p-4 overflow-y-auto flex-1 bg-slate-50 space-y-2"></div></div></div>
 
     <div id="student-dashboard" class="hidden min-h-screen flex flex-col">
-        <header class="uce-header text-white p-4 shadow-lg sticky top-0 z-30"><div class="max-w-7xl mx-auto flex justify-between items-center"><div class="flex items-center gap-4"><img src="/assets/escudo2.png" alt="Escudo UCE" class="h-[55px] object-contain drop-shadow"><div>        <h1 class="font-bold text-lg leading-tight">LABORATORIO DE REDES</h1><span class="text-Base text-blue-200">Facultad de Ingeniería y Ciencias Aplicadas</span></div></div><div class="flex items-center gap-4"><div id="student-header-user-info" class="hidden md:flex items-center bg-white/10 px-4 py-2 rounded-lg backdrop-blur-md text-base"></div><button data-action="open-notifications-modal" class="relative text-blue-200 hover:text-white mr-2" aria-label="Notificaciones" title="Notificaciones"><i class="fas fa-bell text-lg"></i><span id="notif-badge" class="hidden absolute -top-1.5 -right-2 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1"></span></button><button data-action="open-change-password-modal" class="text-xs text-blue-200 hover:text-white underline mr-2">Clave</button><button data-action="handle-logout" class="text-xs bg-gold-500 text-uce-900 font-bold hover:bg-gold-400 px-4 py-2 rounded-full shadow-md">Salir</button></div></div></header>
+        <header class="uce-header text-white p-4 sticky top-0 z-30"><div class="max-w-7xl mx-auto flex justify-between items-center"><div class="flex items-center gap-4"><img src="/assets/escudo2.png" alt="Escudo UCE" class="h-[55px] object-contain drop-shadow"><div>        <h1 class="font-bold text-lg leading-tight" style="font-family: 'Space Grotesk', sans-serif;">LABORATORIO DE REDES</h1><span class="text-Base text-blue-200">Facultad de Ingeniería y Ciencias Aplicadas</span></div></div><div class="flex items-center gap-4"><div id="student-header-user-info" class="hidden md:flex items-center bg-white/10 px-4 py-2 rounded-lg backdrop-blur-md text-base"></div><button data-action="open-notifications-modal" class="relative text-blue-200 hover:text-white mr-2" aria-label="Notificaciones" title="Notificaciones"><i class="fas fa-bell text-lg"></i><span id="notif-badge" class="hidden absolute -top-1.5 -right-2 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1"></span></button><button data-action="open-change-password-modal" class="text-xs text-blue-200 hover:text-white underline mr-2">Clave</button><button data-action="handle-logout" class="btn-ghost"><i class="fas fa-sign-out-alt"></i> Salir</button></div></div></header>
         <main class="flex-1 max-w-7xl mx-auto w-full p-4 lg:p-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
             <div class="lg:col-span-3"><div class="calendar-wrapper"><div class="p-4 bg-white border-b flex justify-between items-center"><button id="student-prev-week" class="text-slate-500 px-3 py-2"><i class="fas fa-chevron-left"></i></button><h2 id="student-week-title" class="font-bold text-lg text-slate-700"></h2><button id="student-next-week" class="text-slate-500 px-3 py-2"><i class="fas fa-chevron-right"></i></button></div><table class="calendar-table"><thead id="student-calendar-head"></thead><tbody id="student-calendar-body"></tbody></table></div></div>
             <div class="lg:col-span-1 space-y-6"><div id="student-request-box" class="bg-uce-gradient text-white p-5 rounded-xl shadow-lg hidden fade-in relative overflow-hidden"><div class="absolute -right-4 -top-4 w-20 h-20 bg-white/10 rounded-full"></div><div class="absolute -left-6 -bottom-6 w-24 h-24 bg-gold-500/20 rounded-full"></div><p class="text-sm text-blue-100 mb-1">Resumen</p><p id="student-request-count" class="font-bold text-xl mb-4"></p><button id="submit-request-btn" class="w-full bg-white text-uce-700 py-2 rounded-lg font-bold hover:bg-blue-50 shadow-md">Confirmar</button></div><div class="bg-white p-5 rounded-xl card-lift text-sm"><h3 class="font-bold text-slate-800 border-b pb-3 mb-3 text-xs uppercase">Estado</h3><div class="space-y-3"><div class="flex items-center"><div class="w-3 h-3 rounded-full bg-white border border-slate-300 mr-3"></div> <span class="text-slate-600">Disponible</span></div><div class="flex items-center"><div class="w-3 h-3 rounded-full bg-blue-50 border border-blue-200 mr-3"></div> <span class="text-slate-600">Parcial</span></div><div class="flex items-center"><div class="w-3 h-3 rounded-full bg-blue-600 mr-3 shadow-sm"></div> <span class="font-medium text-slate-800">Selección</span></div><div class="flex items-center"><div class="w-3 h-3 rounded-full bg-green-500 mr-3 shadow-sm"></div> <span class="font-medium text-slate-800">Agendado</span></div><div class="flex items-center"><div class="w-3 h-3 rounded-full bg-slate-100 border border-slate-200 mr-3"></div> <span class="text-slate-400">No Disp.</span></div></div></div></div>
