@@ -162,7 +162,7 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
     border: 1.5px solid rgba(255, 255, 255, 0.16);
-    border-top: 3px solid #e1ad01;
+    border-top: none;
     border-radius: 2px;
     padding: 2.75rem;
     box-shadow: 0 25px 60px -15px rgba(0, 20, 40, 0.55);
@@ -176,7 +176,6 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
 /* ===== LOGIN SPLIT: PANEL INSTITUCIONAL + GLASS ===== */
 .auth-credential-panel {
     position: relative;
-    border-right: 3px solid #e1ad01;
     background: linear-gradient(100deg, rgba(0, 34, 68, 0.78) 0%, rgba(0, 34, 68, 0.28) 100%);
 }
 
@@ -265,8 +264,8 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
 
 .auth-input:focus {
     outline: none;
-    border-color: #e1ad01 !important;
-    box-shadow: 0 0 0 3px rgba(225, 173, 1, 0.15) !important;
+    border-color: rgba(255, 255, 255, 0.55) !important;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.12) !important;
     background: rgba(255, 255, 255, 0.08);
 }
 
@@ -276,26 +275,26 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
     -webkit-box-shadow: 0 0 0 1000px rgba(13, 32, 54, 0.92) inset !important;
     -webkit-text-fill-color: #f1f5f9 !important;
     caret-color: #f1f5f9;
-    border-color: #e1ad01;
+    border-color: rgba(255, 255, 255, 0.45);
 }
 
 .auth-btn {
     padding: 1rem;
-    background: #e1ad01;
-    border: none;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1.5px solid rgba(255, 255, 255, 0.45);
     border-radius: 2px;
-    color: #002244;
+    color: #ffffff;
     font-family: 'Space Grotesk', 'Archivo', sans-serif;
     font-size: 0.95rem;
     font-weight: 700;
     letter-spacing: 0.16em;
     text-transform: uppercase;
     cursor: pointer;
-    transition: background 0.2s ease, transform 0.2s ease;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
-.auth-btn:hover:not(:disabled) { background: #f2c94c; }
-.auth-btn:active:not(:disabled) { background: #c99500; transform: translateY(1px); }
+.auth-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.28); border-color: rgba(255, 255, 255, 0.7); }
+.auth-btn:active:not(:disabled) { background: rgba(255, 255, 255, 0.22); transform: translateY(1px); }
 
 .auth-checkbox {
     appearance: none;
