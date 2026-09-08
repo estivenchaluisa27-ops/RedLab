@@ -75,7 +75,7 @@
         <header class="uce-header text-white sticky top-0 z-30">
             <div class="flex justify-between items-center px-4 py-3">
                 <div class="flex items-center gap-3">
-                    <button id="admin-burger" type="button" aria-label="Abrir menú" class="md:hidden text-white text-xl px-2 py-1 rounded hover:bg-white/10 transition"><i class="fas fa-bars"></i></button>
+                    <button id="admin-burger" type="button" aria-label="Contraer navegación" aria-expanded="true" aria-controls="admin-sidebar" class="text-white text-xl px-2 py-1 rounded hover:bg-white/10 transition min-w-[44px] min-h-[44px] inline-flex items-center justify-center"><i class="fas fa-bars"></i></button>
                     <img src="/assets/escudo2.png" class="h-[47px] object-contain" alt="UCE">
                     <div>
                         <h1 class="font-bold text-base leading-tight" style="font-family: 'Space Grotesk', sans-serif;">RedLab <span class="text-blue-200 text-sm font-medium">· Lab de Redes</span></h1>
@@ -93,13 +93,6 @@
         <div class="flex flex-col lg:flex-row">
             <!-- Sidebar -->
             <aside id="admin-sidebar" class="bg-uce-800 text-uce-100 w-60 min-h-[calc(100vh-60px)] sticky top-[60px] shrink-0 flex flex-col">
-                <div class="sidebar-brand">
-                    <img src="/assets/escudo2.png" alt="UCE" class="h-8 w-8 object-contain shrink-0">
-                    <div class="sidebar-brand-text">
-                        <div>RedLab</div>
-                        <div class="sidebar-brand-sub">Lab. Redes UCE</div>
-                    </div>
-                </div>
                 <nav class="p-3 space-y-1 flex-1" aria-label="Navegación principal">
                     <a href="#/admin/calendario" data-route="calendario" class="sidebar-item flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition" aria-current="page">
                         <i class="fas fa-calendar-alt w-5 text-center text-base"></i><span class="sidebar-label">Calendario</span>
@@ -121,9 +114,6 @@
                         <div class="sidebar-user-role" id="sidebar-user-role">Admin</div>
                     </div>
                 </div>
-                <button type="button" id="sidebar-collapse-btn" class="sidebar-collapse-btn" aria-label="Colapsar panel">
-                    <i class="fas fa-angles-left"></i><span class="sidebar-collapse-label">Colapsar</span>
-                </button>
             </aside>
 
             <!-- Main content — el router renderiza aquí -->

@@ -143,41 +143,36 @@ document.addEventListener('DOMContentLoaded', async () => {
   // sidebar activo y mostrará la sección default (calendario).
   initAdminRouter();
 
-  // Sidebar drawer en mobile: el botón burger toggla el sidebar a overlay
+  // Burger único en el topbar: en desktop colapsa el sidebar a icon-only
+  // (con persistencia en localStorage); en mobile (<1024px) abre/cierra el drawer overlay
   const burger = document.getElementById('admin-burger');
   const sidebar = document.getElementById('admin-sidebar');
   if (burger && sidebar) {
+    const STORAGE_KEY = 'redlab.sidebar.collapsed';
+    const isMobile = () => window.matchMedia('(max-width: 1023px)').matches;
+    if (localStorage.getItem(STORAGE_KEY) === '1') {
+      sidebar.classList.add('admin-sidebar-collapsed');
+      burger.setAttribute('aria-label', 'Expandir navegación');
+      burger.setAttribute('aria-expanded', 'false');
+    }
     burger.addEventListener('click', () => {
-      const isShown = !sidebar.classList.contains('admin-sidebar-open');
-      sidebar.classList.toggle('admin-sidebar-open', isShown);
-      burger.setAttribute('aria-expanded', String(isShown));
+      if (isMobile()) {
+        const isShown = !sidebar.classList.contains('admin-sidebar-open');
+        sidebar.classList.toggle('admin-sidebar-open', isShown);
+        burger.setAttribute('aria-expanded', String(isShown));
+      } else {
+        const nowCollapsed = sidebar.classList.toggle('admin-sidebar-collapsed');
+        localStorage.setItem(STORAGE_KEY, nowCollapsed ? '1' : '0');
+        burger.setAttribute('aria-expanded', String(!nowCollapsed));
+        burger.setAttribute('aria-label', nowCollapsed ? 'Expandir navegación' : 'Contraer navegación');
+      }
     });
     // Cerrar sidebar al navegar (cualquier click en un sidebar-item)
     sidebar.addEventListener('click', (e) => {
       const item = e.target.closest('.sidebar-item');
-      if (item && window.matchMedia('(max-width: 1023px)').matches) {
+      if (item && isMobile()) {
         sidebar.classList.remove('admin-sidebar-open');
         burger?.setAttribute('aria-expanded', 'false');
-      }
-    });
-  }
-
-  // Sidebar colapsable (desktop): toggle icon-only con persistencia en localStorage
-  const collapseBtn = document.getElementById('sidebar-collapse-btn');
-  if (collapseBtn && sidebar) {
-    const STORAGE_KEY = 'redlab.sidebar.collapsed';
-    const isCollapsed = localStorage.getItem(STORAGE_KEY) === '1';
-    if (isCollapsed) {
-      sidebar.classList.add('admin-sidebar-collapsed');
-      collapseBtn.querySelector('i')?.classList.replace('fa-angles-left', 'fa-angles-right');
-    }
-    collapseBtn.addEventListener('click', () => {
-      const nowCollapsed = sidebar.classList.toggle('admin-sidebar-collapsed');
-      localStorage.setItem(STORAGE_KEY, nowCollapsed ? '1' : '0');
-      const icon = collapseBtn.querySelector('i');
-      if (icon) {
-        icon.classList.toggle('fa-angles-left', !nowCollapsed);
-        icon.classList.toggle('fa-angles-right', nowCollapsed);
       }
     });
   }
