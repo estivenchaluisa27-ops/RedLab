@@ -125,7 +125,25 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
 .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748b; }
 
-/* 8. Sidebar admin drawer (mobile) — overlay scrollable
+/* 8. Sidebar background image + glass overlay
+   FondoPanel.JPG como textura; ::before crea el efecto glass opaco (frosted glass).
+   Los hijos del sidebar se apilan con z-index:1 por encima del overlay. */
+#admin-sidebar::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 30, 60, 0.78);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 0;
+    pointer-events: none;
+}
+#admin-sidebar > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* 9. Sidebar admin drawer (mobile) — overlay scrollable
    En desktop (lg+) el sidebar es sticky fijo y colapsable (icon-only con .admin-sidebar-collapsed);
    en mobile se abre como overlay desde el botón burger. */
 @media (max-width: 1023px) {
