@@ -32,6 +32,11 @@
       "AGENTS.md",
       ".agents/**",
       "plan.md",
+      "AUDIT.md",
+      "REPORT.md",
+      "prototype/**",
+      "skills-lock.json",
+      "login-smoke-desktop.png",
       ".codebase-memory/**",
       ".github/**"
     ],

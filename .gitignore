@@ -51,7 +51,9 @@ redlab-push-server/service-account*.json
 
 # Binarios instaladores (nunca commitear ejecutables >100MB)
 *.exe
+*.apk
 Antigravity*
+login-smoke-desktop.png
 
 # nyc test coverage
 .nyc_output
@@ -97,3 +99,5 @@ node_modules/
 AUDIT.md
 REPORT.md
 plan.md
+prototype/
+skills-lock.json
