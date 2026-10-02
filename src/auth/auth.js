@@ -35,20 +35,35 @@ export function initAuthListener(auth, db, state, resetState, setupSessionFn) {
       let profSnap = null;
       let studentSnap = null;
 
+      const offlineErrors = new Set(['unavailable', 'failed-precondition']);
+      let hasOfflineError = false;
+
       try {
         adminSnap = await getDoc(doc(db, "admins", user.email));
       } catch (error) {
-        console.error("getDoc(admins) falló:", error.code, error.message);
+        if (offlineErrors.has(error.code)) {
+          hasOfflineError = true;
+        } else {
+          console.error("getDoc(admins) falló:", error.code, error.message);
+        }
       }
       try {
         profSnap = await getDoc(doc(db, "professors", user.email));
       } catch (error) {
-        console.error("getDoc(professors) falló:", error.code, error.message);
+        if (offlineErrors.has(error.code)) {
+          hasOfflineError = true;
+        } else {
+          console.error("getDoc(professors) falló:", error.code, error.message);
+        }
       }
       try {
         studentSnap = await getDoc(doc(db, "student_directory", user.email));
       } catch (error) {
-        console.error("getDoc(student_directory) falló:", error.code, error.message);
+        if (offlineErrors.has(error.code)) {
+          hasOfflineError = true;
+        } else {
+          console.error("getDoc(student_directory) falló:", error.code, error.message);
+        }
       }
 
       try {
@@ -56,6 +71,9 @@ export function initAuthListener(auth, db, state, resetState, setupSessionFn) {
         if (profSnap && profSnap.exists()) { setupSessionFn('professor', profSnap.data(), null); return; }
         if (studentSnap && studentSnap.exists()) { setupSessionFn('student', null, studentSnap.data()); return; }
 
+        if (hasOfflineError) {
+          notifyAlert("Sin conexión. Usando datos guardados localmente."); showView('student'); return;
+        }
         notifyAlert("Usuario no registrado."); await signOut(auth);
       } catch (error) {
         console.error("setupSession falló:", error.code, error.message);
@@ -123,7 +141,18 @@ export async function setupSession(role, userData, studentData, state, db) {
         startNotificationsListener();
       }
     } catch (error) {
-      console.error("Error cargando perfil:", error);
+      if (error.code === 'unavailable' || error.code === 'failed-precondition') {
+        // Offline: render student view from cached state if available
+        if (state.user && state.user.email) {
+          showView('student');
+          setupStudentView();
+          startNotificationsListener();
+        } else {
+          console.error("Error cargando perfil sin conexión:", error);
+        }
+      } else {
+        console.error("Error cargando perfil:", error);
+      }
     }
   }
 }

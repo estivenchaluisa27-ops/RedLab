@@ -3,7 +3,7 @@
  */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getFirestore, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 export const firebaseConfig = {
   apiKey: "AIzaSyCR4Kk7kIBpSW3cF02b8zUHegvV4WQNuyI",
@@ -28,6 +28,11 @@ export async function initFirebase() {
     console.warn("[firebase] no se pudo fijar persistencia LOCAL:", e?.message || e);
   }
   db = getFirestore(app);
+  try {
+    await enableIndexedDbPersistence(db);
+  } catch (e) {
+    console.warn("[firebase] no se pudo habilir persistencia IndexedDb:", e?.message || e);
+  }
   return { db, auth };
 }
 
