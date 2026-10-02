@@ -3,24 +3,23 @@
  * Inicializa infraestructura y maneja event delegation para data-action handlers.
  */
 import { initFirebase, RESERVATIONS_COLLECTION } from './firebase-config.js';
-import { state, resetState, clearAllListeners } from './state.js';
+import { state, resetState } from './state.js';
 import { initAuthListener as _initAuthListener, setupSession as _setupSession } from './auth/auth.js';
-import { handleLogout, sendResetLink, openResetModal, closeResetModal, openChangePasswordModal, closeChangePasswordModal, handleChangePassword, openSignupModal, closeSignupModal, handleSignup } from './auth/auth-ui.js';
+import { sendResetLink, handleChangePassword } from './auth/auth-ui.js';
 import { bindLoginView } from './views/login-view.js';
 import { initCoursesList } from './courses/courses-list.js';
-import { initCourses, createCourse, saveCourseChanges, setupEditCourseView } from './courses/courses.js';
-import { initGroups, addGroup, deleteGroup, setupCourseGroupsView, clearGroupsListener } from './groups/groups.js';
-import { clearGroupUtilsCache } from './groups/group-utils.js';
-import { initGroupDetails, setupGroupDetailsView, destroyGroupDetailsView, saveGroupBasicInfo, saveLeaderInfo } from './groups/group-details.js';
-import { initReservations, submitReservation, admAct, rejectReq, deleteReservation, setAttendance, batchBlockAction, executeRecurringBlock } from './reservations/reservations.js';
-import { initNotifications, openNotificationsModal } from './notifications/history.js';
-import { initReports, setupReportesView, executeReport } from './reports/reports.js';
-import { initCalendar, setupAdminCalendarLogic, updateAdminActionBox, updateStudentUI, handleAdminClick, handleStudentClick, openAdminSlotInfo, refreshAdminCalendar, refreshStudentCalendar, clearCalendarListeners } from './calendar/calendar.js';
+import { initCourses, setupEditCourseView } from './courses/courses.js';
+import { initGroups, setupCourseGroupsView, clearGroupsListener } from './groups/groups.js';
+import { initGroupDetails, setupGroupDetailsView, destroyGroupDetailsView } from './groups/group-details.js';
+import { initReservations, submitReservation } from './reservations/reservations.js';
+import { initNotifications } from './notifications/history.js';
+import { initReports, setupReportesView } from './reports/reports.js';
+import { initCalendar, setupAdminCalendarLogic, updateAdminActionBox, updateStudentUI } from './calendar/calendar.js';
 import { initMotionObserver, handlePress } from './utils/motion.js';
 import { initSentry } from './utils/sentry.js';
 import { createSubmitDispatcher } from './utils/dispatcher.js';
 import { initAdminRouter, registerSectionSetup, registerSubviewSetup, registerSubviewOnLeave } from './admin-router-controller.js';
-import { navigate } from './router.js';
+import { createClickActions, createSubmitActions } from './actions.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   initSentry();
@@ -55,83 +54,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   bindLoginView(auth);
 
-  // Event delegation — all data-action handlers
-  const clickActions = {
-    // clearAllListeners vacía el registro; los dos siguientes limpian estado
-    // en memoria que NO vive en el registro y sobreviviría al logout.
-    // clearCalendarListeners es idempotente respecto a clearAllListeners.
-    'handle-logout': () => handleLogout(() => {
-      clearAllListeners();
-      clearCalendarListeners();
-      clearGroupUtilsCache();
-    }, auth),
-    'open-notifications-modal': () => openNotificationsModal(),
-    'open-change-password-modal': () => openChangePasswordModal(),
-    'close-change-password-modal': () => closeChangePasswordModal(),
-    'open-reset-modal': () => openResetModal(),
-    'close-reset-modal': () => closeResetModal(),
-    'open-signup-modal': () => openSignupModal(),
-    'close-signup-modal': () => closeSignupModal(),
-
-    // Close any modal
-    'close-modal': (btn) => {
-      const target = btn.dataset.target;
-      if (target) document.getElementById(target)?.classList.add('hidden');
-    },
-
-    // Courses — ahora navegan a sub-vistas en vez de abrir modales
-    'open-edit-course': (btn) => navigate(`#/admin/cursos/${encodeURIComponent(btn.dataset.id)}/editar`),
-    'open-course-manager': (btn) => navigate(`#/admin/cursos/${encodeURIComponent(btn.dataset.id)}/grupos`),
-    'open-create-course-modal': () => navigate('#/admin/cursos/nuevo'),
-    'open-report-modal': () => navigate('#/admin/reportes'),
-    'delete-reservation': (btn) => deleteReservation(btn.dataset.id),
-    'set-attendance': (btn) => {
-      setAttendance(btn.dataset.group, btn.dataset.date, btn.dataset.cedula, btn.dataset.present === 'true', btn);
-    },
-    'toggle-matrix-cell': (btn) => btn.classList.toggle('selected'),
-    'open-recurring-modal': () => document.getElementById('recurring-modal')?.classList.remove('hidden'),
-
-    // Groups — open-group-details navega a la sub-view grupo-detalle del courseId actual
-    'open-group-details': (btn) => {
-      // currentViewCourse fue seteado por setupCourseGroupsView al entrar a curso-grupos.
-      const courseId = state.currentViewCourse;
-      if (!courseId) return;
-      navigate(`#/admin/cursos/${encodeURIComponent(courseId)}/grupos/${encodeURIComponent(btn.dataset.id)}`);
-    },
-    'delete-group': (btn) => deleteGroup(btn.dataset.id),
-    'add-group': () => addGroup(),
-    'save-group-basic-info': () => saveGroupBasicInfo(),
-    'save-leader-info': () => saveLeaderInfo(),
-
-    // Pending requests (dynamically generated)
-    'adm-act': (btn) => {
-      admAct(btn.dataset.id, btn.dataset.app === 'true', btn.dataset.date, parseInt(btn.dataset.hour), btn.dataset.group);
-    },
-    'reject-req': (btn) => {
-      rejectReq(btn.dataset.id);
-    },
-
-    // Calendar — slots y navegación (los botones obtienen su data-action en
-    // setupAdminCalendarLogic/setupStudentView y en el render de calendar.js)
-    'admin-slot-toggle': (btn, e) => handleAdminClick(e, btn),
-    'open-slot-info': (btn, e) => { e.stopPropagation(); openAdminSlotInfo(btn.dataset.date, btn.dataset.hour); },
-    'admin-prev-week': () => { state.weekOffset--; state.selectedSlots = []; refreshAdminCalendar(); updateAdminActionBox(); },
-    'admin-next-week': () => { state.weekOffset++; state.selectedSlots = []; refreshAdminCalendar(); updateAdminActionBox(); },
-    'admin-block': () => batchBlockAction('block'),
-    'admin-unblock': () => batchBlockAction('unblock'),
-    'student-slot-toggle': (btn) => handleStudentClick(btn),
-    'student-prev-week': () => { state.weekOffset--; state.selectedSlots = []; refreshStudentCalendar(); },
-    'student-next-week': () => { state.weekOffset++; state.selectedSlots = []; refreshStudentCalendar(); },
-  };
-
-  // Form submissions via data-action
-  const submitActions = {
-    'create-course': (e) => createCourse(e),
-    'save-course-changes': (e) => saveCourseChanges(e),
-    'execute-recurring-block': (e) => executeRecurringBlock(e),
-    'execute-report': (e) => executeReport(e),
-    'create-account': (e) => handleSignup(e, auth),
-  };
+  // Event delegation — los mapas de data-action viven en src/actions.js
+  const clickActions = createClickActions({ auth });
+  const submitActions = createSubmitActions({ auth });
 
   // El dispatcher reenvía el evento como 2º arg: las actions que solo usan el
   // botón lo ignoran; 'open-slot-info' lo necesita para stopPropagation().
