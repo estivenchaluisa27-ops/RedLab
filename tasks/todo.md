@@ -8,15 +8,17 @@
 ## Checkpoint F0
 - [x] Suite verde, árbol limpio, plan aprobado por el usuario
 
-## F1 — Ciclo calendar ⇄ reservations
-- [ ] Callbacks inyectadas desde `main.js`, firmas intactas
-- [ ] `grep` una sola dirección + suite verde
+## F1 — Ciclo calendar ⇄ reservations ✅ (a544aa3 precede: 1b15505)
+- [x] Callbacks inyectadas desde `main.js`, firmas intactas
+- [x] `grep` una sola dirección + suite verde (96/4)
+- [x] Review-deep ADVISORY, sin blockers
 ## Checkpoint F1+F2
-- [ ] Suite verde + smoke calendario + revisión con el usuario
+- [x] Suite verde + revisión (falta smoke calendario manual)
 
-## F2 — onclick → dispatcher
-- [ ] 9× `btn.onclick` → `data-action`; `grep \.onclick src/` = 0
-- [ ] Smoke calendario (Vitest no cubre render con CDN-https)
+## F2 — onclick → dispatcher ✅ (a544aa3)
+- [x] 9× `btn.onclick` → `data-action`; `grep \.onclick src/` = 0
+- [x] Smoke calendario pendiente (Vitest no cubre render con CDN-https)
+- [x] Review-fast APPROVE (3 nits no bloqueantes)
 
 ## F3 — Registro único de listeners
 - [ ] `grep setUnsubscribers src/` = 0; cada `init*` registra el suyo
