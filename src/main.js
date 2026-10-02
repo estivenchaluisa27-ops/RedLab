@@ -14,7 +14,7 @@ import { initGroupDetails, setupGroupDetailsView, destroyGroupDetailsView, saveG
 import { initReservations, submitReservation, admAct, rejectReq, deleteReservation, setAttendance, executeRecurringBlock } from './reservations/reservations.js';
 import { initNotifications, stopNotificationsListener, openNotificationsModal } from './notifications/history.js';
 import { initReports, setupReportesView, executeReport } from './reports/reports.js';
-import { initCalendar, clearCalendarListeners, setupAdminCalendarLogic } from './calendar/calendar.js';
+import { initCalendar, clearCalendarListeners, setupAdminCalendarLogic, updateAdminActionBox, updateStudentUI } from './calendar/calendar.js';
 import { initMotionObserver, handlePress } from './utils/motion.js';
 import { initSentry } from './utils/sentry.js';
 import { createClickDispatcher, createSubmitDispatcher } from './utils/dispatcher.js';
@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initCourses(db, state);
   initGroups(db, state);
   initGroupDetails(db, state);
-  initReservations(db, state, RESERVATIONS_COLLECTION);
+  initReservations(db, state, RESERVATIONS_COLLECTION, { updateAdminActionBox, updateStudentUI });
   initReports(db, state);
   initCalendar(db, RESERVATIONS_COLLECTION);
   initNotifications(db, state);

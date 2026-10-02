@@ -5,17 +5,20 @@ import { collection, query, where, getDocs, getDoc, doc, writeBatch, serverTimes
 import { escapeHtml, escapeAttr } from '../utils/escape.js';
 import { lookupMembersByGroupName } from '../groups/group-utils.js';
 import { buildNotificationData } from '../notifications/history.js';
-import { updateAdminActionBox, updateStudentUI } from '../calendar/calendar.js';
 import { alert as notifyAlert } from '../utils/notify.js';
 
 let _db = null;
 let _state = null;
 let _RESERVATIONS_COLLECTION = null;
+let _updateAdminActionBox = null;
+let _updateStudentUI = null;
 
-export function initReservations(db, state, RESERVATIONS_COLLECTION) {
+export function initReservations(db, state, RESERVATIONS_COLLECTION, ui = {}) {
   _db = db;
   _state = state;
   _RESERVATIONS_COLLECTION = RESERVATIONS_COLLECTION;
+  if (ui.updateAdminActionBox) _updateAdminActionBox = ui.updateAdminActionBox;
+  if (ui.updateStudentUI) _updateStudentUI = ui.updateStudentUI;
 }
 
 export async function batchBlockAction(action) {
@@ -34,7 +37,7 @@ export async function batchBlockAction(action) {
   });
   await batch.commit();
   _state.selectedSlots = [];
-  updateAdminActionBox();
+  _updateAdminActionBox();
 }
 
 export async function submitReservation() {
@@ -108,7 +111,7 @@ export async function submitReservation() {
 
     await batch.commit();
     _state.selectedSlots = [];
-    updateStudentUI();
+    _updateStudentUI();
 
     Swal.fire({
       icon: 'success',
