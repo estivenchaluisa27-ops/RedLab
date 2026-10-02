@@ -107,7 +107,7 @@ function renderAdminCalendar(weekDays) {
       const slotPast = isPastDate(formatDateYYYYMMDD(d), h);
       const slotClass = slotPast ? 'slot-past' : 'slot-free';
       const td = document.createElement('td');
-      td.innerHTML = `<div class="slot-container"><button id="${id}" class="slot ${slotClass}" data-action="admin-slot-toggle"></button></div>`;
+      td.innerHTML = `<div class="slot-container"><button id="${escapeAttr(id)}" class="slot ${slotClass}" data-action="admin-slot-toggle"></button></div>`;
       tr.appendChild(td);
       const btn = td.querySelector('button');
       slotMap.set(id, btn);
@@ -335,7 +335,7 @@ function renderStudentCalendar(weekDays) {
       const slotClass = slotPast ? 'slot-past' : 'slot-free';
       const slotLabel = slotPast ? 'Cerrado' : 'Disponible';
       const td = document.createElement('td');
-      td.innerHTML = `<div class="slot-container"><button id="${id}" class="slot ${slotClass}" data-action="student-slot-toggle"><span class="opacity-50">${slotLabel}</span></button></div>`;
+      td.innerHTML = `<div class="slot-container"><button id="${escapeAttr(id)}" class="slot ${slotClass}" data-action="student-slot-toggle"><span class="opacity-50">${slotLabel}</span></button></div>`;
       tr.appendChild(td);
       const btn = td.querySelector('button');
       map.set(id, btn);

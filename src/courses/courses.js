@@ -5,7 +5,7 @@
  *           setup functions invocadas por el admin-router-controller.
  */
 import { collection, doc, getDoc, getDocs, updateDoc, setDoc } from '../firebase-config.js';
-import { escapeHtml } from '../utils/escape.js';
+import { escapeHtml, escapeAttr } from '../utils/escape.js';
 import { buildCourseId } from './course-utils.js';
 import { alert as notifyAlert, notifyConfirm } from '../utils/notify.js';
 import { navigate } from '../router.js';
@@ -93,7 +93,7 @@ export async function setupEditCourseView(params) {
     profSnaps.forEach(p => {
       const pData = p.data();
       const isSelected = p.id === courseData.professorEmail ? 'selected' : '';
-      profSelect.innerHTML += `<option value="${p.id}" ${isSelected}>${escapeHtml(pData.name)}</option>`;
+      profSelect.innerHTML += `<option value="${escapeAttr(p.id)}" ${isSelected}>${escapeHtml(pData.name)}</option>`;
     });
   } catch (e) {
     console.error(e);

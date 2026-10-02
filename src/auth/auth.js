@@ -99,7 +99,7 @@ export async function setupSession(role, userData, studentData, state, db) {
 
   if (role === 'admin' || role === 'professor') {
     showView('admin');
-    if (nameEl) nameEl.innerHTML = `<span class="font-bold">${escapeHtml(userData.name)}</span><span class="ml-2 text-xs bg-yellow-500 text-black px-2 rounded">${role.toUpperCase()}</span>`;
+    if (nameEl) nameEl.innerHTML = `<span class="font-bold">${escapeHtml(userData.name)}</span><span class="ml-2 text-xs bg-yellow-500 text-black px-2 rounded">${escapeHtml(role.toUpperCase())}</span>`;
     loadAdminDashboard();
     // El router del admin decide la sección activa. Default: calendario.
     goAdminSection('calendario');

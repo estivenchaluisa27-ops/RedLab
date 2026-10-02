@@ -1,5 +1,5 @@
 import { collection, query, where, getDocs } from '../firebase-config.js';
-import { escapeHtml } from '../utils/escape.js';
+import { escapeHtml, escapeAttr } from '../utils/escape.js';
 import { formatDateYYYYMMDD } from '../utils/dates.js';
 import { lookupMembersByGroupName } from '../groups/group-utils.js';
 import { alert as notifyAlert } from '../utils/notify.js';
@@ -88,7 +88,7 @@ export function setupReportesView() {
     for (const [id, course] of Object.entries(_state.coursesCache)) {
       list.innerHTML += `
         <label class="flex items-center space-x-2 p-1.5 hover:bg-white rounded cursor-pointer transition-colors">
-          <input type="checkbox" value="${id}" class="rep-course-cb rounded text-blue-600 w-4 h-4 cursor-pointer">
+          <input type="checkbox" value="${escapeAttr(id)}" class="rep-course-cb rounded text-blue-600 w-4 h-4 cursor-pointer">
           <span class="text-slate-700 font-medium">${escapeHtml(course.subject)} (${escapeHtml(course.parallel)})</span>
         </label>
       `;

@@ -21,6 +21,10 @@ export default [
     },
     rules: {
       'no-unused-vars': ['warn', { argsIgnorePattern: '^_', caughtErrors: 'none' }],
+      'no-restricted-syntax': ['warn', {
+        selector: "AssignmentExpression[left.property.name='innerHTML']",
+        message: 'innerHTML assignment — usa escapeHtml/escapeAttr en interpolaciones (audit F4B)',
+      }],
     },
   },
 ];

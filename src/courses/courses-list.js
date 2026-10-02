@@ -65,7 +65,7 @@ export function loadAdminDashboard() {
       const sel = document.getElementById('c-professor');
       if (!sel) return;
       sel.innerHTML = '<option value="">Seleccione Profesor...</option>';
-      snap.forEach(d => { sel.innerHTML += `<option value="${d.id}">${escapeHtml(d.data().name)}</option>`; });
+      snap.forEach(d => { sel.innerHTML += `<option value="${escapeAttr(d.id)}">${escapeHtml(d.data().name)}</option>`; });
     });
   }
 }
