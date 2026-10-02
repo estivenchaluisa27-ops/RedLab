@@ -11,13 +11,13 @@ import { initCoursesList, clearCoursesListener } from './courses/courses-list.js
 import { initCourses, createCourse, saveCourseChanges, setupEditCourseView } from './courses/courses.js';
 import { initGroups, addGroup, deleteGroup, setupCourseGroupsView, clearGroupsListener } from './groups/groups.js';
 import { initGroupDetails, setupGroupDetailsView, destroyGroupDetailsView, saveGroupBasicInfo, saveLeaderInfo } from './groups/group-details.js';
-import { initReservations, submitReservation, admAct, rejectReq, deleteReservation, setAttendance, executeRecurringBlock } from './reservations/reservations.js';
+import { initReservations, submitReservation, admAct, rejectReq, deleteReservation, setAttendance, batchBlockAction, executeRecurringBlock } from './reservations/reservations.js';
 import { initNotifications, stopNotificationsListener, openNotificationsModal } from './notifications/history.js';
 import { initReports, setupReportesView, executeReport } from './reports/reports.js';
-import { initCalendar, clearCalendarListeners, setupAdminCalendarLogic, updateAdminActionBox, updateStudentUI } from './calendar/calendar.js';
+import { initCalendar, clearCalendarListeners, setupAdminCalendarLogic, updateAdminActionBox, updateStudentUI, handleAdminClick, handleStudentClick, openAdminSlotInfo, refreshAdminCalendar, refreshStudentCalendar } from './calendar/calendar.js';
 import { initMotionObserver, handlePress } from './utils/motion.js';
 import { initSentry } from './utils/sentry.js';
-import { createClickDispatcher, createSubmitDispatcher } from './utils/dispatcher.js';
+import { createSubmitDispatcher } from './utils/dispatcher.js';
 import { initAdminRouter, registerSectionSetup, registerSubviewSetup, registerSubviewOnLeave } from './admin-router-controller.js';
 import { navigate } from './router.js';
 
@@ -102,6 +102,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     'reject-req': (btn) => {
       rejectReq(btn.dataset.id);
     },
+
+    // Calendar — slots y navegación (los botones obtienen su data-action en
+    // setupAdminCalendarLogic/setupStudentView y en el render de calendar.js)
+    'admin-slot-toggle': (btn, e) => handleAdminClick(e, btn),
+    'open-slot-info': (btn, e) => { e.stopPropagation(); openAdminSlotInfo(btn.dataset.date, btn.dataset.hour); },
+    'admin-prev-week': () => { state.weekOffset--; state.selectedSlots = []; refreshAdminCalendar(); updateAdminActionBox(); },
+    'admin-next-week': () => { state.weekOffset++; state.selectedSlots = []; refreshAdminCalendar(); updateAdminActionBox(); },
+    'admin-block': () => batchBlockAction('block'),
+    'admin-unblock': () => batchBlockAction('unblock'),
+    'student-slot-toggle': (btn) => handleStudentClick(btn),
+    'student-prev-week': () => { state.weekOffset--; state.selectedSlots = []; refreshStudentCalendar(); },
+    'student-next-week': () => { state.weekOffset++; state.selectedSlots = []; refreshStudentCalendar(); },
   };
 
   // Form submissions via data-action
@@ -113,7 +125,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     'create-account': (e) => handleSignup(e, auth),
   };
 
-  document.addEventListener('click', createClickDispatcher(clickActions));
+  // El dispatcher reenvía el evento como 2º arg: las actions que solo usan el
+  // botón lo ignoran; 'open-slot-info' lo necesita para stopPropagation().
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const handler = clickActions[btn.dataset.action];
+    if (handler) handler(btn, e);
+  });
   document.addEventListener('submit', createSubmitDispatcher(submitActions));
 
   // Bind change password form

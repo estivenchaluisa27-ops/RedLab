@@ -2,7 +2,7 @@ import { collection, query, where, onSnapshot, getDoc, doc } from "https://www.g
 import { state } from '../state.js';
 import { escapeHtml, escapeAttr } from '../utils/escape.js';
 import { getWeekDays, formatDateYYYYMMDD, isPastDate } from '../utils/dates.js';
-import { openAttendanceModal, batchBlockAction, deleteReservation } from '../reservations/reservations.js';
+import { openAttendanceModal, deleteReservation } from '../reservations/reservations.js';
 
 let _db = null;
 let _RESERVATIONS_COLLECTION = null;
@@ -10,6 +10,12 @@ let _unsubscribeReservations = null;
 let _unsubscribePending = null;
 let _unsubscribeStudentBlocked = null;
 let _unsubscribeStudentCourse = null;
+
+const _adminSlotDetails = new Map();
+
+export function openAdminSlotInfo(dateStr, hourStr) {
+  openAttendanceModal(dateStr, hourStr, _adminSlotDetails.get(`${dateStr}_${hourStr}`) || []);
+}
 
 export function initCalendar(db, RESERVATIONS_COLLECTION) {
   _db = db;
@@ -68,7 +74,7 @@ function renderCalendarHeader(weekDays, headId) {
   thead.appendChild(hr);
 }
 
-function handleAdminClick(e, btn) {
+export function handleAdminClick(e, btn) {
   if (state.selectedSlots.includes(btn.id)) {
     state.selectedSlots = state.selectedSlots.filter(x => x !== btn.id);
     btn.classList.remove('slot-selected');
@@ -104,10 +110,9 @@ function renderAdminCalendar(weekDays) {
       const slotPast = isPastDate(formatDateYYYYMMDD(d), h);
       const slotClass = slotPast ? 'slot-past' : 'slot-free';
       const td = document.createElement('td');
-      td.innerHTML = `<div class="slot-container"><button id="${id}" class="slot ${slotClass}"></button></div>`;
+      td.innerHTML = `<div class="slot-container"><button id="${id}" class="slot ${slotClass}" data-action="admin-slot-toggle"></button></div>`;
       tr.appendChild(td);
       const btn = td.querySelector('button');
-      btn.onclick = (e) => handleAdminClick(e, btn);
       slotMap.set(id, btn);
     });
     tbody.appendChild(tr);
@@ -119,6 +124,7 @@ function renderAdminCalendar(weekDays) {
       where("date", ">=", formatDateYYYYMMDD(weekDays[0])),
       where("date", "<=", formatDateYYYYMMDD(weekDays[4]))),
     (s) => {
+      _adminSlotDetails.clear();
       slotMap.forEach((b, k) => {
         const [dStr, hStr] = k.split('_');
         b.disabled = false;
@@ -145,6 +151,7 @@ const map = new Map();
       });
 
       map.forEach((arr, k) => {
+        _adminSlotDetails.set(k, arr);
         const b = slotMap.get(k);
         if (!b) return;
         const container = b.parentElement;
@@ -157,7 +164,9 @@ const map = new Map();
           const infoBtn = document.createElement('div');
           infoBtn.className = 'info-btn';
           infoBtn.innerHTML = '<i class="fas fa-eye"></i>';
-          infoBtn.onclick = (e) => { e.stopPropagation(); openAttendanceModal(k.split('_')[0], k.split('_')[1], arr); };
+          infoBtn.dataset.action = 'open-slot-info';
+          infoBtn.dataset.date = k.split('_')[0];
+          infoBtn.dataset.hour = k.split('_')[1];
           container.appendChild(infoBtn);
         }
 
@@ -253,19 +262,23 @@ function listenAdminPending() {
   );
 }
 
+export function refreshAdminCalendar() {
+  const w = getWeekDays(state.weekOffset);
+  renderAdminCalendar(w);
+}
+
 export function setupAdminCalendarLogic() {
   clearCalendarListeners();
-  const update = () => { const w = getWeekDays(state.weekOffset); renderAdminCalendar(w); };
-  document.getElementById('admin-prev-week').onclick = () => { state.weekOffset--; state.selectedSlots = []; update(); updateAdminActionBox(); };
-  document.getElementById('admin-next-week').onclick = () => { state.weekOffset++; state.selectedSlots = []; update(); updateAdminActionBox(); };
-  document.getElementById('admin-block-btn').onclick = () => batchBlockAction('block');
-  document.getElementById('admin-unblock-btn').onclick = () => batchBlockAction('unblock');
+  document.getElementById('admin-prev-week').dataset.action = 'admin-prev-week';
+  document.getElementById('admin-next-week').dataset.action = 'admin-next-week';
+  document.getElementById('admin-block-btn').dataset.action = 'admin-block';
+  document.getElementById('admin-unblock-btn').dataset.action = 'admin-unblock';
   renderMatrix();
-  update();
+  refreshAdminCalendar();
   listenAdminPending();
 }
 
-function handleStudentClick(btn) {
+export function handleStudentClick(btn) {
   if (btn.disabled) return;
   const id = btn.id;
   const st = btn.dataset.status || '';
@@ -328,10 +341,9 @@ function renderStudentCalendar(weekDays) {
       const slotClass = slotPast ? 'slot-past' : 'slot-free';
       const slotLabel = slotPast ? 'Cerrado' : 'Disponible';
       const td = document.createElement('td');
-      td.innerHTML = `<div class="slot-container"><button id="${id}" class="slot ${slotClass}"><span class="opacity-50">${slotLabel}</span></button></div>`;
+      td.innerHTML = `<div class="slot-container"><button id="${id}" class="slot ${slotClass}" data-action="student-slot-toggle"><span class="opacity-50">${slotLabel}</span></button></div>`;
       tr.appendChild(td);
       const btn = td.querySelector('button');
-      btn.onclick = () => handleStudentClick(btn);
       map.set(id, btn);
     });
     tbody.appendChild(tr);
@@ -447,10 +459,14 @@ function mineStatus(type) {
   return type === 'my-approved' ? 'approved' : 'pending';
 }
 
+export function refreshStudentCalendar() {
+  const w = getWeekDays(state.weekOffset);
+  renderStudentCalendar(w);
+}
+
 export function setupStudentView() {
   clearCalendarListeners();
-  const update = () => { const w = getWeekDays(state.weekOffset); renderStudentCalendar(w); };
-  document.getElementById('student-prev-week').onclick = () => { state.weekOffset--; state.selectedSlots = []; update(); };
-  document.getElementById('student-next-week').onclick = () => { state.weekOffset++; state.selectedSlots = []; update(); };
-  update();
+  document.getElementById('student-prev-week').dataset.action = 'student-prev-week';
+  document.getElementById('student-next-week').dataset.action = 'student-next-week';
+  refreshStudentCalendar();
 }
