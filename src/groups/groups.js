@@ -80,7 +80,6 @@ export function setupCourseGroupsView(params) {
   registerListener('groups:list', unsubscribeGroups);
 }
 
-/** placeholder */
 export async function addGroup() {
   const name = document.getElementById('new-group-name').value.trim();
   const emailRaw = document.getElementById('new-group-leader').value;

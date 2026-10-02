@@ -10,11 +10,12 @@ import { bindLoginView } from './views/login-view.js';
 import { initCoursesList } from './courses/courses-list.js';
 import { initCourses, createCourse, saveCourseChanges, setupEditCourseView } from './courses/courses.js';
 import { initGroups, addGroup, deleteGroup, setupCourseGroupsView, clearGroupsListener } from './groups/groups.js';
+import { clearGroupUtilsCache } from './groups/group-utils.js';
 import { initGroupDetails, setupGroupDetailsView, destroyGroupDetailsView, saveGroupBasicInfo, saveLeaderInfo } from './groups/group-details.js';
 import { initReservations, submitReservation, admAct, rejectReq, deleteReservation, setAttendance, batchBlockAction, executeRecurringBlock } from './reservations/reservations.js';
 import { initNotifications, openNotificationsModal } from './notifications/history.js';
 import { initReports, setupReportesView, executeReport } from './reports/reports.js';
-import { initCalendar, setupAdminCalendarLogic, updateAdminActionBox, updateStudentUI, handleAdminClick, handleStudentClick, openAdminSlotInfo, refreshAdminCalendar, refreshStudentCalendar } from './calendar/calendar.js';
+import { initCalendar, setupAdminCalendarLogic, updateAdminActionBox, updateStudentUI, handleAdminClick, handleStudentClick, openAdminSlotInfo, refreshAdminCalendar, refreshStudentCalendar, clearCalendarListeners } from './calendar/calendar.js';
 import { initMotionObserver, handlePress } from './utils/motion.js';
 import { initSentry } from './utils/sentry.js';
 import { createSubmitDispatcher } from './utils/dispatcher.js';
@@ -56,7 +57,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Event delegation — all data-action handlers
   const clickActions = {
-    'handle-logout': () => handleLogout(() => clearAllListeners(), auth),
+    // clearAllListeners vacía el registro; los dos siguientes limpian estado
+    // en memoria que NO vive en el registro y sobreviviría al logout.
+    // clearCalendarListeners es idempotente respecto a clearAllListeners.
+    'handle-logout': () => handleLogout(() => {
+      clearAllListeners();
+      clearCalendarListeners();
+      clearGroupUtilsCache();
+    }, auth),
     'open-notifications-modal': () => openNotificationsModal(),
     'open-change-password-modal': () => openChangePasswordModal(),
     'close-change-password-modal': () => closeChangePasswordModal(),

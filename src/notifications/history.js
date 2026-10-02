@@ -40,7 +40,11 @@ export function initNotifications(db, state) {
 }
 
 export function startNotificationsListener() {
-  if (!_db || !_state?.user?.uid || _unsubscribe) return;
+  // La guarda consulta el registro, no el espejo local `_unsubscribe`: tras un
+  // clearAllListeners() sin reload, el espejo quedaría no-null con un unsubscribe
+  // ya invocado y el badge moriría en silencio. registerListener() reemplaza
+  // el previo por su cuenta, así que no hace falta comprobar nada aquí.
+  if (!_db || !_state?.user?.uid) return;
   const q = query(collection(_db, 'notifications'), where('userId', '==', _state.user.uid), orderBy('createdAt', 'desc'), limit(100));
   _unsubscribe = onSnapshot(q, (snap) => {
     renderBadge(snap);
