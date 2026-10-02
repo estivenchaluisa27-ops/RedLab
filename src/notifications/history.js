@@ -5,6 +5,7 @@
 import { collection, query, where, orderBy, limit, onSnapshot, getDocs, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { escapeHtml } from '../utils/escape.js';
 import { alert as notifyAlert } from '../utils/notify.js';
+import { registerListener, unregisterListener } from '../state.js';
 
 let _db = null;
 let _state = null;
@@ -47,10 +48,12 @@ export function startNotificationsListener() {
   }, (error) => {
     console.error('Error cargando notificaciones:', error);
   });
+  registerListener('notifications:list', _unsubscribe);
 }
 
 export function stopNotificationsListener() {
-  if (_unsubscribe) { _unsubscribe(); _unsubscribe = null; }
+  unregisterListener('notifications:list');
+  _unsubscribe = null;
 }
 
 export async function openNotificationsModal() {

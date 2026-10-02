@@ -4,10 +4,10 @@
 import { collection, query, where, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { escapeHtml, escapeAttr } from '../utils/escape.js';
 import { animateListIn } from '../utils/motion.js';
+import { registerListener, unregisterListener } from '../state.js';
 
 let _db = null;
 let _state = null;
-let unsubscribeCourses = null;
 let coursesStaggered = false;
 
 export function initCoursesList(db, state) {
@@ -16,7 +16,7 @@ export function initCoursesList(db, state) {
 }
 
 export function clearCoursesListener() {
-  if (unsubscribeCourses) { unsubscribeCourses(); unsubscribeCourses = null; }
+  unregisterListener('courses:list');
 }
 
 export function loadAdminDashboard() {
@@ -24,7 +24,7 @@ export function loadAdminDashboard() {
 
   clearCoursesListener();
 
-  unsubscribeCourses = onSnapshot(q, (snap) => {
+  registerListener('courses:list', onSnapshot(q, (snap) => {
     const grid = document.getElementById('courses-grid');
     if (!grid) return;
     grid.innerHTML = '';
@@ -58,7 +58,7 @@ export function loadAdminDashboard() {
       coursesStaggered = true;
       animateListIn(grid);
     }
-  });
+  }));
 
   if (_state.role === 'admin') {
     getDocs(collection(_db, "professors")).then(snap => {

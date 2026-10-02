@@ -14,6 +14,7 @@ import { loadAdminDashboard } from '../courses/courses-list.js';
 import { setupStudentView } from '../calendar/calendar.js';
 import { goAdminSection } from '../admin-router-controller.js';
 import { initPushNotifications } from '../notifications/push.js';
+import { registerListener, unregisterListener } from '../state.js';
 
 let unsubscribeAuth = null;
 
@@ -71,13 +72,15 @@ export function initAuthListener(auth, db, state, resetState, setupSessionFn) {
       }
     }
   });
+  registerListener('auth:state', unsubscribeAuth);
 }
 
 /**
  * Detiene el listener de autenticación.
  */
 export function unsubscribeAuthListener() {
-  if (unsubscribeAuth) { unsubscribeAuth(); unsubscribeAuth = null; }
+  unregisterListener('auth:state');
+  unsubscribeAuth = null;
 }
 
 /**

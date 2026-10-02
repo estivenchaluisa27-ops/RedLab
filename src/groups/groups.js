@@ -9,6 +9,7 @@ import { escapeHtml, escapeAttr } from '../utils/escape.js';
 import { alert as notifyAlert } from '../utils/notify.js';
 import { clearGroupUtilsCache } from './group-utils.js';
 import { navigate } from '../router.js';
+import { registerListener, unregisterListener } from '../state.js';
 
 let _db = null;
 let _state = null;
@@ -20,7 +21,8 @@ export function initGroups(db, state) {
 }
 
 export function clearGroupsListener() {
-  if (unsubscribeGroups) { unsubscribeGroups(); unsubscribeGroups = null; }
+  unregisterListener('groups:list');
+  unsubscribeGroups = null;
 }
 
 /**
@@ -75,8 +77,10 @@ export function setupCourseGroupsView(params) {
       </tr>`;
     });
   });
+  registerListener('groups:list', unsubscribeGroups);
 }
 
+/** placeholder */
 export async function addGroup() {
   const name = document.getElementById('new-group-name').value.trim();
   const emailRaw = document.getElementById('new-group-leader').value;

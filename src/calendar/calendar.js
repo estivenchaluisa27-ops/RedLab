@@ -1,15 +1,11 @@
 import { collection, query, where, onSnapshot, getDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-import { state } from '../state.js';
+import { state, registerListener, unregisterListener } from '../state.js';
 import { escapeHtml, escapeAttr } from '../utils/escape.js';
 import { getWeekDays, formatDateYYYYMMDD, isPastDate } from '../utils/dates.js';
 import { openAttendanceModal, deleteReservation } from '../reservations/reservations.js';
 
 let _db = null;
 let _RESERVATIONS_COLLECTION = null;
-let _unsubscribeReservations = null;
-let _unsubscribePending = null;
-let _unsubscribeStudentBlocked = null;
-let _unsubscribeStudentCourse = null;
 
 const _adminSlotDetails = new Map();
 
@@ -23,10 +19,11 @@ export function initCalendar(db, RESERVATIONS_COLLECTION) {
 }
 
 export function clearCalendarListeners() {
-  if (_unsubscribeReservations) { _unsubscribeReservations(); _unsubscribeReservations = null; }
-  if (_unsubscribePending) { _unsubscribePending(); _unsubscribePending = null; }
-  if (_unsubscribeStudentBlocked) { _unsubscribeStudentBlocked(); _unsubscribeStudentBlocked = null; }
-  if (_unsubscribeStudentCourse) { _unsubscribeStudentCourse(); _unsubscribeStudentCourse = null; }
+  unregisterListener('calendar:reservations');
+  unregisterListener('calendar:pending');
+  unregisterListener('calendar:student-blocked');
+  unregisterListener('calendar:student-course');
+  _adminSlotDetails.clear();
 }
 
 export function classifySlot(dateStr, hourStr, reservations, userState) {
@@ -118,8 +115,7 @@ function renderAdminCalendar(weekDays) {
     tbody.appendChild(tr);
   }
 
-  if (_unsubscribeReservations) _unsubscribeReservations();
-  _unsubscribeReservations = onSnapshot(
+  registerListener('calendar:reservations', onSnapshot(
     query(collection(_db, _RESERVATIONS_COLLECTION),
       where("date", ">=", formatDateYYYYMMDD(weekDays[0])),
       where("date", "<=", formatDateYYYYMMDD(weekDays[4]))),
@@ -186,7 +182,7 @@ const map = new Map();
         if (state.selectedSlots.includes(k)) b.classList.add('slot-selected');
       });
     }
-  );
+  ));
 }
 
 function renderMatrix() {
@@ -196,9 +192,7 @@ function renderMatrix() {
 }
 
 function listenAdminPending() {
-  if (_unsubscribePending) _unsubscribePending();
-
-  _unsubscribePending = onSnapshot(
+  registerListener('calendar:pending', onSnapshot(
     query(collection(_db, _RESERVATIONS_COLLECTION), where("status", "==", "pending")),
     async (s) => {
       const c = document.getElementById('admin-requests-list');
@@ -259,7 +253,7 @@ function listenAdminPending() {
         c.appendChild(el);
       }
     }
-  );
+  ));
 }
 
 export function refreshAdminCalendar() {
@@ -349,9 +343,6 @@ function renderStudentCalendar(weekDays) {
     tbody.appendChild(tr);
   }
 
-  if (_unsubscribeStudentBlocked) _unsubscribeStudentBlocked();
-  if (_unsubscribeStudentCourse) _unsubscribeStudentCourse();
-
   const blockedDocs = new Map();
   const courseDocs = new Map();
 
@@ -362,7 +353,7 @@ function renderStudentCalendar(weekDays) {
     renderStudentSlots(map, Array.from(merged.values()));
   };
 
-  _unsubscribeStudentBlocked = onSnapshot(
+  registerListener('calendar:student-blocked', onSnapshot(
     query(collection(_db, _RESERVATIONS_COLLECTION),
       where("status", "==", "blocked"),
       where("date", ">=", formatDateYYYYMMDD(weekDays[0])),
@@ -376,9 +367,9 @@ function renderStudentCalendar(weekDays) {
       console.error('Error en listener de bloqueados:', error);
       mergeAndRender(map);
     }
-  );
+  ));
 
-  _unsubscribeStudentCourse = onSnapshot(
+  registerListener('calendar:student-course', onSnapshot(
     query(collection(_db, _RESERVATIONS_COLLECTION),
       where("courseId", "==", state.courseId),
       where("date", ">=", formatDateYYYYMMDD(weekDays[0])),
@@ -392,7 +383,7 @@ function renderStudentCalendar(weekDays) {
       console.error('Error en listener de curso:', error);
       mergeAndRender(map);
     }
-  );
+  ));
 }
 
 function renderStudentSlots(map, docsArray) {

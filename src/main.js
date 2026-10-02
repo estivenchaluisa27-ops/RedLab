@@ -3,18 +3,18 @@
  * Inicializa infraestructura y maneja event delegation para data-action handlers.
  */
 import { initFirebase, RESERVATIONS_COLLECTION } from './firebase-config.js';
-import { state, resetState, clearListeners } from './state.js';
-import { initAuthListener as _initAuthListener, setupSession as _setupSession, unsubscribeAuthListener } from './auth/auth.js';
+import { state, resetState, clearAllListeners } from './state.js';
+import { initAuthListener as _initAuthListener, setupSession as _setupSession } from './auth/auth.js';
 import { handleLogout, sendResetLink, openResetModal, closeResetModal, openChangePasswordModal, closeChangePasswordModal, handleChangePassword, openSignupModal, closeSignupModal, handleSignup } from './auth/auth-ui.js';
 import { bindLoginView } from './views/login-view.js';
-import { initCoursesList, clearCoursesListener } from './courses/courses-list.js';
+import { initCoursesList } from './courses/courses-list.js';
 import { initCourses, createCourse, saveCourseChanges, setupEditCourseView } from './courses/courses.js';
 import { initGroups, addGroup, deleteGroup, setupCourseGroupsView, clearGroupsListener } from './groups/groups.js';
 import { initGroupDetails, setupGroupDetailsView, destroyGroupDetailsView, saveGroupBasicInfo, saveLeaderInfo } from './groups/group-details.js';
 import { initReservations, submitReservation, admAct, rejectReq, deleteReservation, setAttendance, batchBlockAction, executeRecurringBlock } from './reservations/reservations.js';
-import { initNotifications, stopNotificationsListener, openNotificationsModal } from './notifications/history.js';
+import { initNotifications, openNotificationsModal } from './notifications/history.js';
 import { initReports, setupReportesView, executeReport } from './reports/reports.js';
-import { initCalendar, clearCalendarListeners, setupAdminCalendarLogic, updateAdminActionBox, updateStudentUI, handleAdminClick, handleStudentClick, openAdminSlotInfo, refreshAdminCalendar, refreshStudentCalendar } from './calendar/calendar.js';
+import { initCalendar, setupAdminCalendarLogic, updateAdminActionBox, updateStudentUI, handleAdminClick, handleStudentClick, openAdminSlotInfo, refreshAdminCalendar, refreshStudentCalendar } from './calendar/calendar.js';
 import { initMotionObserver, handlePress } from './utils/motion.js';
 import { initSentry } from './utils/sentry.js';
 import { createSubmitDispatcher } from './utils/dispatcher.js';
@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Event delegation — all data-action handlers
   const clickActions = {
-    'handle-logout': () => handleLogout(() => { unsubscribeAuthListener(); clearListeners(); clearCalendarListeners(); stopNotificationsListener(); clearCoursesListener(); }, auth),
+    'handle-logout': () => handleLogout(() => clearAllListeners(), auth),
     'open-notifications-modal': () => openNotificationsModal(),
     'open-change-password-modal': () => openChangePasswordModal(),
     'close-change-password-modal': () => closeChangePasswordModal(),
