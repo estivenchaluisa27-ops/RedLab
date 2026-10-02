@@ -2,7 +2,7 @@
  * src/firebase-config.js — Inicialización de Firebase
  */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getAuth, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 export const firebaseConfig = {
@@ -19,9 +19,14 @@ export const RESERVATIONS_COLLECTION = "reservations";
 let db = null;
 let auth = null;
 
-export function initFirebase() {
+export async function initFirebase() {
   const app = initializeApp(firebaseConfig);
   auth = getAuth(app);
+  try {
+    await setPersistence(auth, browserLocalPersistence);
+  } catch (e) {
+    console.warn("[firebase] no se pudo fijar persistencia LOCAL:", e?.message || e);
+  }
   db = getFirestore(app);
   return { db, auth };
 }

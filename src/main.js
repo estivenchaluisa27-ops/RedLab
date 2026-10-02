@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initSentry();
   initMotionObserver();
   document.addEventListener('pointerdown', handlePress, true);
-  const { db, auth } = initFirebase();
+  const { db, auth } = await initFirebase();
 
   initCoursesList(db, state);
   initCourses(db, state);
