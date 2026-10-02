@@ -6,6 +6,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ci": "vitest run --reporter=verbose",
+    "emulators": "firebase emulators:start --only firestore --project lab-redes-turnos",
+    "test:rules": "vitest run tests/rules/firestore-rules.test.ts",
     "lint": "eslint src/",
     "build:css": "tailwindcss -i src/styles/tailwind-input.css -o styles.css --minify",
     "build:app": "node scripts/build-app.js",

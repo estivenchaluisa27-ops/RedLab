@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [master, 'refactor/**']
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Firestore emulator requires a JVM. Java 21 is preinstalled on the runner.
+      - name: Cache emulators
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-${{ runner.os }}-${{ hashFiles('firebase.json') }}
+          restore-keys: |
+            firebase-emulators-${{ runner.os }}-
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build CSS
+        run: npm run build:css
+
+      - name: Start Firestore emulator
+        run: |
+          nohup npm run emulators > /tmp/emulator.log 2>&1 &
+          echo $! > /tmp/emulator.pid
+
+      - name: Wait for emulator
+        run: |
+          for i in $(seq 1 60); do
+            if curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8081 | grep -q 200; then
+              echo "Emulator ready after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Emulator did not start in 60s:"
+          cat /tmp/emulator.log
+          exit 1
+
+      # Without the emulator the 40 rules tests skip silently, so a green run
+      # would not prove firestore.rules is safe. Hence the explicit steps.
+      - name: Test Firestore rules (emulator)
+        run: npm run test:rules
+
+      - name: Test unit
+        run: npm test
+
+      - name: Emulator log on failure
+        if: failure()
+        run: cat /tmp/emulator.log
