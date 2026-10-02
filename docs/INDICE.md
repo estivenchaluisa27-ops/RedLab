@@ -2,7 +2,7 @@
 
 ## ¿Qué es RedLab?
 
-Sistema de gestión para laboratorio de idiomas: cursos, grupos, reservas de salas con calendario, notificaciones push en Android y panel de administración. Backend serverless (Firebase) + push server propio en Fly.io.
+Sistema de gestión para laboratorio de redes: cursos, grupos, reservas de salas con calendario, notificaciones push en Android y panel de administración. Backend serverless (Firebase) + push server propio en Fly.io.
 
 ## Documentación
 

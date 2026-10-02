@@ -21,6 +21,7 @@
       "package-lock.json",
       "tailwind.config.js",
       "tests/**",
+      "tasks/**",
       "**/*.exe",
       "**/*.apk",
       "firestore-debug.log",
