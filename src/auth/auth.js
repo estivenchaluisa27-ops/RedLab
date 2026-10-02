@@ -2,8 +2,8 @@
  * src/auth/auth.js — Listener de autenticación y setup de sesión
  * @module auth/auth
  */
-import { getDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getDoc, doc } from '../firebase-config.js';
+import { onAuthStateChanged, signOut } from '../firebase-config.js';
 import { escapeHtml } from '../utils/escape.js';
 import { showView } from '../utils/dom.js';
 import { alert as notifyAlert } from '../utils/notify.js';

@@ -1,7 +1,7 @@
 /**
  * src/auth/auth-ui.js — UI de login, logout, reset/change password
  */
-import { signInWithEmailAndPassword, signOut, sendPasswordResetEmail, updatePassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { signInWithEmailAndPassword, signOut, sendPasswordResetEmail, updatePassword, createUserWithEmailAndPassword } from '../firebase-config.js';
 import { showMessage, alert as notifyAlert } from '../utils/notify.js';
 
 /**

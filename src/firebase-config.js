@@ -1,9 +1,31 @@
 /**
  * src/firebase-config.js — Inicialización de Firebase
+ *
+ * Único punto donde se fija la versión del SDK (11.6.1). Todos los módulos
+ * importan los símbolos de Firebase desde aquí para que subir de versión
+ * sea un cambio en un solo archivo.
  */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import {
+  getAuth, setPersistence, browserLocalPersistence,
+  onAuthStateChanged, signOut, signInWithEmailAndPassword,
+  sendPasswordResetEmail, updatePassword, createUserWithEmailAndPassword,
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import {
+  getFirestore, collection, query, where, orderBy, limit,
+  getDoc, getDocs, doc, writeBatch, onSnapshot, setDoc, updateDoc, deleteDoc,
+  serverTimestamp,
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+export {
+  initializeApp,
+  getAuth, setPersistence, browserLocalPersistence,
+  getFirestore, collection, query, where, orderBy, limit,
+  getDoc, getDocs, doc, writeBatch, onSnapshot, setDoc, updateDoc, deleteDoc,
+  serverTimestamp,
+  onAuthStateChanged, signOut, signInWithEmailAndPassword,
+  sendPasswordResetEmail, updatePassword, createUserWithEmailAndPassword,
+};
 
 export const firebaseConfig = {
   apiKey: "AIzaSyCR4Kk7kIBpSW3cF02b8zUHegvV4WQNuyI",

@@ -2,7 +2,7 @@
  * src/notifications/history.js — Historial in-app de notificaciones del estudiante
  * @module notifications/history
  */
-import { collection, query, where, orderBy, limit, onSnapshot, getDocs, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { collection, query, where, orderBy, limit, onSnapshot, getDocs, writeBatch, serverTimestamp } from '../firebase-config.js';
 import { escapeHtml } from '../utils/escape.js';
 import { alert as notifyAlert } from '../utils/notify.js';
 import { registerListener, unregisterListener } from '../state.js';

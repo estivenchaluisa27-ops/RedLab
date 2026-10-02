@@ -1,4 +1,4 @@
-import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { collection, query, where, getDocs } from '../firebase-config.js';
 import { escapeHtml } from '../utils/escape.js';
 import { formatDateYYYYMMDD } from '../utils/dates.js';
 import { lookupMembersByGroupName } from '../groups/group-utils.js';

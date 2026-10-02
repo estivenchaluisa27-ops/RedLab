@@ -1,7 +1,7 @@
 /**
  * src/reservations/reservations.js — Reservas, asistencia, bloqueos
  */
-import { collection, query, where, getDocs, getDoc, doc, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { collection, query, where, getDocs, getDoc, doc, writeBatch, serverTimestamp } from '../firebase-config.js';
 import { escapeHtml, escapeAttr } from '../utils/escape.js';
 import { lookupMembersByGroupName } from '../groups/group-utils.js';
 import { buildNotificationData } from '../notifications/history.js';

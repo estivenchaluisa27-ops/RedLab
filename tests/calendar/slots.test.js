@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 
-vi.mock('https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js', () => ({
+vi.mock('../../src/firebase-config.js', () => ({
   collection: vi.fn(),
   query: vi.fn(),
   where: vi.fn(),

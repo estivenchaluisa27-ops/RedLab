@@ -4,7 +4,7 @@
  * Firestore se arranca al entrar a la sub-view y se limpia al salir
  * (registerSubviewOnLeave). openGroupDetails ahora navega a #/admin/cursos/:courseId/grupos/:groupId.
  */
-import { collection, doc, writeBatch, deleteDoc, onSnapshot, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { collection, doc, writeBatch, deleteDoc, onSnapshot, query, where, getDocs } from '../firebase-config.js';
 import { escapeHtml, escapeAttr } from '../utils/escape.js';
 import { alert as notifyAlert } from '../utils/notify.js';
 import { clearGroupUtilsCache } from './group-utils.js';

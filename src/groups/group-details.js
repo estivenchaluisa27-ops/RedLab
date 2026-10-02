@@ -8,7 +8,7 @@
  * El setup se invoca al entrar a la sub-view 'grupo-detalle' via router con
  *   params { courseId, groupId }. El botón "Atrás" vuelve a curso-grupos del mismo curso.
  */
-import { getDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getDoc, doc, updateDoc } from '../firebase-config.js';
 import { alert as notifyAlert } from '../utils/notify.js';
 import { clearGroupUtilsCache } from './group-utils.js';
 import { navigate } from '../router.js';

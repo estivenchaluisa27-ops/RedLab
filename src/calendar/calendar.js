@@ -1,4 +1,4 @@
-import { collection, query, where, onSnapshot, getDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { collection, query, where, onSnapshot, getDoc, doc } from '../firebase-config.js';
 import { state, registerListener, unregisterListener } from '../state.js';
 import { escapeHtml, escapeAttr } from '../utils/escape.js';
 import { getWeekDays, formatDateYYYYMMDD, isPastDate } from '../utils/dates.js';

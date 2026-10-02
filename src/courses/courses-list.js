@@ -1,7 +1,7 @@
 /**
  * src/courses/courses-list.js — Grid de cursos + select de profesores (admin dashboard)
  */
-import { collection, query, where, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { collection, query, where, onSnapshot, getDocs } from '../firebase-config.js';
 import { escapeHtml, escapeAttr } from '../utils/escape.js';
 import { animateListIn } from '../utils/motion.js';
 import { registerListener, unregisterListener } from '../state.js';

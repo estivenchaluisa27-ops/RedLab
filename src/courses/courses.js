@@ -4,7 +4,7 @@
  *           no modales. openCreateCourseModal/openEditCourseModal pasan a ser
  *           setup functions invocadas por el admin-router-controller.
  */
-import { collection, doc, getDoc, getDocs, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { collection, doc, getDoc, getDocs, updateDoc, setDoc } from '../firebase-config.js';
 import { escapeHtml } from '../utils/escape.js';
 import { buildCourseId } from './course-utils.js';
 import { alert as notifyAlert, notifyConfirm } from '../utils/notify.js';

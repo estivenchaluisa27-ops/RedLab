@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js', () => ({
+vi.mock('../../src/firebase-config.js', () => ({
   collection: vi.fn(() => 'mocked-collection'),
   query: vi.fn(() => 'mocked-query'),
   where: vi.fn(() => 'mocked-where'),
   getDocs: vi.fn()
 }));
 
-const { getDocs } = await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js');
+const { getDocs } = await import('../../src/firebase-config.js');
 
 const { lookupMembersByGroupName, clearGroupUtilsCache } = await import('../../src/groups/group-utils.js');
 

@@ -11,7 +11,7 @@ export async function lookupMembersByGroupName(db, courseId, groupName) {
     return _membersCache.get(cacheKey);
   }
   try {
-    const { collection, query, where, getDocs } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
+    const { collection, query, where, getDocs } = await import('../firebase-config.js');
     const q = query(collection(db, "courses", courseId, "groups"), where("name", "==", groupName));
     const gSnap = await getDocs(q);
     const members = gSnap.empty ? [] : gSnap.docs[0].data().members || [];

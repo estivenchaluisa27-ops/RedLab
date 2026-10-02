@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
-import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, setDoc, serverTimestamp } from '../firebase-config.js';
+import { getAuth } from '../firebase-config.js';
 
 const RESERVATIONS_COLLECTION = "reservations";
 
