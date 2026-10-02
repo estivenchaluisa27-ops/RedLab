@@ -58,11 +58,11 @@ function renderCalendarHeader(weekDays, headId) {
   const hr = document.createElement('tr');
   const thHora = document.createElement('th');
   thHora.innerHTML = '<i class="far fa-clock text-slate-400 mr-2"></i>HORARIO';
-  thHora.className = 'text-center bg-slate-100 w-24';
+  thHora.className = 'text-center bg-slate-100 w-24 max-sm:w-10';
   hr.appendChild(thHora);
   weekDays.forEach(d => {
     const th = document.createElement('th');
-    th.innerHTML = `<div class="flex flex-col leading-tight"><span class="text-lg font-bold text-slate-700">${d.toLocaleDateString('es-ES', {weekday:'long'})} ${d.getDate()}</span><span class="text-xs text-slate-500 font-medium uppercase mt-1">${d.toLocaleDateString('es-ES', {month:'long'})}</span></div>`;
+    th.innerHTML = `<div class="flex flex-col leading-tight"><span class="text-lg font-bold text-slate-700"><span class="day-full">${d.toLocaleDateString('es-ES', {weekday:'long'})} ${d.getDate()}</span><span class="day-abbr">${d.toLocaleDateString('es-ES', {weekday:'short'}).replace(/\./g, '')} ${d.getDate()}</span></span><span class="text-xs text-slate-500 font-medium uppercase mt-1">${d.toLocaleDateString('es-ES', {month:'long'})}</span></div>`;
     hr.appendChild(th);
   });
   thead.appendChild(hr);
@@ -98,7 +98,7 @@ function renderAdminCalendar(weekDays) {
 
   for (let h = 7; h <= 19; h++) {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td><div class="time-cell-content">${h}:00 - ${h+1}:00</div></td>`;
+    tr.innerHTML = `<td><div class="time-cell-content"><span class="time-cell-full">${h}:00 - ${h+1}:00</span><span class="time-cell-compact">${h}h</span></div></td>`;
     weekDays.forEach(d => {
       const id = `${formatDateYYYYMMDD(d)}_${h}`;
       const slotPast = isPastDate(formatDateYYYYMMDD(d), h);
@@ -321,7 +321,7 @@ function renderStudentCalendar(weekDays) {
 
   for (let h = 7; h <= 19; h++) {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td><div class="time-cell-content">${h}:00 - ${h+1}:00</div></td>`;
+    tr.innerHTML = `<td><div class="time-cell-content"><span class="time-cell-full">${h}:00 - ${h+1}:00</span><span class="time-cell-compact">${h}h</span></div></td>`;
     weekDays.forEach(d => {
       const id = `${formatDateYYYYMMDD(d)}_${h}`;
       const slotPast = isPastDate(formatDateYYYYMMDD(d), h);
