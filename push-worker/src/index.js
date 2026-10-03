@@ -399,11 +399,23 @@ async function runOnce(env) {
 
 export default {
   // Cron: se ejecuta solo cada minuto, no necesita request entrante.
-  async scheduled(_event, _ctx, env) {
+  //
+  // La firma es (controller, env, ctx): `env` es el SEGUNDO parametro, no el
+  // tercero. Ponerlo tercero hace que `env` reciba el ExecutionContext y
+  // `env.FIREBASE_SERVICE_ACCOUNT` sea undefined: el handler lanza antes de
+  // enviar nada y el cron no entrega nunca. Solo lo detecta el camino del cron,
+  // porque fetch(request, env) tiene otra firma y si funciona.
+  async scheduled(_controller, env, _ctx) {
+    // FIREBASE_PROJECT_ID es una var, no un secret, asi que SIEMPRE esta presente.
+    // Con la firma mal (env en 3er lugar) esto imprime "undefined", lo que hace
+    // este log discriminante del fallo real.
+    console.log(
+      `[cron] project_id=${env.FIREBASE_PROJECT_ID} secret=${Boolean(env.FIREBASE_SERVICE_ACCOUNT)}`
+    );
     try {
       await runOnce(env);
     } catch (err) {
-      console.error("[fatal]", err.message);
+      console.error("[fatal] cron:", err.message);
     }
   },
 
