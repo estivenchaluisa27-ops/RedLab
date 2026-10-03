@@ -464,30 +464,39 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
     border-radius: 2px;
     color: #f1f5f9;
     font-size: 0.95rem;
+    /* .auth-input NO declaraba caret-color. El navegador resolvia auto ->
+       currentColor, asi que el cursor heredaba el color del texto (#f1f5f9,
+       blanco al 97% de luminosidad) y aparecia como una linea blanca muy
+       marcada sobre el navy. Medido rgb(241,245,249) en los dos estados.
+       El grosor del cursor NO es controlable por CSS (lo fija el SO), pero
+       el color si. */
+    caret-color: #7dd3fc;
     transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .auth-input::placeholder { color: rgba(148, 163, 184, 0.55); }
 
+/* El foco ya no suma un anillo blanco de 2 px encima del borde: eso era lo
+   que hace que el contorno se lea como una linea mas gruesa al escribir. */
 .auth-input:focus {
     outline: none;
-    border-color: rgba(255, 255, 255, 0.10) !important;
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.03) !important;
-    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(125, 211, 252, 0.45) !important;
+    box-shadow: 0 0 0 2px rgba(125, 211, 252, 0.12) !important;
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .auth-input:-webkit-autofill,
 .auth-input:-webkit-autofill:hover {
     -webkit-box-shadow: 0 0 0 1000px rgba(13, 32, 54, 0.92) inset !important;
     -webkit-text-fill-color: #f1f5f9 !important;
-    caret-color: #f1f5f9;
+    caret-color: #7dd3fc;
     border-color: rgba(255, 255, 255, 0.04) !important;
 }
 
 .auth-input:-webkit-autofill:focus {
     -webkit-box-shadow: 0 0 0 1000px rgba(13, 32, 54, 0.92) inset !important;
     -webkit-text-fill-color: #f1f5f9 !important;
-    caret-color: #f1f5f9;
+    caret-color: #7dd3fc;
     border-color: rgba(255, 255, 255, 0.10) !important;
 }
 
