@@ -25,8 +25,8 @@ const PUSHABLE_TYPES = ["aprobada", "rechazada"];
 // primera vez que corre el workflow.
 const MAX_AGE_MS = 2 * 60 * 60 * 1000; // 2 horas
 
-// Tope por corrida.
-const BATCH_LIMIT = 50;
+// Tope de documentos leidos por corrida (sobre el rango temporal, no por tipo).
+const SCAN_LIMIT = 200;
 
 // Codigos de FCM que indican que el token ya no sirve mas.
 const DEAD_TOKEN_CODES = new Set([
@@ -144,35 +144,29 @@ async function pushToUser(uid, message) {
 /**
  * Consulta notificaciones pendientes de push.
  *
- * Usa solo un filtro de igualdad + un orderBy, que Firestore resuelve con
- * index merging de single-field indexes: no requiere indice compuesto.
- * Los documentos ya-enviados se filtran en JS para no depender de un indice
- * adicional ni del estado del indice en el momento del deploy.
+ * Usa UN SOLO filtro de rango (createdAt >= cutoff), que Firestore resuelve con
+ * el indice single-field automatico: no requiere indice compuesto.
+ *
+ * No se usa `where('type','==',X).orderBy('createdAt')` a proposito: la igualdad
+ * sobre `type` combinada con orderBy sobre OTRO campo (`createdAt`) si exige
+ * indice compuesto, y falla con FAILED_PRECONDITION. El filtro por `type` se
+ * aplica en JS, sobre un rango ya acotado por tiempo.
+ *
+ * Acotar por tiempo en la query (y no despues en JS) evita ademas que la
+ * primera corrida dispare notificaciones historicas.
  */
 async function fetchPending() {
-  const cutoff = Date.now() - MAX_AGE_MS;
-  const byType = await Promise.all(
-    PUSHABLE_TYPES.map(async (type) => {
-      const snap = await db
-        .collection(NOTIFICATIONS_COLLECTION)
-        .where("type", "==", type)
-        .orderBy("createdAt", "asc")
-        .limit(BATCH_LIMIT)
-        .get();
-      return snap.docs;
-    })
+  const cutoff = admin.firestore.Timestamp.fromMillis(Date.now() - MAX_AGE_MS);
+
+  const snap = await db
+    .collection(NOTIFICATIONS_COLLECTION)
+    .where("createdAt", ">=", cutoff)
+    .limit(SCAN_LIMIT)
+    .get();
+
+  return snap.docs.filter(
+    (d) => PUSHABLE_TYPES.includes(d.data()?.type) && !d.data()?.pushSentAt
   );
-
-  const docs = byType.flat();
-
-  // createdAt es un serverTimestamp; hasta que se resuelve puede venir null.
-  const isRecent = (d) => {
-    const ts = d.data()?.createdAt;
-    if (!ts || typeof ts.toMillis !== "function") return true; // recien escrito
-    return ts.toMillis() >= cutoff;
-  };
-
-  return docs.filter((d) => !d.data()?.pushSentAt && isRecent(d));
 }
 
 async function main() {
