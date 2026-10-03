@@ -26,7 +26,7 @@ h1, h2, h3 { font-weight: 800; letter-spacing: -0.01em; }
 /* --- MEJORA VISUAL TABLA (PUNTO 2) --- */
 .calendar-wrapper { background: white; border-radius: 2px; box-shadow: 0 2px 4px rgba(0, 34, 68, 0.04), 0 12px 32px -18px rgba(0, 66, 116, 0.22); overflow: hidden; border: 1px solid #e2e8f0; }
 .calendar-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-.calendar-table th, .calendar-table td { border: 1px solid #e2e8f0; padding: 0; vertical-align: top; height: 85px; }
+.calendar-table th, .calendar-table td { border: 1px solid #e2e8f0; padding: 0; vertical-align: top; height: 64px; }
 .calendar-table th { background-color: #f8fafc; color: #334155; padding: 0.8rem; text-transform: capitalize; border-bottom: 2px solid #94a3b8; }
 
 .time-cell-content { background-color: #f1f5f9; color: #475569; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; height: 100%; width: 100%; text-align: center; }
@@ -326,16 +326,19 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
 /* 9. Calendario compacto en pantallas angostas (mobile/Capacitor)
    SIN scroll horizontal forzado: la tabla se adapta al ancho disponible */
 @media (max-width: 639px) {
+    /* 44px es el minimo de area tactil comfortable: por debajo el dedo empieza a
+       fallar el slot. Antes 52px, que hacia la tabla 676px de alto. */
     .calendar-table th, .calendar-table td {
-        height: 52px;
+        height: 44px;
     }
     .calendar-table th {
-        padding: 0.35rem;
-        font-size: 0.75rem;
+        padding: 0.25rem;
+        font-size: 0.7rem;
     }
     .calendar-table th .text-lg {
-        font-size: 0.8rem;
+        font-size: 0.75rem;
     }
+    .slot-container { padding: 2px; }
     .time-cell-content {
         font-size: 0.7rem;
     }
