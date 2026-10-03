@@ -62,21 +62,22 @@ const messaging = admin.messaging();
 // Mensajes
 // ==============================
 function buildMessage(notification) {
-  const { type, date, hour, groupName } = notification;
-  const slot = `${date} ${hour}:00`;
-  const grupo = groupName ? ` (${groupName})` : "";
+  const { type, date, hour } = notification;
 
+  // Para un estudiante la info util es solo el estado del turno. La fecha/hora
+  // y el grupo NO van en el push: son datos de gestion, no mensajes de usuario.
+  // Se conservan en `data` por si el tap necesita abrirlos.
   if (type === "aprobada") {
     return {
       title: "Turno aprobado",
-      body: `Tu solicitud del ${slot}${grupo} fue aprobada.`,
+      body: "",
       data: { type: "reservation_approved", date: String(date), hour: String(hour) },
     };
   }
 
   return {
     title: "Turno rechazado",
-    body: `Tu solicitud del ${slot}${grupo} no fue aprobada.`,
+    body: "",
     data: { type: "reservation_rejected", date: String(date), hour: String(hour) },
   };
 }
