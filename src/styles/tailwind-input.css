@@ -395,6 +395,22 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
     color: #e1ad01;
 }
 
+/* Linea de la facultad, entre el kicker y el wordmark. Medida en 308 px a
+   0.95 rem, contra 375 px de contenido util en el viewport mas estrecho que
+   muestra este panel (1024 px): cabe en una sola linea con 67 px de sobra.
+   No lleva max-width porque no hace falta como proteccion: el texto tiene
+   espacios y ya envuelve solo si el contenedor se estrecha. Lo que si protege
+   contra un token largo es overflow-wrap. */
+.auth-faculty {
+    font-family: 'Archivo', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    line-height: 1.35;
+    color: rgba(255, 255, 255, 0.72);
+    overflow-wrap: break-word;
+}
+
 .auth-wordmark {
     font-family: 'Space Grotesk', sans-serif;
     font-size: clamp(2rem, 3.2vw, 3.1rem);
