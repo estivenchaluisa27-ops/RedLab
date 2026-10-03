@@ -44,10 +44,18 @@ export function showView(name) {
   const studentView = document.getElementById('student-dashboard');
   const adminView = document.getElementById('admin-dashboard');
   const loginView = document.getElementById('login-view');
+
+  const target = name === 'admin' ? adminView : name === 'student' ? studentView : loginView;
+
+  // Estado ANTES de alternar. Si la vista ya estaba visible no hay entrada que
+  // animar: el login es la vista de arranque (visible desde el primer frame), y
+  // al resolver la sesion showView('login') lo volveria a animar, con lo que
+  // parpadea fuera y vuelve a entrar aunque no haya cambiado nada.
+  const wasHidden = target ? target.classList.contains('hidden') : false;
+
   if (loginView) loginView.classList.toggle('hidden', name !== 'login');
   if (studentView) studentView.classList.toggle('hidden', name !== 'student');
   if (adminView) adminView.classList.toggle('hidden', name !== 'admin');
-  if (name === 'admin' && adminView) animateViewIn(adminView);
-  if (name === 'student' && studentView) animateViewIn(studentView);
-  if (name === 'login' && loginView) animateViewIn(loginView);
+
+  if (wasHidden) animateViewIn(target);
 }
