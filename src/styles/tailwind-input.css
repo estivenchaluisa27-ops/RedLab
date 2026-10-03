@@ -27,7 +27,14 @@ h1, h2, h3 { font-weight: 800; letter-spacing: -0.01em; }
 .calendar-wrapper { background: white; border-radius: 2px; box-shadow: 0 2px 4px rgba(0, 34, 68, 0.04), 0 12px 32px -18px rgba(0, 66, 116, 0.22); overflow: hidden; border: 1px solid #e2e8f0; }
 .calendar-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
 .calendar-table th, .calendar-table td { border: 1px solid #e2e8f0; padding: 0; vertical-align: top; height: 64px; }
-.calendar-table th { background-color: #f8fafc; color: #334155; padding: 0.8rem; text-transform: capitalize; border-bottom: 2px solid #94a3b8; }
+/* La cabecera va mas baja que el cuerpo: solo lleva el nombre del dia y un
+   numero, no un slot. Medido 64 -> 52 px en escritorio. */
+.calendar-table thead th { height: 52px; }
+.calendar-table th { background-color: #f8fafc; color: #334155; padding: 0.45rem; text-transform: capitalize; border-bottom: 2px solid #94a3b8; }
+/* Barra de navegacion de semana. Medido 72.8 -> 48 px: eran 32 px de padding
+   (p-4) mas un boton de 40 px (py-2) para mostrar dos chevrones. */
+.calendar-nav { padding: 0.5rem 0.75rem; }
+.calendar-nav button { padding: 0.25rem 0.75rem; }
 
 .time-cell-content { background-color: #f1f5f9; color: #475569; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; height: 100%; width: 100%; text-align: center; }
 .time-cell-compact { display: none; }
@@ -335,6 +342,11 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
         padding: 0.25rem;
         font-size: 0.7rem;
     }
+    /* La cabecera en movil queda en 36 px y la barra en 34 px: juntas eran
+       116.8 px, el 14% de la pantalla, antes de la primera hora. */
+    .calendar-table thead th { height: 36px; padding: 0.15rem; }
+    .calendar-nav { padding: 0.25rem 0.5rem; }
+    .calendar-nav button { padding: 0.125rem 0.5rem; }
     .calendar-table th .text-lg {
         font-size: 0.75rem;
     }
