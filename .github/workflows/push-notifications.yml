@@ -1,7 +1,11 @@
 name: Push notifications
 
 on:
-  # GitHub no permite cron mas frecuente que cada 5 minutos.
+  # RESPALDO. El camino principal es el Cloudflare Worker en push-worker/, que corre
+  # cada minuto (GitHub garantiza 5 minutos COMO MINIMO y no tiene SLA; en pruebas
+  # reales este cron no disparo ni una vez en 50 minutos, solo los workflow_dispatch
+  # manuales). Se deja el cron porque es idempotente (pushSentAt evita duplicados) y
+  # si alguna vez dispara cubre el hueco. Si disparaWorker no, esto no envia nada.
   schedule:
     - cron: "*/5 * * * *"
   # Permite disparar a mano para depurar sin esperar al cron.
