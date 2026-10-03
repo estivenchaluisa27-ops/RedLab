@@ -1,139 +1,154 @@
 /**
- * src/utils/skeleton.js — Skeletons de carga reutilizables
+ * src/utils/skeleton.js — Siluetas de carga
  *
- * Los contenedores que se llenan desde Firestore arrancan vacios hasta el primer
- * onSnapshot. Con red lenta (o abriendo la app sin conexion) eso se ve como un
- * hueco en blanco y despues el contenido salta de golpe.
+ * Renderiza esqueletos con boneyard-js (`renderBones`), que devuelve un string
+ * HTML de rectangulos posicionados en absoluto y con la animacion de pulso.
  *
- * Estos helpers pintan la silueta de la forma final: el usuario ve la estructura
- * desde el inicio y el layout deja de moverse cuando llegan los datos.
+ * El bundle esta VENDORIZADO en src/vendor/boneyard.js a proposito, no se
+ * importa del CDN: la app funciona sin internet y una importacion remota
+ * resolveria contra un origen inalcanzable en modo offline, tumbao el modulo
+ * que importa (courses-list, group-details, history, reports) y con el la app.
+ * Ademas npm install boneyard-js arrastra Playwright como dependencia dura,
+ * que aqui no se usa: el runtime de boneyard es JS puro.
  *
- * Regla de integracion: el codigo que ya renderiza datos hace
- * `container.innerHTML = ...`, asi que el skeleton se reemplaza solo. Solo hay
- * que pintar el skeleton ANTES de arrancar la carga.
+ * Los bones se escriben a mano (formato compacto [x, y, w, h, r]) en vez de
+ * extraerse con la CLI de Playwright. Motivo: la CLI necesita la app servida y
+ * con sesion iniciada, y RedLab esta tras Firebase Auth. Aqui el layout de cada
+ * contenedor es fijo y conocido, asi que se declara directamente.
+ *
+ * Convensiones del formato compacto:
+ *   x, w  -> porcentaje del ancho del contenedor
+ *   y, h  -> pixeles
+ *   r     -> radio en px, o '50%' para circulos
+ *   6to elemento (c: true) = hueso contenedor; renderBones lo OMITE, asi que
+ *   aqui no se usa.
  */
+import { renderBones } from '../vendor/boneyard.js';
 
-const BAR = 'bg-slate-200 dark:bg-slate-700';
-const BAR_SOFT = 'bg-slate-100 dark:bg-slate-800';
+// slate-200: encaja con la paleta Tailwind que ya usa la app.
+const BONE_COLOR = '#e2e8f0';
+
+// Alto de cada variante en px. Es el `height` del contenedor posicionado, asi
+// que hay que ajustarlo si se tocan los bones.
+const VARIANTS = {
+  card: { height: 132, gap: 0 },
+  row: { height: 64, gap: 8 },
+  line: { height: 44, gap: 0 },
+  block: { height: 64, gap: 0 },
+  bar: { height: 12, gap: 0 },
+};
 
 /**
- * Una barra skeletica con shimmer.
- * @param {string} [extra] clases extra (ancho, alto, radio)
- * @returns {string}
+ * Construye los bones de una variante.
+ * @param {keyof VARIANTS} variant
+ * @param {number} containerWidth ancho real del contenedor, en px. Necesario
+ *   para que los circulos salgan redondos: renderBones compara el ancho en px
+ *   (w% * width) contra la altura, y si no coinciden el circulo se deforma.
+ * @returns {Array<[number, number, number, number, number|string]>}
  */
-export function bar(extra = '') {
-  return `<div class="${BAR} rounded animate-pulse ${extra}"></div>`;
+function bonesFor(variant, containerWidth) {
+  const pct = (px) => (containerWidth > 0 ? (px / containerWidth) * 100 : 0);
+
+  switch (variant) {
+    // Tarjeta de curso: titulo, dos lineas de detalle y un chip al pie.
+    case 'card':
+      return [
+        [6, 20, 58, 16, 4],
+        [6, 46, 84, 11, 3],
+        [6, 64, 66, 11, 3],
+        [6, 94, 34, 18, 9],
+      ];
+
+    // Fila de lista: circulo a la izquierda y dos lineas de texto.
+    case 'row':
+      return [
+        [pct(16), 14, pct(36), 36, '50%'],
+        [pct(64), 18, 45, 12, 4],
+        [pct(64), 38, 70, 10, 3],
+      ];
+
+    // Parrafo de texto.
+    case 'line':
+      return [
+        [0, 0, 100, 12, 3],
+        [0, 20, 78, 12, 3],
+      ];
+
+    case 'block':
+      return [[0, 0, 100, 64, 4]];
+
+    case 'bar':
+      return [[0, 0, 60, 12, 4]];
+
+    default:
+      return [[0, 0, 100, 48, 4]];
+  }
 }
 
 /**
- * Bloque rectangular skeleton (avatar, thumbnail, celda).
- * @param {string} [extra]
+ * Devuelve el HTML de una unidad de esqueleto.
+ * @param {keyof VARIANTS} variant
+ * @param {number} containerWidth
  * @returns {string}
  */
-export function block(extra = '') {
-  return `<div class="${BAR_SOFT} rounded-lg animate-pulse ${extra}"></div>`;
+export function unit(variant, containerWidth) {
+  const cfg = VARIANTS[variant] ?? VARIANTS.block;
+  return renderBones(
+    { bones: bonesFor(variant, containerWidth), width: containerWidth, height: cfg.height },
+    BONE_COLOR,
+    true
+  );
 }
 
 /**
- * Linea de texto skeleton de ancho variable, para que la silueta no sea
- * un bloque uniforme (se lee mas como contenido real).
- * @param {string} widthClass clase de ancho, p.ej. 'w-3/4'
+ * HTML de una sola fila de esqueleto.
+ *
+ * Existe suelto porque reports.js lo concatena con `innerHTML +=` DESPUES del
+ * checkbox "Seleccionar todos", para no borrarlo. showSkeleton() no sirve
+ * ahi porque reemplaza el contenido entero del contenedor.
+ *
+ * @param {number} [containerWidth] ancho del contenedor; si se omite se mide
  * @returns {string}
  */
-export function line(widthClass = 'w-full') {
-  return `<div class="${BAR} h-3 rounded animate-pulse ${widthClass}"></div>`;
+export function row(containerWidth) {
+  const w = containerWidth || 320;
+  return `<div style="margin-bottom:8px">${unit('row', w)}</div>`;
 }
 
 /**
- * Skeleton de una tarjeta: encabezado + lineas + boton.
- * @returns {string}
- */
-export function card() {
-  return `
-    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-card space-y-3">
-      <div class="flex items-center gap-3">
-        ${block('h-10 w-10 shrink-0')}
-        <div class="flex-1 space-y-2">
-          ${line('w-2/5')}
-          ${bar('h-3 w-1/4')}
-        </div>
-      </div>
-      <div class="space-y-2 pt-1">
-        ${line('w-full')}
-        ${line('w-5/6')}
-      </div>
-      <div class="pt-2">
-        ${bar('h-8 w-28 rounded-md')}
-      </div>
-    </div>
-  `;
-}
-
-/**
- * Skeleton de una fila (lista de notifiedades, integrantes, reportes).
- * @returns {string}
- */
-export function row() {
-  return `
-    <div class="rounded-lg border border-slate-200 bg-white p-4 flex items-center gap-3">
-      ${block('h-9 w-9 shrink-0 rounded-full')}
-      <div class="flex-1 space-y-2">
-        ${line('w-1/3')}
-        ${bar('h-3 w-2/3')}
-      </div>
-    </div>
-  `;
-}
-
-/**
- * Pinta skeletons en un contenedor. No hace nada si ya hay skeleton, para
- * que varias llamadas durante la misma carga no se acumulen.
+ * Pinta esqueletos en un contenedor mientras llegan sus datos.
+ *
+ * El render real sobrescribe el innerHTML, asi que no hace falta quitar nada a
+ * mano. Si el contenedor llega a estar vacio y visible, no se pinta nada.
+ *
  * @param {HTMLElement|null} container
- * @param {{variant?: 'card'|'row', count?: number, className?: string}} [opts]
+ * @param {{variant?: keyof VARIANTS, count?: number}} [options]
  */
-export function showSkeleton(container, opts = {}) {
+export function showSkeleton(container, options = {}) {
   if (!container) return;
-  const { variant = 'card', count = 6, className = '' } = opts;
-  if (container.dataset.skeleton === '1') return;
+  const { variant = 'row', count = 5 } = options;
+  const cfg = VARIANTS[variant] ?? VARIANTS.block;
 
-  const item = variant === 'row' ? row() : card();
-  container.innerHTML = Array.from({ length: count }, () => item).join('');
-  container.dataset.skeleton = '1';
-  if (className) container.classList.add(...className.split(' ').filter(Boolean));
+  // Sin layout hay 0px de ancho y los circulos salen deformados. Se usa un
+  // ancho de reserva antes de que el navegador layouthee.
+  const containerWidth = container.clientWidth || container.offsetWidth || 320;
+  const total = Math.max(1, Math.min(count, 12));
+
+  const html = Array.from({ length: total }, (_, i) => {
+    const spacing = cfg.gap && i < total - 1 ? `margin-bottom:${cfg.gap}px` : '';
+    // min-width:0 evita que un hijo con ancho intrinseco ensanche la celda de
+    // un grid y desborde el contenedor.
+    return `<div style="${spacing};min-width:0">${unit(variant, containerWidth)}</div>`;
+  }).join('');
+
+  container.innerHTML = html;
 }
 
-/**
- * Quita el estado de skeleton. Opcional: normalmente no hace falta, porque el
- * render real sobrescribe innerHTML; se usa cuando se cambia solo el dataset.
- * @param {HTMLElement|null} container
- */
-export function clearSkeleton(container) {
-  if (container) delete container.dataset.skeleton;
-}
-
-/**
- * Skeleton de pantalla completa para el arranque, antes de saber si el usuario
- * es admin o estudiante. Se muestra siempre al cargar y lo oculta showView().
- * @param {string} label texto de contexto, p.ej. "Cargando tus clases"
- * @returns {string}
- */
-export function bootScreen(label = 'Cargando') {
-  return `
-    <div class="min-h-screen bg-uce-950 flex flex-col items-center justify-center px-6 gap-6">
-      <div class="flex items-center gap-3">
-        <div class="relative">
-          ${block('h-12 w-12 rounded-xl')}
-          <div class="absolute inset-0 rounded-xl ring-1 ring-uce-500/30"></div>
-        </div>
-        <div class="space-y-2">
-          ${bar('h-4 w-24')}
-          ${bar('h-3 w-16')}
-        </div>
-      </div>
-      <div class="w-40 h-1 rounded-full bg-uce-900 overflow-hidden">
-        <div class="h-full w-1/3 rounded-full bg-uce-400 animate-pulse"></div>
-      </div>
-      <p class="text-uce-200/70 text-sm">${label}…</p>
-    </div>
-  `;
-}
+/** @deprecated usa showSkeleton() */
+export function card() { return unit('card', 320); }
+/** @deprecated usa showSkeleton() */
+export function block() { return unit('block', 320); }
+/** @deprecated usa showSkeleton() */
+export function bar() { return unit('bar', 320); }
+/** @deprecated usa showSkeleton() */
+export function line() { return unit('line', 320); }

@@ -20,33 +20,20 @@ import { initSentry } from './utils/sentry.js';
 import { createClickDispatcher, createSubmitDispatcher } from './utils/dispatcher.js';
 import { initAdminRouter, registerSectionSetup, registerSubviewSetup, registerSubviewOnLeave } from './admin-router-controller.js';
 import { navigate } from './router.js';
-import { showView, hideBootLoader } from './utils/dom.js';
+import { showView } from './utils/dom.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   initSentry();
   initMotionObserver();
   document.addEventListener('pointerdown', handlePress, true);
 
-  // Red de seguridad del loader de arranque: si nada muestra una vista en 15s
-  // (Firebase colgado, redmuerta, error silencioso) el loader se retira igual.
-  // Un loader infinito es peor que una vista vacia.
-  const bootFailsafe = setTimeout(() => {
-    const boot = document.getElementById('boot-loader');
-    if (boot) {
-      boot.remove();
-      console.warn('[boot] timeout: ninguna vista se mostro en 15s');
-    }
-  }, 15000);
-
   let db, auth;
   try {
     ({ db, auth } = await initFirebase());
   } catch (err) {
-    // Sin Firebase no hay nada que montar. Se retira el loader y se muestra el
-    // login para que el usuario vea un formulario en vez de "Cargando" eterno.
+    // Sin Firebase no hay nada que montar. El login ya esta visible (es la vista
+    // de arranque), asi que solo hace falta registrar el fallo.
     console.error('[boot] initFirebase fallo:', err);
-    clearTimeout(bootFailsafe);
-    hideBootLoader('Sin conexión');
     showView('login');
     return;
   }
@@ -162,11 +149,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     (role, userData, studentData) => _setupSession(role, userData, studentData, state, db)
   );
 
-  // A partir de aqui el flujo normal toma el control: onAuthStateChanged siempre
-  // leads a showView (admin/student/login), asi que el loader ya no hace falta.
-  clearTimeout(bootFailsafe);
-
-  // Iniciar router del panel admin — se mantiene inactivo hasta que showView('admin')
+  // Iniciar router del panel admin - se mantiene inactivo hasta que showView('admin')
   // le quite 'hidden' al #admin-dashboard. El handler del router actualizará el
   // sidebar activo y mostrará la sección default (calendario).
   initAdminRouter();

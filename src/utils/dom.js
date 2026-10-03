@@ -38,11 +38,6 @@ export function toggleHidden(id) {
 /**
  * Muestra una vista (student/admin) y oculta la otra.
  *
- * También descarta el loader de arranque: las tres vistas empiezan en `hidden`,
- * así que hasta la primera llamada a showView() no hay nada visible. Este es el
- * único punto por el que una vista real se muestra, por eso el boot loader se
- * apaga aquí y no en otro sitio.
- *
  * @param {'student'|'admin'|'login'} name
  */
 export function showView(name) {
@@ -52,22 +47,7 @@ export function showView(name) {
   if (loginView) loginView.classList.toggle('hidden', name !== 'login');
   if (studentView) studentView.classList.toggle('hidden', name !== 'student');
   if (adminView) adminView.classList.toggle('hidden', name !== 'admin');
-  hideBootLoader();
   if (name === 'admin' && adminView) animateViewIn(adminView);
   if (name === 'student' && studentView) animateViewIn(studentView);
   if (name === 'login' && loginView) animateViewIn(loginView);
-}
-
-/**
- * Quita el loader de arranque. Se exporta aparte para que el login (que no pasa
- * por showView hasta bastante más tarde) pueda descartarlo en cuanto su propio
- * render termine, sin tener que simular una vista.
- * @param {string} [label] texto final opcional antes de desaparecer
- */
-export function hideBootLoader(label) {
-  const boot = document.getElementById('boot-loader');
-  if (!boot) return;
-  const bootLabel = document.getElementById('boot-label');
-  if (label && bootLabel) bootLabel.textContent = `${label}…`;
-  boot.remove();
 }

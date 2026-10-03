@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Preview skeletons · RedLab</title>
+<link rel="stylesheet" href="/styles.css">
+<style>body{background:#f8fafc}</style>
+</head>
+<body class="p-6 space-y-8">
+
+<h1 class="text-sm font-bold text-slate-500 uppercase tracking-wider">Preview de skeletons (boneyard)</h1>
+
+<div>
+  <p class="text-xs text-slate-500 mb-2">variant: card · grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 (courses-grid)</p>
+  <div id="cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+</div>
+
+<div>
+  <p class="text-xs text-slate-500 mb-2">variant: row (notifications-list)</p>
+  <div id="rows" class="space-y-2"></div>
+</div>
+
+<div>
+  <p class="text-xs text-slate-500 mb-2">variant: line</p>
+  <div id="lines"></div>
+</div>
+
+<div>
+  <p class="text-xs text-slate-500 mb-2">modo oscuro (clase .dark en el contenedor)</p>
+  <div id="dark" class="dark bg-slate-900 p-4 rounded"></div>
+</div>
+
+<script type="module">
+import { showSkeleton } from '/src/utils/skeleton.js';
+showSkeleton(document.getElementById('cards'), { variant: 'card', count: 3 });
+showSkeleton(document.getElementById('rows'), { variant: 'row', count: 4 });
+showSkeleton(document.getElementById('lines'), { variant: 'line', count: 2 });
+showSkeleton(document.getElementById('dark'), { variant: 'row', count: 2 });
+</script>
+</body>
+</html>
