@@ -4,11 +4,22 @@
 import { collection, query, where, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { escapeHtml, escapeAttr } from '../utils/escape.js';
 import { animateListIn } from '../utils/motion.js';
+import { showSkeleton } from '../utils/skeleton.js';
 
 let _db = null;
 let _state = null;
 let unsubscribeCourses = null;
 let coursesStaggered = false;
+// Marca que ya llego el primer snapshot. Permite que otras vistas distingan
+// "no hay cursos" de "aun estoy cargando", que antes se confundian.
+let coursesLoaded = false;
+
+/**
+ * @returns {boolean} true si el primer onSnapshot de cursos ya llego.
+ */
+export function hasCoursesLoaded() {
+  return coursesLoaded;
+}
 
 export function initCoursesList(db, state) {
   _db = db;
@@ -24,9 +35,14 @@ export function loadAdminDashboard() {
 
   clearCoursesListener();
 
+  // Silueta antes del primer onSnapshot: sin esto el grid queda en blanco hasta
+  // que Firestore responde. El render real sobrescribe el innerHTML.
+  showSkeleton(document.getElementById('courses-grid'), { variant: 'card', count: 6 });
+
   unsubscribeCourses = onSnapshot(q, (snap) => {
     const grid = document.getElementById('courses-grid');
     if (!grid) return;
+    coursesLoaded = true;
     grid.innerHTML = '';
     const firstRender = !coursesStaggered;
     snap.forEach(d => {

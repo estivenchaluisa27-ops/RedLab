@@ -5,6 +5,7 @@
 import { collection, query, where, orderBy, limit, onSnapshot, getDocs, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { escapeHtml } from '../utils/escape.js';
 import { alert as notifyAlert } from '../utils/notify.js';
+import { showSkeleton } from '../utils/skeleton.js';
 
 let _db = null;
 let _state = null;
@@ -57,6 +58,9 @@ export async function openNotificationsModal() {
   const modal = document.getElementById('notifications-modal');
   if (!modal) return;
   modal.classList.remove('hidden');
+  // Silueta mientras corre el getDocs: el modal se abre ya visible, asi que sin
+  // esto el usuario mira un recuadro vacio hasta que responde Firestore.
+  showSkeleton(document.getElementById('notifications-list'), { variant: 'row', count: 5 });
   try {
     const q = query(collection(_db, 'notifications'), where('userId', '==', _state.user.uid), orderBy('createdAt', 'desc'), limit(100));
     const snap = await getDocs(q);
