@@ -13,7 +13,7 @@ export async function handleLogin(e, auth) {
   e.preventDefault();
   const btn = document.getElementById('login-submit-btn');
   btn.disabled = true;
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>VALIDANDO...';
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Validando...';
 
   const email = document.getElementById('login-email').value;
   const remember = document.getElementById('remember-me')?.checked;
@@ -27,7 +27,7 @@ export async function handleLogin(e, auth) {
     await signInWithEmailAndPassword(auth, email, document.getElementById('login-password').value);
   } catch {
     btn.disabled = false;
-    btn.innerHTML = 'INGRESAR';
+    btn.innerHTML = 'Ingresar';
     showMessage('error', 'Credenciales incorrectas.');
   }
 }

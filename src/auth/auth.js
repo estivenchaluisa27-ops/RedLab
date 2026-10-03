@@ -82,7 +82,7 @@ export function initAuthListener(auth, db, state, resetState, setupSessionFn) {
     } else {
       resetState(); clearGroupUtilsCache(); clearSentryUser(); showView('login');
       const btn = document.getElementById('login-submit-btn');
-      if (btn) { btn.disabled = false; btn.innerHTML = 'INGRESAR'; }
+      if (btn) { btn.disabled = false; btn.innerHTML = 'Ingresar'; }
       // Limpiar query string y hash residuales de la URL (ej: /?#/admin/calendario)
       if (window.location.search || window.location.hash) {
         window.history.replaceState(null, '', window.location.pathname);
