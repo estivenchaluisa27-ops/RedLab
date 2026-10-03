@@ -101,3 +101,6 @@ REPORT.md
 plan.md
 prototype/
 skills-lock.json
+
+# Capturas del panel de OpenChamber, no son parte del proyecto.
+.openchamber/
