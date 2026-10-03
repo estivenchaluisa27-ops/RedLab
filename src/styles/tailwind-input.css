@@ -23,6 +23,70 @@ h1, h2, h3 { font-weight: 800; letter-spacing: -0.01em; }
   .card-lift:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0, 34, 68, 0.06), 0 16px 40px -16px rgba(0, 66, 116, 0.30); border-color: rgba(0, 66, 116, 0.25); }
 }
 
+/* --- PORTADA DECORATIVA DE LAS TARJETAS DE CURSO ---
+   La imagen la genera src/utils/cover-pattern.js como data URI SVG sembrada con
+   el id del curso. Aqui solo se define la caja: alto fijo, background-size cover
+   y una base navy de respaldo mientras el SVG no esta.
+   El degradado inferior no es decorativo: sostiene el contraste del borde de la
+   portada contra la tarjeta blanca. */
+.course-cover {
+  height: 96px;
+  background-color: #004274;
+  background-size: cover;
+  background-position: center;
+  border-bottom: 1px solid rgba(0, 34, 68, 0.12);
+  position: relative;
+}
+.course-cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 34, 68, 0) 55%, rgba(0, 34, 68, 0.22) 100%);
+  pointer-events: none;
+}
+
+/* El menu se posiciona sobre la tarjeta y se revela con data-abierto, no con
+   una clase: el estado vive en el DOM y asi sobrevive al repintado del grid. */
+.course-menu-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  padding: 0.25rem 0;
+  color: #64748b;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 2px;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.course-menu-toggle:hover { background: #e2e8f0; color: #004274; }
+
+.course-menu {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 6px);
+  right: 0;
+  min-width: 168px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 2px;
+  box-shadow: 0 8px 24px -8px rgba(0, 34, 68, 0.28);
+  padding: 0.25rem;
+  z-index: 20;
+}
+.course-menu[data-abierto] { display: block; }
+.course-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem 0.625rem;
+  font-size: 0.8125rem;
+  color: #334155;
+  border-radius: 2px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.course-menu-item:hover { background: #f1f5f9; color: #004274; }
+
 /* --- MEJORA VISUAL TABLA (PUNTO 2) --- */
 .calendar-wrapper { background: white; border-radius: 2px; box-shadow: 0 2px 4px rgba(0, 34, 68, 0.04), 0 12px 32px -18px rgba(0, 66, 116, 0.22); overflow: hidden; border: 1px solid #e2e8f0; }
 .calendar-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
