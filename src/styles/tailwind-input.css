@@ -23,13 +23,86 @@ h1, h2, h3 { font-weight: 800; letter-spacing: -0.01em; }
   .card-lift:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0, 34, 68, 0.06), 0 16px 40px -16px rgba(0, 66, 116, 0.30); border-color: rgba(0, 66, 116, 0.25); }
 }
 
+/* --- PORTADA DECORATIVA DE LAS TARJETAS DE CURSO ---
+   La imagen la genera src/utils/cover-pattern.js como data URI SVG sembrada con
+   el id del curso. Aqui solo se define la caja: alto fijo, background-size cover
+   y una base navy de respaldo mientras el SVG no esta.
+   El degradado inferior no es decorativo: sostiene el contraste del borde de la
+   portada contra la tarjeta blanca. */
+.course-cover {
+  height: 96px;
+  background-color: #004274;
+  background-size: cover;
+  background-position: center;
+  border-bottom: 1px solid rgba(0, 34, 68, 0.12);
+  position: relative;
+}
+.course-cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 34, 68, 0) 55%, rgba(0, 34, 68, 0.22) 100%);
+  pointer-events: none;
+}
+
+/* El menu se posiciona sobre la tarjeta y se revela con data-abierto, no con
+   una clase: el estado vive en el DOM y asi sobrevive al repintado del grid. */
+.course-menu-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  padding: 0.25rem 0;
+  color: #64748b;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 2px;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.course-menu-toggle:hover { background: #e2e8f0; color: #004274; }
+
+.course-menu {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 6px);
+  right: 0;
+  min-width: 168px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 2px;
+  box-shadow: 0 8px 24px -8px rgba(0, 34, 68, 0.28);
+  padding: 0.25rem;
+  z-index: 20;
+}
+.course-menu[data-abierto] { display: block; }
+.course-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem 0.625rem;
+  font-size: 0.8125rem;
+  color: #334155;
+  border-radius: 2px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.course-menu-item:hover { background: #f1f5f9; color: #004274; }
+
 /* --- MEJORA VISUAL TABLA (PUNTO 2) --- */
 .calendar-wrapper { background: white; border-radius: 2px; box-shadow: 0 2px 4px rgba(0, 34, 68, 0.04), 0 12px 32px -18px rgba(0, 66, 116, 0.22); overflow: hidden; border: 1px solid #e2e8f0; }
 .calendar-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-.calendar-table th, .calendar-table td { border: 1px solid #e2e8f0; padding: 0; vertical-align: top; height: 85px; }
-.calendar-table th { background-color: #f8fafc; color: #334155; padding: 0.8rem; text-transform: capitalize; border-bottom: 2px solid #94a3b8; }
+.calendar-table th, .calendar-table td { border: 1px solid #e2e8f0; padding: 0; vertical-align: top; height: 64px; }
+/* La cabecera va mas baja que el cuerpo: solo lleva el nombre del dia y un
+   numero, no un slot. Medido 64 -> 52 px en escritorio. */
+.calendar-table thead th { height: 52px; }
+.calendar-table th { background-color: #f8fafc; color: #334155; padding: 0.45rem; text-transform: capitalize; border-bottom: 2px solid #94a3b8; }
+/* Barra de navegacion de semana. Medido 72.8 -> 48 px: eran 32 px de padding
+   (p-4) mas un boton de 40 px (py-2) para mostrar dos chevrones. */
+.calendar-nav { padding: 0.5rem 0.75rem; }
+.calendar-nav button { padding: 0.25rem 0.75rem; }
 
 .time-cell-content { background-color: #f1f5f9; color: #475569; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; height: 100%; width: 100%; text-align: center; }
+.time-cell-compact { display: none; }
+.day-abbr { display: none; }
 .slot-container { width: 100%; height: 100%; padding: 3px; position: relative; }
 .slot { width: 100%; height: 100%; border-radius: 6px; border: 1px solid transparent; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-size: 0.75rem; font-weight: 600; line-height: 1.2; overflow: hidden; }
 .occupancy-badge { font-size: 0.65rem; margin-top: 3px; padding: 2px 8px; border-radius: 12px; background-color: rgba(255,255,255,0.95); color: #1e293b; font-weight: 800; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
@@ -321,16 +394,37 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
 }
 .sidebar-label { transition: opacity 0.15s ease; }
 
-/* 9. Calendar horizontal scroll en pantallas muy angostas (mobile/Capacitor)
-   Evita que las celdas se compriman demasiado en phones <640px */
+/* 9. Calendario compacto en pantallas angostas (mobile/Capacitor)
+   SIN scroll horizontal forzado: la tabla se adapta al ancho disponible */
 @media (max-width: 639px) {
-    .calendar-wrapper {
-        overflow-x: auto;
-        overflow-y: hidden;
+    /* 44px es el minimo de area tactil comfortable: por debajo el dedo empieza a
+       fallar el slot. Antes 52px, que hacia la tabla 676px de alto. */
+    .calendar-table th, .calendar-table td {
+        height: 44px;
     }
-    .calendar-table {
-        min-width: 640px;
+    .calendar-table th {
+        padding: 0.25rem;
+        font-size: 0.7rem;
     }
+    /* La cabecera en movil queda en 36 px y la barra en 34 px: juntas eran
+       116.8 px, el 14% de la pantalla, antes de la primera hora. */
+    .calendar-table thead th { height: 36px; padding: 0.15rem; }
+    .calendar-nav { padding: 0.25rem 0.5rem; }
+    .calendar-nav button { padding: 0.125rem 0.5rem; }
+    .calendar-table th .text-lg {
+        font-size: 0.75rem;
+    }
+    .slot-container { padding: 2px; }
+    .time-cell-content {
+        font-size: 0.7rem;
+    }
+    .time-cell-full { display: none; }
+    .time-cell-compact { display: inline; }
+    .day-full { display: none; }
+    .day-abbr { display: inline; }
+    /* El color del slot ya codifica el estado (leyenda en index.html): ocultar texto que se saldría de la columna */
+    .slot span { display: none; }
+    .slot-selected::after { content: '✓'; color: #ffffff; font-weight: 800; font-size: 0.9rem; }
 }
 
 /* ===== AUTH: TARJETA DARK GLASS NAVY (estilo TutoMatch adaptado) ===== */
@@ -363,6 +457,22 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
     letter-spacing: 0.24em;
     text-transform: uppercase;
     color: #e1ad01;
+}
+
+/* Linea de la facultad, entre el kicker y el wordmark. Medida en 308 px a
+   0.95 rem, contra 375 px de contenido util en el viewport mas estrecho que
+   muestra este panel (1024 px): cabe en una sola linea con 67 px de sobra.
+   No lleva max-width porque no hace falta como proteccion: el texto tiene
+   espacios y ya envuelve solo si el contenedor se estrecha. Lo que si protege
+   contra un token largo es overflow-wrap. */
+.auth-faculty {
+    font-family: 'Archivo', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    line-height: 1.35;
+    color: rgba(255, 255, 255, 0.72);
+    overflow-wrap: break-word;
 }
 
 .auth-wordmark {
@@ -434,30 +544,39 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
     border-radius: 2px;
     color: #f1f5f9;
     font-size: 0.95rem;
+    /* .auth-input NO declaraba caret-color. El navegador resolvia auto ->
+       currentColor, asi que el cursor heredaba el color del texto (#f1f5f9,
+       blanco al 97% de luminosidad) y aparecia como una linea blanca muy
+       marcada sobre el navy. Medido rgb(241,245,249) en los dos estados.
+       El grosor del cursor NO es controlable por CSS (lo fija el SO), pero
+       el color si. */
+    caret-color: #7dd3fc;
     transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .auth-input::placeholder { color: rgba(148, 163, 184, 0.55); }
 
+/* El foco ya no suma un anillo blanco de 2 px encima del borde: eso era lo
+   que hace que el contorno se lea como una linea mas gruesa al escribir. */
 .auth-input:focus {
     outline: none;
-    border-color: rgba(255, 255, 255, 0.10) !important;
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.03) !important;
-    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(125, 211, 252, 0.45) !important;
+    box-shadow: 0 0 0 2px rgba(125, 211, 252, 0.12) !important;
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .auth-input:-webkit-autofill,
 .auth-input:-webkit-autofill:hover {
     -webkit-box-shadow: 0 0 0 1000px rgba(13, 32, 54, 0.92) inset !important;
     -webkit-text-fill-color: #f1f5f9 !important;
-    caret-color: #f1f5f9;
+    caret-color: #7dd3fc;
     border-color: rgba(255, 255, 255, 0.04) !important;
 }
 
 .auth-input:-webkit-autofill:focus {
     -webkit-box-shadow: 0 0 0 1000px rgba(13, 32, 54, 0.92) inset !important;
     -webkit-text-fill-color: #f1f5f9 !important;
-    caret-color: #f1f5f9;
+    caret-color: #7dd3fc;
     border-color: rgba(255, 255, 255, 0.10) !important;
 }
 
@@ -732,8 +851,42 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
     letter-spacing: 0.1em !important;
     text-transform: uppercase !important;
 }
+#admin-selection-count {
+    font-family: 'Archivo', sans-serif !important;
+    letter-spacing: 0 !important;
+}
 #admin-block-btn { background: rgba(220, 38, 38, 0.15) !important; border: 1px solid rgba(220, 38, 38, 0.5) !important; color: #fca5a5 !important; }
 #admin-block-btn:hover { background: rgba(220, 38, 38, 0.25) !important; color: #ffffff !important; }
 #admin-unblock-btn { background: rgba(16, 185, 129, 0.15) !important; border: 1px solid rgba(16, 185, 129, 0.5) !important; color: #6ee7b7 !important; }
 #admin-unblock-btn:hover { background: rgba(16, 185, 129, 0.25) !important; color: #ffffff !important; }
 
+
+/* ===== TIPOGRAFIA FUNCIONAL: ARCHIVO EN TODOS LOS BOTONES =====
+   Las seis clases de boton compartian la misma combinacion: Space Grotesk
+   en weight 700, text-transform uppercase y letter-spacing entre 0.1em y
+   0.16em. Space Grotesk es una fuente de DISPLAY, no de UI: geometrica y con
+   letras muy peculiares. A 0.78-0.95rem, en mayusculas y con ese tracking, la
+   a, la g y la e se cierran y el texto cuesta leerlo de una pasada.
+
+   Archivo ya estaba cargada como fuente base de la app, asi que el cambio no
+   cuesta ni un byte de red adicional.
+
+   Space Grotesk se queda donde si funciona: marcas (wordmark, avatar,
+   kicker). Aqui solo se sustituye la parte funcional.
+
+   Esta regla va AL FINAL a proposito: todas las clases anteriores son de
+   especificidad 0,1,0, asi que gana por orden de cascada y deja intactos el
+   color, el borde y el padding de cada boton. !important hace falta porque
+   las clases originales ya lo usaban. */
+.btn-navy,
+.btn-ghost,
+.btn-danger,
+.btn-success,
+.btn-outline-navy,
+.auth-btn,
+#admin-action-box button {
+    font-family: 'Archivo', sans-serif !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.01em !important;
+    text-transform: none !important;
+}

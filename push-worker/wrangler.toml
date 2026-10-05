@@ -1,0 +1,17 @@
+name = "redlab-push"
+main = "src/index.js"
+compatibility_date = "2024-11-01"
+
+# Dispara cada minuto. Es la razon de existir de este Worker: GitHub Actions
+# garantiza 5 minutos como minimo y en la practica no es fiable, sobre todo en
+# la primera hora de cada hora.
+[triggers]
+crons = ["* * * * *"]
+
+# Service account de Firebase como secret: `wrangler secret put FIREBASE_SERVICE_ACCOUNT`.
+# El valor es el JSON completo del service account en una sola linea.
+[vars]
+FIREBASE_PROJECT_ID = "lab-redes-turnos"
+
+[observability]
+enabled = true

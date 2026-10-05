@@ -3,6 +3,8 @@ import { escapeHtml, escapeAttr } from '../utils/escape.js';
 import { formatDateYYYYMMDD } from '../utils/dates.js';
 import { lookupMembersByGroupName } from '../groups/group-utils.js';
 import { alert as notifyAlert } from '../utils/notify.js';
+import { row } from '../utils/skeleton.js';
+import { hasCoursesLoaded } from '../courses/courses-list.js';
 
 let _db = null;
 let _state = null;
@@ -83,7 +85,14 @@ export function setupReportesView() {
   });
 
   if (Object.keys(_state.coursesCache).length === 0) {
-    list.innerHTML += `<p class="text-xs text-slate-500 italic p-2 text-center">No hay cursos registrados.</p>`;
+    // Cache vacio puede significar dos cosas distintas. Antes mostraba siempre
+    // "No hay cursos registrados", incluso con los cursos aun en camino.
+    if (!hasCoursesLoaded()) {
+      // Se agregan filas skeleton DESPUES del toggle-all para no borrarlo.
+      list.innerHTML += Array.from({ length: 4 }, () => row()).join('');
+    } else {
+      list.innerHTML += `<p class="text-xs text-slate-500 italic p-2 text-center">No hay cursos registrados.</p>`;
+    }
   } else {
     for (const [id, course] of Object.entries(_state.coursesCache)) {
       list.innerHTML += `

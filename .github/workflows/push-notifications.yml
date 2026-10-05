@@ -1,0 +1,40 @@
+name: Push notifications
+
+on:
+  # RESPALDO. El camino principal es el Cloudflare Worker en push-worker/, que corre
+  # cada minuto (GitHub garantiza 5 minutos COMO MINIMO y no tiene SLA; en pruebas
+  # reales este cron no disparo ni una vez en 50 minutos, solo los workflow_dispatch
+  # manuales). Se deja el cron porque es idempotente (pushSentAt evita duplicados) y
+  # si alguna vez dispara cubre el hueco. Si disparaWorker no, esto no envia nada.
+  schedule:
+    - cron: "*/5 * * * *"
+  # Permite disparar a mano para depurar sin esperar al cron.
+  workflow_dispatch:
+
+# Evita que dos corridas se solapen si una se pasa de los 5 minutos.
+concurrency:
+  group: push-notifications
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install firebase-admin
+        run: npm install firebase-admin@12.6.0 --no-save --no-package-lock
+
+      - name: Send pending push notifications
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_LAB_REDES_TURNOS }}
+          FIREBASE_PROJECT_ID: lab-redes-turnos
+        run: node .github/scripts/push-notifications.mjs

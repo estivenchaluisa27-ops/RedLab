@@ -3,7 +3,10 @@ import globals from 'globals';
 
 export default [
   {
-    ignores: ['node_modules/**'],
+    // src/vendor/ es codigo de terceros minificado (boneyard-js), copiado tal
+    // cual para poder importarlo en local. No se parchea ni se le aplica lint:
+    // un fix sobre el bundle lo desincroniza de la version publicada.
+    ignores: ['node_modules/**', 'src/vendor/**'],
   },
   js.configs.recommended,
   {

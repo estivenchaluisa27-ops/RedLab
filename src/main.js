@@ -20,12 +20,23 @@ import { initSentry } from './utils/sentry.js';
 import { createSubmitDispatcher } from './utils/dispatcher.js';
 import { initAdminRouter, registerSectionSetup, registerSubviewSetup, registerSubviewOnLeave } from './admin-router-controller.js';
 import { createClickActions, createSubmitActions } from './actions.js';
+import { showView } from './utils/dom.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   initSentry();
   initMotionObserver();
   document.addEventListener('pointerdown', handlePress, true);
-  const { db, auth } = await initFirebase();
+
+  let db, auth;
+  try {
+    ({ db, auth } = await initFirebase());
+  } catch (err) {
+    // Sin Firebase no hay nada que montar. El login ya esta visible (es la vista
+    // de arranque), asi que solo hace falta registrar el fallo.
+    console.error('[boot] initFirebase fallo:', err);
+    showView('login');
+    return;
+  }
 
   initCoursesList(db, state);
   initCourses(db, state);
@@ -90,7 +101,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     (role, userData, studentData) => _setupSession(role, userData, studentData, state, db)
   );
 
-  // Iniciar router del panel admin — se mantiene inactivo hasta que showView('admin')
+  // Iniciar router del panel admin - se mantiene inactivo hasta que showView('admin')
   // le quite 'hidden' al #admin-dashboard. El handler del router actualizará el
   // sidebar activo y mostrará la sección default (calendario).
   initAdminRouter();

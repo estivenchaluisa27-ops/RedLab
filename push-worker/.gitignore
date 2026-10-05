@@ -1,0 +1,6 @@
+node_modules/
+dist/
+dist-check/
+.wrangler/
+# Secret del service account en local. NUNCA debe subirse.
+.dev.vars

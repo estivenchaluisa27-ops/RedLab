@@ -13,6 +13,7 @@ import { alert as notifyAlert } from '../utils/notify.js';
 import { clearGroupUtilsCache } from './group-utils.js';
 import { navigate } from '../router.js';
 import { mountMemberGrid } from './member-grid.js';
+import { showSkeleton } from '../utils/skeleton.js';
 
 let editingGroupData = null;
 let editingGroupId = null;
@@ -74,6 +75,9 @@ export async function setupGroupDetailsView(params) {
     // Montar el MemberGrid custom vanilla en el container reservado
     const gridContainer = document.getElementById('member-grid-container');
     if (gridContainer) {
+      // Silueta mientras el MemberGrid monta sus controles: sin esto el
+      // contenedor queda vacio y la tabla aparece de golpe al terminar.
+      showSkeleton(gridContainer, { variant: 'row', count: 5 });
       _gridCleanup = mountMemberGrid(gridContainer, {
         initialMembers: members,
         onChange: async (newMembers) => {
