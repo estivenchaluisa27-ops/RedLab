@@ -24,11 +24,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 4
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Install firebase-admin
         run: npm install firebase-admin@12.6.0 --no-save --no-package-lock
