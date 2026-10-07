@@ -110,4 +110,35 @@ describe('classifySlot', () => {
     const result = classifySlot('2020-06-15', 10, [{ status: 'blocked' }], null);
     expect(result.type).toBe('past');
   });
+
+  describe('con capacity=2 (path escritorio: config inyectada)', () => {
+    it('clasifica como full con 2 grupos aprobados', () => {
+      const reservations = [
+        { groupName: 'G1', status: 'approved' },
+        { groupName: 'G2', status: 'approved' }
+      ];
+      const result = classifySlot(futureDate, 10, reservations, null, 2);
+      expect(result.type).toBe('full');
+      expect(result.disabled).toBe(true);
+    });
+
+    it('clasifica como partial con 1 grupo aprobado', () => {
+      const reservations = [
+        { groupName: 'G1', status: 'approved' }
+      ];
+      const result = classifySlot(futureDate, 10, reservations, null, 2);
+      expect(result.type).toBe('partial');
+      expect(result.occupancy).toBe(1);
+    });
+
+    it('capacity por defecto es 4 (DEFAULTS, path móvil sin config)', () => {
+      const reservations = [
+        { groupName: 'G1', status: 'approved' },
+        { groupName: 'G2', status: 'approved' },
+        { groupName: 'G3', status: 'approved' }
+      ];
+      const result = classifySlot(futureDate, 10, reservations, null);
+      expect(result.type).toBe('partial');
+    });
+  });
 });

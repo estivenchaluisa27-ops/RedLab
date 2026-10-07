@@ -6,6 +6,7 @@ import { escapeHtml, escapeAttr } from '../utils/escape.js';
 import { lookupMembersByGroupName } from '../groups/group-utils.js';
 import { buildNotificationData } from '../notifications/history.js';
 import { alert as notifyAlert } from '../utils/notify.js';
+import { DEFAULTS } from '../settings/lab-config.js';
 
 let _db = null;
 let _state = null;
@@ -49,22 +50,30 @@ export async function submitReservation() {
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
 
   try {
-    const limit = _state.weeklyLimit || 4;
+    const limit = _state.weeklyLimit || _state.labConfig?.weeklyLimit || DEFAULTS.weeklyLimit;
     const newSlotsCount = _state.selectedSlots.length;
 
     const firstSlotDate = _state.selectedSlots[0].split('_')[0];
     const dateObj = new Date(firstSlotDate + "T12:00:00");
 
+    // Ventana semanal según días hábiles de config; con defaults [1..5]
+    // equivale al cálculo lunes–viernes anterior.
+    const weekDays = _state.labConfig?.weekDays || DEFAULTS.weekDays;
+    const sortedDays = [...weekDays].sort((a, b) => a - b);
+    const firstDay = sortedDays[0];
+    const lastDay = sortedDays[sortedDays.length - 1];
+
     const day = dateObj.getDay();
-    const diffToMon = day === 0 ? -6 : 1 - day;
-    const monday = new Date(dateObj);
-    monday.setDate(dateObj.getDate() + diffToMon);
-    const friday = new Date(monday);
-    friday.setDate(monday.getDate() + 4);
+    let diffToFirst = firstDay - day;
+    if (diffToFirst > 0) diffToFirst -= 7;
+    const weekStart = new Date(dateObj);
+    weekStart.setDate(dateObj.getDate() + diffToFirst);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + (lastDay - firstDay));
 
     const { formatDateYYYYMMDD } = await import('../utils/dates.js');
-    const startStr = formatDateYYYYMMDD(monday);
-    const endStr = formatDateYYYYMMDD(friday);
+    const startStr = formatDateYYYYMMDD(weekStart);
+    const endStr = formatDateYYYYMMDD(weekEnd);
 
     const q = query(
       collection(_db, _RESERVATIONS_COLLECTION),
@@ -142,7 +151,8 @@ export async function admAct(id, app, d, h, _gn) {
   const s = await getDocs(query(collection(_db, _RESERVATIONS_COLLECTION), where("date", "==", d), where("hour", "==", h), where("status", "in", ["approved", "blocked"])));
   if (s.docs.find(x => x.data().status === 'blocked')) return notifyAlert("Horario bloqueado.");
   const uniqueApproved = new Set(s.docs.filter(doc => doc.data().status === 'approved').map(doc => doc.data().groupName)).size;
-  if (uniqueApproved >= 4) return notifyAlert("Horario lleno.");
+  const capacity = _state.labConfig?.slotCapacity || DEFAULTS.slotCapacity;
+  if (uniqueApproved >= capacity) return notifyAlert("Horario lleno.");
   try {
     const resRef = doc(_db, _RESERVATIONS_COLLECTION, id);
     const resSnap = await getDoc(resRef);

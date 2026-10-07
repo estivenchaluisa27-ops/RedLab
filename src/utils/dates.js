@@ -1,13 +1,17 @@
 /**
  * src/utils/dates.js — Utilidades de fechas para el calendario semanal
  */
+import { DEFAULTS } from '../settings/lab-config.js';
 
 /**
- * Devuelve un array de 5 fechas (lun-vie) para una semana dada.
+ * Devuelve un array de fechas para una semana dada, una por cada día
+ * listado en `weekDays`.
+ * Sin segundo argumento conserva la semántica móvil: 5 fechas (lun–vie).
  * @param {number} offset - Semanas relativas a la actual (0 = esta semana)
+ * @param {number[]} [weekDays] - Días a incluir (0=dom … 6=sáb); default lun–vie
  * @returns {Date[]}
  */
-export function getWeekDays(offset = 0) {
+export function getWeekDays(offset = 0, weekDays = DEFAULTS.weekDays) {
   const now = new Date();
   now.setHours(12, 0, 0, 0);
   now.setDate(now.getDate() + (offset * 7));
@@ -15,9 +19,10 @@ export function getWeekDays(offset = 0) {
   const mon = new Date(now);
   mon.setDate(mon.getDate() + d);
   const w = [];
-  for (let i = 0; i < 5; i++) {
+  for (const dayOfWeek of weekDays) {
+    const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
     const x = new Date(mon);
-    x.setDate(x.getDate() + i);
+    x.setDate(x.getDate() + diff);
     w.push(x);
   }
   return w;

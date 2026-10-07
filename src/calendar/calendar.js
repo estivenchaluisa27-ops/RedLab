@@ -1,5 +1,6 @@
 import { collection, query, where, onSnapshot, getDoc, doc } from '../firebase-config.js';
 import { state, registerListener, unregisterListener } from '../state.js';
+import { DEFAULTS } from '../settings/lab-config.js';
 import { escapeHtml, escapeAttr } from '../utils/escape.js';
 import { getWeekDays, formatDateYYYYMMDD, isPastDate } from '../utils/dates.js';
 import { openAttendanceModal, deleteReservation } from '../reservations/reservations.js';
@@ -27,7 +28,14 @@ export function clearCalendarListeners() {
   _adminSlotDetails.clear();
 }
 
-export function classifySlot(dateStr, hourStr, reservations, userState) {
+/**
+ * Clasifica un slot según reservas y usuario.
+ * Sin `capacity` usa el default móvil (DEFAULTS.slotCapacity = 4): el path
+ * móvil (vista-día, tabla estudiante sin config) llama siempre con 4 args.
+ * El path escritorio/admin inyecta la capacidad de la config como 5.º arg.
+ */
+export function classifySlot(dateStr, hourStr, reservations, userState, capacity) {
+  const cap = capacity ?? DEFAULTS.slotCapacity;
   const past = isPastDate(dateStr, parseInt(hourStr));
   if (past) return { type: 'past', className: 'slot-past', label: 'Cerrado', disabled: true };
 
@@ -49,7 +57,7 @@ export function classifySlot(dateStr, hourStr, reservations, userState) {
   }
 
   const uniqueApproved = new Set(reservations.filter(x => x.status === 'approved').map(x => x.groupName)).size;
-  if (uniqueApproved >= 4) return { type: 'full', className: 'slot-full', label: 'Lleno', disabled: true };
+  if (uniqueApproved >= cap) return { type: 'full', className: 'slot-full', label: 'Lleno', disabled: true };
   if (uniqueApproved > 0) return { type: 'partial', className: 'slot-partial', label: 'Disp.', disabled: false, occupancy: uniqueApproved };
 
   return { type: 'free', className: 'slot-free', label: 'Disponible', disabled: false };
@@ -99,8 +107,11 @@ function renderAdminCalendar(weekDays) {
   const tbody = document.getElementById('admin-calendar-body');
   tbody.innerHTML = '';
   const slotMap = new Map();
+  const startHour = state.labConfig?.startHour ?? DEFAULTS.startHour;
+  const endHour = state.labConfig?.endHour ?? DEFAULTS.endHour;
+  const capacity = state.labConfig?.slotCapacity ?? DEFAULTS.slotCapacity;
 
-  for (let h = 7; h <= 19; h++) {
+  for (let h = startHour; h <= endHour; h++) {
     const tr = document.createElement('tr');
     tr.innerHTML = `<td><div class="time-cell-content"><span class="time-cell-full">${h}:00 - ${h+1}:00</span><span class="time-cell-compact">${h}h</span></div></td>`;
     weekDays.forEach(d => {
@@ -119,7 +130,7 @@ function renderAdminCalendar(weekDays) {
   registerListener('calendar:reservations', onSnapshot(
     query(collection(_db, _RESERVATIONS_COLLECTION),
       where("date", ">=", formatDateYYYYMMDD(weekDays[0])),
-      where("date", "<=", formatDateYYYYMMDD(weekDays[4]))),
+      where("date", "<=", formatDateYYYYMMDD(weekDays[weekDays.length - 1]))),
     (s) => {
       _adminSlotDetails.clear();
       slotMap.forEach((b, k) => {
@@ -172,8 +183,8 @@ const map = new Map();
           b.innerHTML = '<span>Bloqueado</span>';
           b.dataset.status = 'blocked';
         } else if (uniqueApprovedCount > 0) {
-          b.className = `slot slot-admin-has-data ${uniqueApprovedCount >= 4 ? 'slot-full' : 'slot-partial'}`;
-          b.innerHTML = `<span>Ocupado</span><div class="occupancy-badge">${uniqueApprovedCount}/4</div>` + (pending ? `<span class="text-xs text-yellow-700 font-bold mt-1">Espera: ${pending}</span>` : '');
+          b.className = `slot slot-admin-has-data ${uniqueApprovedCount >= capacity ? 'slot-full' : 'slot-partial'}`;
+          b.innerHTML = `<span>Ocupado</span><div class="occupancy-badge">${uniqueApprovedCount}/${capacity}</div>` + (pending ? `<span class="text-xs text-yellow-700 font-bold mt-1">Espera: ${pending}</span>` : '');
           b.dataset.status = 'has-data';
         } else if (pending > 0) {
           b.className = 'slot slot-pending';
@@ -189,7 +200,13 @@ const map = new Map();
 function renderMatrix() {
   const container = document.getElementById('matrix-container');
   if (!container) return;
-  container.innerHTML = `<div class="grid-matrix mb-4"><div></div><div class="matrix-header">Lun</div><div class="matrix-header">Mar</div><div class="matrix-header">Mié</div><div class="matrix-header">Jue</div><div class="matrix-header">Vie</div>${[7,8,9,10,11,12,13,14,15,16,17,18,19].map(h => `<div class="matrix-time">${h}:00</div>${[1,2,3,4,5].map(d => `<div class="matrix-cell" data-action="toggle-matrix-cell" data-day="${d}" data-hour="${h}"></div>`).join('')}`).join('')}</div>`;
+  const startHour = state.labConfig?.startHour ?? DEFAULTS.startHour;
+  const endHour = state.labConfig?.endHour ?? DEFAULTS.endHour;
+  const matrixDays = state.labConfig?.weekDays ?? DEFAULTS.weekDays;
+  const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+  const hours = [];
+  for (let h = startHour; h <= endHour; h++) hours.push(h);
+  container.innerHTML = `<div class="grid-matrix mb-4"><div></div>${matrixDays.map(d => `<div class="matrix-header">${dayNames[d]}</div>`).join('')}${hours.map(h => `<div class="matrix-time">${h}:00</div>${matrixDays.map(d => `<div class="matrix-cell" data-action="toggle-matrix-cell" data-day="${d}" data-hour="${h}"></div>`).join('')}`).join('')}</div>`;
 }
 
 function listenAdminPending() {
@@ -258,7 +275,9 @@ function listenAdminPending() {
 }
 
 export function refreshAdminCalendar() {
-  const w = getWeekDays(state.weekOffset);
+  // Path escritorio/admin: la semana se filtra por los días hábiles de config.
+  const weekDays = state.labConfig?.weekDays ?? DEFAULTS.weekDays;
+  const w = getWeekDays(state.weekOffset, weekDays);
   renderAdminCalendar(w);
 }
 
@@ -326,8 +345,13 @@ function renderStudentCalendar(weekDays) {
   const tbody = document.getElementById('student-calendar-body');
   tbody.innerHTML = '';
   const map = new Map();
+  // Tabla semanal de estudiante = vista de escritorio (hidden md:table en
+  // index.html): horario parametrizado. La vista-día móvil no pasa por aquí
+  // (usa sus propias constantes FIRST/LAST_HOUR en student-day-view.js).
+  const startHour = state.labConfig?.startHour ?? DEFAULTS.startHour;
+  const endHour = state.labConfig?.endHour ?? DEFAULTS.endHour;
 
-  for (let h = 7; h <= 19; h++) {
+  for (let h = startHour; h <= endHour; h++) {
     const tr = document.createElement('tr');
     tr.innerHTML = `<td><div class="time-cell-content"><span class="time-cell-full">${h}:00 - ${h+1}:00</span><span class="time-cell-compact">${h}h</span></div></td>`;
     weekDays.forEach(d => {
@@ -365,7 +389,7 @@ function renderStudentCalendar(weekDays) {
     query(collection(_db, _RESERVATIONS_COLLECTION),
       where("status", "==", "blocked"),
       where("date", ">=", formatDateYYYYMMDD(weekDays[0])),
-      where("date", "<=", formatDateYYYYMMDD(weekDays[4]))),
+      where("date", "<=", formatDateYYYYMMDD(weekDays[weekDays.length - 1]))),
     (s) => {
       blockedDocs.clear();
       s.forEach(d => blockedDocs.set(d.id, { id: d.id, ...d.data() }));
@@ -381,7 +405,7 @@ function renderStudentCalendar(weekDays) {
     query(collection(_db, _RESERVATIONS_COLLECTION),
       where("courseId", "==", state.courseId),
       where("date", ">=", formatDateYYYYMMDD(weekDays[0])),
-      where("date", "<=", formatDateYYYYMMDD(weekDays[4]))),
+      where("date", "<=", formatDateYYYYMMDD(weekDays[weekDays.length - 1]))),
     (s) => {
       courseDocs.clear();
       s.forEach(d => courseDocs.set(d.id, { id: d.id, ...d.data() }));
@@ -421,7 +445,10 @@ function renderStudentSlots(map, docsArray) {
     const b = map.get(k);
     if (!b || b.dataset.status === 'past') return;
     const [dStr, hStr] = k.split('_');
-    const result = classifySlot(dStr, hStr, arr, state);
+    // Path escritorio: la config se inyecta como argumento (la vista-día
+    // móvil llama a classifySlot con 4 args y usa defaults).
+    const cap = state.labConfig?.slotCapacity ?? DEFAULTS.slotCapacity;
+    const result = classifySlot(dStr, hStr, arr, state, cap);
     if (result.type === 'blocked') {
       b.className = 'slot slot-blocked';
       b.innerHTML = '<span>No disp.</span>';
@@ -439,7 +466,7 @@ function renderStudentSlots(map, docsArray) {
       b.disabled = true;
     } else if (result.type === 'partial') {
       b.className = 'slot slot-partial';
-      b.innerHTML = `<span>Disp.</span><div class="occupancy-badge">${result.occupancy}/4</div>`;
+      b.innerHTML = `<span>Disp.</span><div class="occupancy-badge">${result.occupancy}/${cap}</div>`;
       b.dataset.status = 'partial';
     }
   });

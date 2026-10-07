@@ -9,6 +9,7 @@ import { escapeHtml, escapeAttr } from '../utils/escape.js';
 import { buildCourseId } from './course-utils.js';
 import { alert as notifyAlert, notifyConfirm } from '../utils/notify.js';
 import { navigate } from '../router.js';
+import { DEFAULTS } from '../settings/lab-config.js';
 
 let _db = null;
 let _state = null;
@@ -48,7 +49,7 @@ export async function createCourse(e) {
     document.getElementById('c-subject').value = '';
     document.getElementById('c-parallel').value = '';
     document.getElementById('c-career').value = '';
-    document.getElementById('c-limit').value = '4';
+    document.getElementById('c-limit').value = String(_state.labConfig?.weeklyLimit || DEFAULTS.weeklyLimit);
     navigate('#/admin/cursos');
   } catch (err) {
     notifyAlert("Error crítico: " + err.message);
@@ -83,7 +84,7 @@ export async function setupEditCourseView(params) {
 
     document.getElementById('e-subject').value = courseData.subject;
     document.getElementById('e-parallel').value = courseData.parallel;
-    document.getElementById('e-limit').value = courseData.weeklyLimit || 4;
+    document.getElementById('e-limit').value = courseData.weeklyLimit || _state.labConfig?.weeklyLimit || DEFAULTS.weeklyLimit;
 
     const profSelect = document.getElementById('e-professor');
     profSelect.innerHTML = '<option value="">Cargando...</option>';

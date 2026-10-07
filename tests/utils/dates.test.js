@@ -42,6 +42,34 @@ describe('getWeekDays', () => {
     const days = getWeekDays(1);
     expect(days[0].toISOString().slice(0, 10)).toBe('2026-07-13');
   });
+
+  it('con weekDays=[1,3,5] devuelve solo 3 días (lun, mié, vie)', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-08T12:00:00')); // miércoles
+    const days = getWeekDays(0, [1, 3, 5]);
+    expect(days).toHaveLength(3);
+    expect(days[0].getDay()).toBe(1);
+    expect(days[1].getDay()).toBe(3);
+    expect(days[2].getDay()).toBe(5);
+  });
+
+  it('con weekDays=[0,6] devuelve solo 2 días (dom, sáb)', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-08T12:00:00'));
+    const days = getWeekDays(0, [0, 6]);
+    expect(days).toHaveLength(2);
+    expect(days[0].getDay()).toBe(0);
+    expect(days[1].getDay()).toBe(6);
+  });
+
+  it('con weekDays=[1,2,3,4,5] devuelve 5 días (lun-vie)', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-08T12:00:00'));
+    const days = getWeekDays(0, [1, 2, 3, 4, 5]);
+    expect(days).toHaveLength(5);
+    expect(days[0].getDay()).toBe(1);
+    expect(days[4].getDay()).toBe(5);
+  });
 });
 
 describe('formatDateYYYYMMDD', () => {
