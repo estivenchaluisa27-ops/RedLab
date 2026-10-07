@@ -830,11 +830,10 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
 .btn-outline-navy:active:not(:disabled) { transform: translateY(1px); }
 .btn-outline-navy:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* ===== ACTION BOX (Bloquear/Desbloquear) — tarjeta clara sticky ===== */
+/* ===== ACTION BOX (Bloquear/Desbloquear) — tarjeta clara compacta sobre pendientes =====
+   Vive en flujo encima del panel de pendientes (columna derecha h-fit): el
+   sticky top:1rem anterior ya no anclaba a nada util y se elimina. */
 #admin-action-box {
-    position: sticky;
-    top: 1rem;
-    z-index: 30;
     border-radius: 2px !important;
     box-shadow: 0 1px 0 rgba(255, 255, 255, 0.07), 0 8px 24px -16px rgba(0, 20, 40, 0.45) !important;
     border: 1px solid #e2e8f0 !important;
