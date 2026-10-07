@@ -21,6 +21,7 @@
  */
 import { initRouter, navigate } from './router.js';
 import { animateViewIn } from './utils/motion.js';
+import { state } from './state.js';
 
 let _sectionSetup = {};
 let _subviewSetup = {};   // { 'curso-nuevo': { fn, hasRun }, ... }
@@ -105,11 +106,35 @@ function showCursosSubview(subview) {
   }
 }
 
+/**
+ * Secciones solo-admin (P-A, solo-escritorio). El guard de rol vive aquí
+ * (shell de navegación): no-admin que entre por hash directo cae a
+ * 'calendario' y los items del sidebar se ocultan. Sin efecto en móvil.
+ */
+const ADMIN_ONLY_SECTIONS = ['usuarios', 'ajustes'];
+
+function applyRoleVisibility() {
+  const isAdmin = state.role === 'admin';
+  document.querySelectorAll('#admin-sidebar .sidebar-item').forEach(item => {
+    if (ADMIN_ONLY_SECTIONS.includes(item.dataset.route)) {
+      item.classList.toggle('hidden', !isAdmin);
+    }
+  });
+}
+
 function showSection(section, params = {}) {
   // No despachar setups si el panel admin está oculto (nadie logueado).
   // Esto evita permission-denied al intentar leer Firestore antes de login.
   const adminDash = document.getElementById('admin-dashboard');
   if (adminDash?.classList.contains('hidden')) return;
+  // P-A: guard de rol solo-escritorio. usuarios/ajustes son solo-admin:
+  // no-admin por hash directo cae a 'calendario'. No toca el path
+  // estudiante (ese flujo no pasa por este router admin).
+  applyRoleVisibility();
+  if (ADMIN_ONLY_SECTIONS.includes(section) && state.role !== 'admin') {
+    navigate('#/admin/calendario');
+    return;
+  }
   // Si venimos de la sección 'cursos' y vamos a otra sección, correr el
   // onLeave de la sub-vista activa (limpia listeners, ej: grupos).
   if (_currentSection === 'cursos' && section !== 'cursos' && _currentSubview && _subviewOnLeave[_currentSubview]) {

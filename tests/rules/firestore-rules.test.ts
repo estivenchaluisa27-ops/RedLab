@@ -846,3 +846,47 @@ describe('Firestore Rules — Notificaciones in-app (historial estudiante)', () 
     await assertFails(q.get());
   });
 });
+
+describe('Firestore Rules — config/lab (P-A)', () => {
+  if (!emulatorAvailable) {
+    it.skip('Firestore emulator not available — config/lab tests skipped', () => {});
+    return;
+  }
+
+  it('Usuario firmado PUEDE leer config/lab', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('config/lab').set({ slotCapacity: 4 });
+    });
+    const student = testEnv.authenticatedContext(STUDENT_UID, { email: STUDENT_EMAIL });
+    await assertSucceeds(student.firestore().doc('config/lab').get());
+  });
+
+  it('Anónimo NO puede leer config/lab', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('config/lab').set({ slotCapacity: 4 });
+    });
+    const unauth = testEnv.unauthenticatedContext();
+    await assertFails(unauth.firestore().doc('config/lab').get());
+  });
+
+  it('Admin PUEDE escribir config/lab', async () => {
+    const admin = testEnv.authenticatedContext(ADMIN_UID, { email: ADMIN_EMAIL });
+    await assertSucceeds(
+      admin.firestore().doc('config/lab').set({ slotCapacity: 6 })
+    );
+  });
+
+  it('No-admin NO puede escribir config/lab', async () => {
+    const student = testEnv.authenticatedContext(STUDENT_UID, { email: STUDENT_EMAIL });
+    await assertFails(
+      student.firestore().doc('config/lab').set({ slotCapacity: 6 })
+    );
+  });
+
+  it('Anónimo NO puede escribir config/lab', async () => {
+    const unauth = testEnv.unauthenticatedContext();
+    await assertFails(
+      unauth.firestore().doc('config/lab').set({ slotCapacity: 6 })
+    );
+  });
+});

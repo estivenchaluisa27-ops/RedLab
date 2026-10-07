@@ -201,6 +201,16 @@ service cloud.firestore {
     }
 
     // ==============================
+    // CONFIG DEL LABORATORIO (P-A)
+    // ==============================
+    // Lectura para cualquier usuario firmado; escritura solo admin.
+    // Aditiva: no recorta ninguna regla que lee el móvil.
+    match /config/lab {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && isAdmin();
+    }
+
+    // ==============================
     // DENEGAR TODO LO DEMÁS
     // ==============================
     match /{document=**} {

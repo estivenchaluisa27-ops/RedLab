@@ -26,7 +26,12 @@ export let state = {
   selectedSlots: [],
   coursesCache: {},
   professorsCache: {},
-  weeklyLimit: 4
+  weeklyLimit: 4,
+  // Config del laboratorio (P-A, doc `config/lab` vía src/settings/lab-config.js).
+  // null hasta que el boot la cargue; los consumidores usan DEFAULTS como
+  // fallback. Los defaults vivos están fijados en DEFAULTS (lab-config.js):
+  // horario 7–19, weekDays lun–vie [1..5], tope semanal 4, capacidad 4.
+  labConfig: null
 };
 
 export function resetState() {
@@ -42,7 +47,8 @@ export function resetState() {
     selectedSlots: [],
     coursesCache: {},
     professorsCache: {},
-    weeklyLimit: 4
+    weeklyLimit: 4,
+    labConfig: null
   });
 }
 

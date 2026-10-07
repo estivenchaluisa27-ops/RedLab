@@ -21,6 +21,12 @@ import { createSubmitDispatcher } from './utils/dispatcher.js';
 import { initAdminRouter, registerSectionSetup, registerSubviewSetup, registerSubviewOnLeave } from './admin-router-controller.js';
 import { createClickActions, createSubmitActions } from './actions.js';
 import { showView } from './utils/dom.js';
+// P-A core escritorio: paneles Usuarios/Ajustes + parametrización config/lab.
+// Solo-escritorio; no altera el init móvil (se añade después, sin reordenar).
+import { setupUsuariosView, handleSaveAdmin, handleSaveProfessor, handleCSVImport, handleMoveStudent } from './users/users.js';
+import { initUsuarios } from './users/users-store.js';
+import { loadLabConfig } from './settings/lab-config.js';
+import { setupAjustesView, saveLabConfig } from './settings/settings.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   initSentry();
@@ -46,10 +52,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   initReports(db, state);
   initCalendar(db, RESERVATIONS_COLLECTION);
   initNotifications(db, state);
+  // P-A: init solo-escritorio después del init móvil (sin reordenarlo).
+  initUsuarios(db, state);
+
+  // P-A: cargar config del laboratorio antes de cualquier setup de sección.
+  // No bloquea el boot: la vista-día móvil (init diferido en setupStudentView)
+  // arranca igual con DEFAULTS si la lectura aún no resolvió.
+  loadLabConfig(db).then(cfg => { state.labConfig = cfg; }).catch(() => { state.labConfig = null; });
 
   // Router admin — registro de setups por sección y sub-vista
   registerSectionSetup('calendario', () => setupAdminCalendarLogic(), { rerunOnEveryEnter: true });
   registerSectionSetup('cursos', () => { /* la sub-view activa decide setup, ver registerSubviewSetup */ });
+  registerSectionSetup('usuarios', () => setupUsuariosView());
+  registerSectionSetup('ajustes', () => setupAjustesView());
   registerSectionSetup('reportes', () => setupReportesView(), { rerunOnEveryEnter: true });
 
   // Sub-vistas de cursos: setup se invoca al montar cada sub-view
@@ -67,7 +82,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Event delegation — los mapas de data-action viven en src/actions.js
   const clickActions = createClickActions({ auth });
-  const submitActions = createSubmitActions({ auth });
+  const baseSubmitActions = createSubmitActions({ auth });
+  // P-A: handlers solo-escritorio (Usuarios/Ajustes). Se fusionan sin
+  // modificar actions.js ni los handlers móviles existentes.
+  const submitActions = {
+    ...baseSubmitActions,
+    'save-admin': (e) => handleSaveAdmin(e),
+    'save-professor': (e) => handleSaveProfessor(e),
+    'submit-csv-import': (e) => handleCSVImport(e),
+    'submit-move-student': (e) => handleMoveStudent(e),
+    'save-lab-config': (e) => saveLabConfig(e, db),
+  };
 
   // El dispatcher reenvía el evento como 2º arg: las actions que solo usan el
   // botón lo ignoran; 'open-slot-info' lo necesita para stopPropagation().
