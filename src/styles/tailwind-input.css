@@ -19,7 +19,7 @@ h1, h2, h3 { font-weight: 800; letter-spacing: -0.01em; }
 
 /* --- TARJETAS CON ELEVACIÓN EN CAPAS --- */
 @layer components {
-  .card-lift { background: white; border: 1px solid #e2e8f0; border-radius: 2px; box-shadow: 0 2px 4px rgba(0, 34, 68, 0.04), 0 8px 24px -16px rgba(0, 66, 116, 0.18); transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s; }
+  .card-lift { background: white; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 34, 68, 0.04), 0 8px 24px -16px rgba(0, 66, 116, 0.18); transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s; }
   .card-lift:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0, 34, 68, 0.06), 0 16px 40px -16px rgba(0, 66, 116, 0.30); border-color: rgba(0, 66, 116, 0.25); }
 }
 
@@ -34,16 +34,10 @@ h1, h2, h3 { font-weight: 800; letter-spacing: -0.01em; }
   background-color: #004274;
   background-size: cover;
   background-position: center;
-  border-bottom: 1px solid rgba(0, 34, 68, 0.12);
+  border-bottom: 1px solid #f1f5f9;
   position: relative;
 }
-.course-cover::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(0, 34, 68, 0) 55%, rgba(0, 34, 68, 0.22) 100%);
-  pointer-events: none;
-}
+
 
 /* El menu se posiciona sobre la tarjeta y se revela con data-abierto, no con
    una clase: el estado vive en el DOM y asi sobrevive al repintado del grid. */
@@ -145,7 +139,7 @@ h1, h2, h3 { font-weight: 800; letter-spacing: -0.01em; }
 #groups-table-body td:nth-child(2) {
     font-size: 14.5px;
     font-weight: 500;
-    color: #334155;
+    color: #000;
 }
 
 /* MICRO-INTERACCIONES (Botones que "viven") */

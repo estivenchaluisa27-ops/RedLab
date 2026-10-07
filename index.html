@@ -106,10 +106,13 @@
                     <a href="#/admin/cursos" data-route="cursos" class="sidebar-item flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition">
                         <i class="fas fa-book w-5 text-center text-base"></i><span class="sidebar-label">Cursos</span>
                     </a>
+                    <a href="#/admin/usuarios" data-route="usuarios" class="sidebar-item flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition">
+                        <i class="fas fa-users w-5 text-center text-base"></i><span class="sidebar-label">Usuarios</span>
+                    </a>
                     <a href="#/admin/reportes" data-route="reportes" class="sidebar-item flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition" data-fase="B">
                         <i class="fas fa-file-excel w-5 text-center text-base"></i><span class="sidebar-label">Reportes</span>
                     </a>
-                    <a href="#/admin/ajustes" data-route="ajustes" class="sidebar-item flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition hidden" data-fase="B">
+                    <a href="#/admin/ajustes" data-route="ajustes" class="sidebar-item flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition" data-fase="B">
                         <i class="fas fa-cog w-5 text-center text-base"></i><span class="sidebar-label">Ajustes</span>
                     </a>
                 </nav>
@@ -146,7 +149,7 @@
                     <h2 class="text-xl font-bold text-slate-700">Cursos Activos</h2>
                     <a href="#/admin/cursos/nuevo" data-route-link="curso-nuevo" class="bg-uce-700 text-white px-4 py-2 rounded shadow hover:opacity-90 font-bold text-sm"><i class="fas fa-plus mr-2"></i>Nuevo Curso</a>
                 </div>
-                <div id="courses-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                <div id="courses-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"></div>
             </section>
 
             <!-- Sub-view 'curso-nuevo' (migrado de modal-course) -->
@@ -184,22 +187,22 @@
                     <input type="hidden" id="edit-course-id">
                     <form data-action="save-course-changes" class="space-y-3">
                         <div>
-                            <label class="block text-xs font-bold text-slate-500 mb-1">Materia</label>
-                            <input type="text" id="e-subject" class="w-full p-2 border rounded text-slate-700" required>
+                            <label class="block text-sm font-bold text-sky-600 mb-1">Materia</label>
+                            <input type="text" id="e-subject" class="w-full p-2 border rounded text-black" required>
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-xs font-bold text-slate-500 mb-1">Paralelo</label>
-                                <input type="text" id="e-parallel" class="w-full p-2 border rounded text-slate-700" required>
+                                <label class="block text-sm font-bold text-sky-600 mb-1">Paralelo</label>
+                                <input type="text" id="e-parallel" class="w-full p-2 border rounded text-black" required>
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-slate-500 mb-1">Horas/Semana</label>
-                                <input type="number" id="e-limit" class="w-full p-2 border rounded text-slate-700" min="1" required>
+                                <label class="block text-sm font-bold text-sky-600 mb-1">Horas/Semana</label>
+                                <input type="number" id="e-limit" class="w-full p-2 border rounded text-black" min="1" required>
                             </div>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-500 mb-1">Docente Encargado</label>
-                            <select id="e-professor" class="w-full p-2 border rounded bg-white text-slate-700" required>
+                            <label class="block text-sm font-bold text-sky-600 mb-1">Docente Encargado</label>
+                            <select id="e-professor" class="w-full p-2 border rounded bg-white text-black" required>
                                 <option value="">Cargando lista...</option>
                             </select>
                         </div>
@@ -220,20 +223,20 @@
                 </div>
                 <div class="bg-white rounded-xl shadow-lg border border-slate-200 p-6">
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-2 mb-4 bg-slate-50 p-3 rounded border">
-                        <input type="text" id="new-group-name" placeholder="G1" class="p-2 border rounded">
-                        <input type="email" id="new-group-leader" placeholder="Email Líder" class="p-2 border rounded">
-                        <input type="text" id="new-group-cedula" placeholder="Cédula Líder" class="p-2 border rounded">
-                        <input type="text" id="new-group-fullname" placeholder="Nombre Completo Líder" class="p-2 border rounded">
+                        <input type="text" id="new-group-name" placeholder="G1" class="p-2 border rounded text-black">
+                        <input type="email" id="new-group-leader" placeholder="Email Líder" class="p-2 border rounded text-black">
+                        <input type="text" id="new-group-cedula" placeholder="Cédula Líder" class="p-2 border rounded text-black">
+                        <input type="text" id="new-group-fullname" placeholder="Nombre Completo Líder" class="p-2 border rounded text-black">
                         <button data-action="add-group" class="btn-outline-navy md:col-span-4"><i class="fas fa-plus mr-1"></i> Agregar Grupo</button>
                     </div>
                     <div class="overflow-y-auto border rounded p-4 max-h-[60vh]">
                         <table class="w-full text-sm text-left">
-                            <thead class="text-slate-500 font-bold border-b">
+                            <thead class="text-sky-600 font-bold border-b">
                                 <tr>
-                                    <th class="pb-2">Grupo</th>
-                                    <th class="pb-2">Líder</th>
-                                    <th class="pb-2 text-center">Integrantes</th>
-                                    <th class="pb-2 text-right">Acción</th>
+                                    <th class="pb-2 text-sky-600">Grupo</th>
+                                    <th class="pb-2 text-sky-600">Líder</th>
+                                    <th class="pb-2 text-center text-sky-600">Integrantes</th>
+                                    <th class="pb-2 text-right text-sky-600">Acción</th>
                                 </tr>
                             </thead>
                             <tbody id="groups-table-body"></tbody>
@@ -295,6 +298,14 @@
                 </div>
             </section>
 
+            <!-- Sección: Usuarios (shell de navegación; tabs futuros) -->
+            <section id="section-usuarios" data-section="usuarios" class="hidden fade-in">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-slate-700">Usuarios</h2>
+                </div>
+                <div id="usuarios-tabs"></div>
+            </section>
+
             <!-- Sección: Reportes (migrado de modal-report) -->
             <section id="section-reportes" data-section="reportes" class="hidden fade-in max-w-2xl">
                 <div class="flex items-center gap-3 mb-6">
@@ -325,11 +336,13 @@
                 </div>
             </section>
 
-            <!-- Placeholder: Ajustes (post-Fase B) -->
-            <section id="section-ajustes" data-section="ajustes" class="hidden fade-in">
-                <div class="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-500">
-                    <i class="fas fa-tools text-3xl text-slate-300 mb-3"></i>
-                    <p class="font-medium">Sección de Ajustes disponible próximamente.</p>
+            <!-- Sección: Ajustes -->
+            <section id="section-ajustes" data-section="ajustes" class="hidden fade-in max-w-2xl">
+                <div class="flex items-center gap-3 mb-6">
+                    <h2 class="text-xl font-bold text-uce-700">Ajustes del Laboratorio</h2>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg border border-slate-200 p-6">
+                    <div id="ajustes-form"></div>
                 </div>
             </section>
 

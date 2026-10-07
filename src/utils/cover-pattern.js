@@ -28,13 +28,14 @@
 const W = 400;
 const H = 110;
 
-/** Paletas derivadas de la identidad visual de RedLab (tailwind-input.css). */
+/** Seis familias apagadas estilo referencia: la portada decora sin competir. */
 const PALETTES = [
-  { bg: '#004274', fg: '#0d6ea8', accent: '#e1ad01' },
-  { bg: '#003366', fg: '#1f6fb2', accent: '#d1b610' },
-  { bg: '#002244', fg: '#0b5c8a', accent: '#f0c419' },
-  { bg: '#003f6b', fg: '#4a90c2', accent: '#e1ad01' },
-  { bg: '#004b7a', fg: '#2d8ac4', accent: '#d9b310' },
+  { bg1: '#8F8AC9', bg2: '#6A63B8', fg: '#5A54A6', accent: '#C2BEE3' }, // Violeta mate
+  { bg1: '#E8A0BF', bg2: '#D67BA0', fg: '#B95E83', accent: '#F2C9DA' }, // Rosa suave
+  { bg1: '#5E8FC4', bg2: '#3E6FA3', fg: '#2F5885', accent: '#9DBEDD' }, // Azul medio
+  { bg1: '#CFE8F7', bg2: '#A5CDE9', fg: '#7FA8C9', accent: '#E6F2FA' }, // Celeste pastel
+  { bg1: '#9CAF88', bg2: '#7A9B7E', fg: '#5F7F60', accent: '#C4D6BC' }, // Verde salvia
+  { bg1: '#F0E2B6', bg2: '#DCC88F', fg: '#B49B5E', accent: '#F8F0DA' }, // Amarillo pastel mate
 ];
 
 /**
@@ -81,19 +82,27 @@ function triangles(rnd, colors) {
     for (let x = -cell; x < W + cell; x += cell) {
       const skew = Math.round(cell * (0.3 + rnd() * 0.4));
       out += `<polygon points="${x},${y} ${x + cell},${y} ${x + skew},${y + cell}" `
-        + `fill="${pick(rnd, colors)}" opacity="${opacity(rnd, 0.1, 0.45)}"/>`;
+        + `fill="${pick(rnd, colors)}" opacity="${opacity(rnd, 0.08, 0.22)}"/>`;
     }
   }
   return out;
 }
 
 function squares(rnd, colors) {
-  const cell = 40;
+  // Mosaico tenue sin aristas compartidas: celda 44 con baldosa 36 centrada,
+  // deja 8px de fondo visible entre baldosas para que no se lean como bordes
+  // sombreados. Un solo relleno tonal por portada (accent) y una sola
+  // opacidad tenue (<=0.16): sin alternancia fg/accent de contraste.
+  const cell = 44;
+  const size = 36;
+  const gap = (cell - size) / 2;
+  const fill = colors[0];
+  const alpha = (0.08 + rnd() * 0.08).toFixed(2);
   let out = '';
   for (let y = 0; y < H + cell; y += cell) {
     for (let x = 0; x < W + cell; x += cell) {
-      out += `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" `
-        + `fill="${pick(rnd, colors)}" opacity="${opacity(rnd, 0.08, 0.38)}"/>`;
+      out += `<rect x="${x + gap}" y="${y + gap}" width="${size}" height="${size}" `
+        + `fill="${fill}" opacity="${alpha}"/>`;
     }
   }
   return out;
@@ -114,7 +123,7 @@ function hexagons(rnd, colors) {
         pts.push(`${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`);
       }
       out += `<polygon points="${pts.join(' ')}" fill="${pick(rnd, colors)}" `
-        + `opacity="${opacity(rnd, 0.1, 0.42)}"/>`;
+        + `opacity="${opacity(rnd, 0.08, 0.22)}"/>`;
     }
   }
   return out;
@@ -125,7 +134,7 @@ function circles(rnd, colors) {
   for (let i = 0; i < 26; i += 1) {
     const r = (6 + rnd() * 22).toFixed(1);
     out += `<circle cx="${(rnd() * W).toFixed(1)}" cy="${(rnd() * H).toFixed(1)}" r="${r}" `
-      + `fill="${pick(rnd, colors)}" opacity="${opacity(rnd, 0.08, 0.4)}"/>`;
+      + `fill="${pick(rnd, colors)}" opacity="${opacity(rnd, 0.08, 0.22)}"/>`;
   }
   return out;
 }
@@ -136,7 +145,7 @@ function dots(rnd, colors) {
   for (let y = 0; y < H + cell; y += cell) {
     for (let x = 0; x < W + cell; x += cell) {
       out += `<circle cx="${x}" cy="${y}" r="${(1.5 + rnd() * 4.5).toFixed(1)}" `
-        + `fill="${pick(rnd, colors)}" opacity="${opacity(rnd, 0.15, 0.55)}"/>`;
+        + `fill="${pick(rnd, colors)}" opacity="${opacity(rnd, 0.08, 0.22)}"/>`;
     }
   }
   return out;
@@ -153,7 +162,7 @@ const FAMILIES = [triangles, squares, hexagons, circles, dots];
  * path en algunos navegadores y sin escapar rompe la URL.
  */
 function encodeSvg(svg) {
-  return encodeURIComponent(svg).replace(/'/g, '%27');
+  return encodeURIComponent(svg).replace(/'/g, '%27').replace(/\(/g, '%28').replace(/\)/g, '%29');
 }
 
 /**
@@ -167,18 +176,22 @@ function encodeSvg(svg) {
  * dentro del payload que puedan cerrar este envoltorio.
  *
  * @param {string} seed texto que identifica el curso (normalmente su id)
+ * @param {number} [index=0] posición en la grilla: desplaza la paleta para
+ *   que dos tarjetas vecinas jamás repitan paleta aunque el hash colisione.
+ *   Default 0 mantiene compatibilidad con llamadas viejas.
  * @returns {string} url('data:image/svg+xml,...')
  */
-export function coverPattern(seed) {
+export function coverPattern(seed, index = 0) {
   const text = String(seed ?? '');
   const h = hash(text);
   const rnd = mulberry32(h);
-  const palette = PALETTES[h % PALETTES.length];
+  const palette = PALETTES[index % PALETTES.length];
   const family = FAMILIES[Math.floor(rnd() * FAMILIES.length)];
   const colors = [palette.fg, palette.accent, palette.fg];
-  const body = family(rnd, colors);
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"`
-    + ` viewBox="0 0 ${W} ${H}"><rect width="${W}" height="${H}" fill="${palette.bg}"/>${body}</svg>`;
+  const body = family === squares ? family(rnd, [palette.accent]) : family(rnd, colors);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`
+    + `<defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="${palette.bg1}"/><stop offset="100%" stop-color="${palette.bg2}"/></linearGradient></defs>`
+    + `<rect width="${W}" height="${H}" fill="url(#g)"/>${body}</svg>`;
   return `url('data:image/svg+xml,${encodeSvg(svg)}')`;
 }
 

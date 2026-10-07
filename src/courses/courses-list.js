@@ -105,6 +105,9 @@ export function loadAdminDashboard() {
     grid.innerHTML = '';
     closeCourseMenus();
     const firstRender = !coursesStaggered;
+    // Desplaza la paleta por posición en la grilla: dos tarjetas vecinas
+    // jamás repiten paleta aunque el sorteo por hash colisione en la vista.
+    let coverIndex = 0;
     snap.forEach(d => {
       const c = d.data();
       _state.coursesCache[d.id] = c;
@@ -113,27 +116,28 @@ export function loadAdminDashboard() {
       // La portada se siembra con el id del curso: misma semilla, mismo patron
       // siempre. Se sembrara con el subject si el id cambia, para no perder la
       // identidad visual al reimportar cursos.
-      const cover = coverPattern(d.id || subject);
+      const cover = coverPattern(d.id || subject, coverIndex);
+      coverIndex += 1;
 
       grid.innerHTML += `
-        <div class="course-card bg-white rounded-[2px] border border-slate-200 card-lift relative overflow-hidden flex flex-col">
+        <div class="course-card bg-white rounded-lg border border-slate-200 card-lift relative overflow-hidden flex flex-col">
           <div class="course-cover" style="background-image:${cover}" role="img" aria-label="Portada decorativa de ${subject}"></div>
-          <div class="p-5 flex flex-col flex-1">
-            <div>
-              <h3 class="font-bold text-lg text-slate-800">${subject}</h3>
-              <span class="inline-block mt-1 bg-uce-100 text-uce-800 text-xs px-2 py-1 rounded font-bold">${escapeHtml(c.parallel)}</span>
+          <div class="p-3 flex flex-col flex-1">
+            <h3 class="text-sm font-normal uppercase tracking-wide text-sky-600 leading-snug line-clamp-3">${subject}</h3>
+            <div class="flex justify-between items-start mt-1 gap-2">
+              <p class="text-sm font-normal text-slate-600 leading-tight">${escapeHtml(c.career)}</p>
+              <span class="text-sm font-normal text-slate-600 shrink-0">${escapeHtml(c.parallel)}</span>
             </div>
-            <p class="text-sm text-slate-500 mt-1">${escapeHtml(c.career)}</p>
-            <div class="mt-3 flex justify-between items-center gap-2 text-xs text-slate-400 border-t pt-2">
+            <div class="mt-auto pt-2 flex justify-between items-center gap-2 text-sm font-normal text-slate-600 border-t border-slate-100">
               <span class="truncate"><i class="fas fa-user mr-1"></i>${escapeHtml(c.professorEmail)}</span>
-              <span class="font-bold text-slate-600 shrink-0"><i class="fas fa-clock mr-1"></i>${c.weeklyLimit}h/sem</span>
-            </div>
-            <div class="mt-2 flex items-stretch gap-2">
-              <button data-action="open-course-manager" data-id="${escapeAttr(d.id)}" class="text-uce-700 font-bold hover:underline text-xs flex-1 py-1 bg-slate-50 rounded">Gestionar Grupos <i class="fas fa-arrow-right ml-1"></i></button>
-              <div class="relative shrink-0">
-                <button type="button" data-action="toggle-course-menu" class="course-menu-toggle" title="Mas opciones" aria-haspopup="menu" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></button>
-                <div data-course-menu role="menu" class="course-menu">
-                  <button type="button" role="menuitem" data-action="open-edit-course" data-id="${escapeAttr(d.id)}" class="course-menu-item"><i class="fas fa-pencil-alt mr-2"></i>Editar curso</button>
+              <div class="flex items-center gap-2 shrink-0">
+                <span class="font-normal text-slate-600"><i class="fas fa-clock mr-1"></i>${c.weeklyLimit}h/sem</span>
+                <div class="relative flex items-center">
+                  <button type="button" data-action="toggle-course-menu" class="course-menu-toggle" title="Opciones" aria-haspopup="menu" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></button>
+                  <div data-course-menu role="menu" class="course-menu">
+                    <button type="button" role="menuitem" data-action="open-course-manager" data-id="${escapeAttr(d.id)}" class="course-menu-item"><i class="fas fa-users-cog w-4 mr-2 text-center"></i>Gestionar Grupos</button>
+                    <button type="button" role="menuitem" data-action="open-edit-course" data-id="${escapeAttr(d.id)}" class="course-menu-item"><i class="fas fa-pencil-alt w-4 mr-2 text-center"></i>Editar curso</button>
+                  </div>
                 </div>
               </div>
             </div>

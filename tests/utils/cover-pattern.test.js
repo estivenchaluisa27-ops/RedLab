@@ -55,7 +55,7 @@ describe('coverPattern', () => {
     const inner = decodeURIComponent(coverPattern('curso-abc').slice("url('data:image/svg+xml,".length, -2));
     expect(inner.startsWith('<svg')).toBe(true);
     expect(inner.endsWith('</svg>')).toBe(true);
-    expect(inner).toMatch(/<rect [^>]*fill="#[0-9a-f]{6}"/);
+    expect(inner).toMatch(/<rect [^>]*fill="(#[0-9a-fA-F]{6}|url\([^)]+\))"/);
     // Al menos una figura dibujada encima del fondo.
     expect(inner).toMatch(/<(polygon|rect|circle)/);
   });
@@ -83,5 +83,18 @@ describe('coverSeedOf', () => {
     for (let i = 0; i < 200; i += 1) buckets.add(Math.floor((coverSeedOf(`curso-${i}`) / 4294967296) * 16));
     // Si el hash fuera Poor, casi todos caerian en pocos cubos.
     expect(buckets.size).toBeGreaterThanOrEqual(12);
+  });
+});
+
+describe('coverPattern adjacencia de paletas', () => {
+  const bg1Of = (out) => {
+    const m = decodeURIComponent(out.slice("url('data:image/svg+xml,".length, -2)).match(/stop-color="(#[0-9a-fA-F]{6})"/);
+    return m ? m[1] : null;
+  };
+
+  it('tarjetas vecinas nunca repiten paleta', () => {
+    for (let i = 0; i < 13; i += 1) {
+      expect(bg1Of(coverPattern('x', i))).not.toBe(bg1Of(coverPattern('x', i + 1)));
+    }
   });
 });
