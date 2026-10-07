@@ -123,7 +123,7 @@ export function loadAdminDashboard() {
         <div class="course-card bg-white rounded-lg border border-slate-200 card-lift relative overflow-hidden flex flex-col">
           <div class="course-cover" style="background-image:${cover}" role="img" aria-label="Portada decorativa de ${subject}"></div>
           <div class="p-3 flex flex-col flex-1">
-            <h3 class="text-sm font-normal uppercase tracking-wide text-sky-600 leading-snug line-clamp-3">${subject}</h3>
+            <h3 class="text-sm font-normal uppercase tracking-wide text-sky-700 leading-snug line-clamp-3">${subject}</h3>
             <div class="flex justify-between items-start mt-1 gap-2">
               <p class="text-sm font-normal text-slate-600 leading-tight">${escapeHtml(c.career)}</p>
               <span class="text-sm font-normal text-slate-600 shrink-0">${escapeHtml(c.parallel)}</span>
