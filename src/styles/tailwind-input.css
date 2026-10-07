@@ -830,11 +830,14 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
 .btn-outline-navy:active:not(:disabled) { transform: translateY(1px); }
 .btn-outline-navy:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* ===== ACTION BOX (Bloquear/Desbloquear) — coherente con sidebar navy ===== */
+/* ===== ACTION BOX (Bloquear/Desbloquear) — tarjeta clara sticky ===== */
 #admin-action-box {
+    position: sticky;
+    top: 1rem;
+    z-index: 30;
     border-radius: 2px !important;
     box-shadow: 0 1px 0 rgba(255, 255, 255, 0.07), 0 8px 24px -16px rgba(0, 20, 40, 0.45) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid #e2e8f0 !important;
 }
 #admin-action-box button {
     padding: 0.6rem 1.1rem !important;
@@ -849,10 +852,10 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
     font-family: 'Archivo', sans-serif !important;
     letter-spacing: 0 !important;
 }
-#admin-block-btn { background: rgba(220, 38, 38, 0.15) !important; border: 1px solid rgba(220, 38, 38, 0.5) !important; color: #fca5a5 !important; }
-#admin-block-btn:hover { background: rgba(220, 38, 38, 0.25) !important; color: #ffffff !important; }
-#admin-unblock-btn { background: rgba(16, 185, 129, 0.15) !important; border: 1px solid rgba(16, 185, 129, 0.5) !important; color: #6ee7b7 !important; }
-#admin-unblock-btn:hover { background: rgba(16, 185, 129, 0.25) !important; color: #ffffff !important; }
+#admin-block-btn { background: rgba(220, 38, 38, 0.08) !important; border: 1px solid rgba(220, 38, 38, 0.45) !important; color: #b91c1c !important; }
+#admin-block-btn:hover { background: rgba(220, 38, 38, 0.16) !important; color: #7f1d1d !important; }
+#admin-unblock-btn { background: rgba(16, 185, 129, 0.10) !important; border: 1px solid rgba(16, 185, 129, 0.45) !important; color: #047857 !important; }
+#admin-unblock-btn:hover { background: rgba(16, 185, 129, 0.20) !important; color: #065f46 !important; }
 
 
 /* ===== TIPOGRAFIA FUNCIONAL: ARCHIVO EN TODOS LOS BOTONES =====
