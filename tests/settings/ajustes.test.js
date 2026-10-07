@@ -57,13 +57,16 @@ describe('setupAjustesView', () => {
     expect(form.querySelector('input[name="weeklyLimit"]').value).toBe('6');
   });
 
-  it('marca los checkboxes de weekDays según la config', () => {
-    mockState.labConfig = { ...DEFAULTS, weekDays: [0, 2, 4] };
+  it('pinta cfg [1..5] (getDay) marcando Lun–Vie con values getDay', () => {
+    mockState.labConfig = { ...DEFAULTS, weekDays: [1, 2, 3, 4, 5] };
     setupAjustesView();
     const form = document.querySelector('#ajustes-form form[data-action="save-lab-config"]');
     const checked = form.querySelectorAll('input[name="weekDays"]:checked');
-    expect(checked.length).toBe(3);
-    expect(Array.from(checked).map(c => c.value)).toEqual(['0', '2', '4']);
+    expect(checked.length).toBe(5);
+    expect(Array.from(checked).map(c => c.value)).toEqual(['1', '2', '3', '4', '5']);
+    expect(Array.from(checked).map(c => c.closest('label').textContent.trim())).toEqual(
+      ['Lun', 'Mar', 'Mié', 'Jue', 'Vie']
+    );
   });
 
   it('muestra skeleton antes de renderizar', async () => {
@@ -110,6 +113,31 @@ describe('saveLabConfig', () => {
       allowedEmailDomain: 'uce.edu.ec',
     });
     expect(mockState.labConfig).toEqual(dataArg);
+  });
+
+  it('guardar Lun–Vie persiste [1..5] en getDay (no [0..4])', async () => {
+    document.body.innerHTML = `
+      <form data-action="save-lab-config">
+        <input type="number" name="slotCapacity" value="6">
+        <input type="number" name="startHour" value="8">
+        <input type="number" name="endHour" value="20">
+        <input type="number" name="weeklyLimit" value="5">
+        <input type="checkbox" name="weekDays" value="1" checked>
+        <input type="checkbox" name="weekDays" value="2" checked>
+        <input type="checkbox" name="weekDays" value="3" checked>
+        <input type="checkbox" name="weekDays" value="4" checked>
+        <input type="checkbox" name="weekDays" value="5" checked>
+        <input type="text" name="allowedEmailDomain" value="uce.edu.ec">
+      </form>
+    `;
+    const form = document.querySelector('form[data-action="save-lab-config"]');
+    const fakeEvent = { preventDefault: vi.fn(), target: form };
+
+    await saveLabConfig(fakeEvent, {});
+
+    expect(mockSetDoc).toHaveBeenCalledTimes(1);
+    expect(mockSetDoc.mock.calls[0][1].weekDays).toEqual([1, 2, 3, 4, 5]);
+    expect(mockState.labConfig.weekDays).toEqual([1, 2, 3, 4, 5]);
   });
 
   it('no llama setDoc si la validación falla', async () => {

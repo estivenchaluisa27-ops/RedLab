@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Router admin — registro de setups por sección y sub-vista
   registerSectionSetup('calendario', () => setupAdminCalendarLogic(), { rerunOnEveryEnter: true });
   registerSectionSetup('cursos', () => { /* la sub-view activa decide setup, ver registerSubviewSetup */ });
-  registerSectionSetup('usuarios', () => setupUsuariosView());
+  registerSectionSetup('usuarios', () => setupUsuariosView(db, state));
   registerSectionSetup('ajustes', () => setupAjustesView());
   registerSectionSetup('reportes', () => setupReportesView(), { rerunOnEveryEnter: true });
 

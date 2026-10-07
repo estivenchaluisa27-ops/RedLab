@@ -24,10 +24,14 @@ function renderForm(config) {
   const cfg = mergeLabConfig(DEFAULTS, config);
 
   const weekDayCheckboxes = WEEKDAY_LABELS.map((label, day) => {
-    const checked = cfg.weekDays.includes(day) ? 'checked' : '';
+    // WEEKDAY_LABELS usa índice 0=Lun…6=Dom, pero weekDays usa semántica
+    // getDay (0=Dom…6=Sáb): mapear al pintar para que value/checked ya
+    // sean getDay y persistan sin conversión.
+    const v = (day + 1) % 7;
+    const checked = cfg.weekDays.includes(v) ? 'checked' : '';
     return `
       <label class="inline-flex items-center gap-1.5 text-sm">
-        <input type="checkbox" name="weekDays" value="${day}" ${checked} class="rounded">
+        <input type="checkbox" name="weekDays" value="${v}" ${checked} class="rounded">
         ${label}
       </label>`;
   }).join('');

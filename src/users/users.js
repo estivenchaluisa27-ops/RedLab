@@ -29,7 +29,9 @@ let _state = null;
 let _currentTab = 'admins';
 let _directoryLoaded = false;
 
-export function setupUsuariosView() {
+export function setupUsuariosView(db, state) {
+  _db = db;
+  _state = state;
   initUsuarios(_db, _state);
   renderTabs();
   loadTab(_currentTab);
