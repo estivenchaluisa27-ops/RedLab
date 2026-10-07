@@ -3,6 +3,7 @@ import { state, registerListener, unregisterListener } from '../state.js';
 import { escapeHtml, escapeAttr } from '../utils/escape.js';
 import { getWeekDays, formatDateYYYYMMDD, isPastDate } from '../utils/dates.js';
 import { openAttendanceModal, deleteReservation } from '../reservations/reservations.js';
+import { initStudentDayView, syncStudentDayView } from './student-day-view.js';
 
 let _db = null;
 let _RESERVATIONS_COLLECTION = null;
@@ -346,11 +347,18 @@ function renderStudentCalendar(weekDays) {
   const blockedDocs = new Map();
   const courseDocs = new Map();
 
+  // Vista-día móvil: shell inmediato con la semana (skeleton hasta que
+  // lleguen los snapshots); las queries y classifySlot no cambian.
+  syncStudentDayView(weekDays, null, classifySlot);
+
   const mergeAndRender = (map) => {
     const merged = new Map();
     for (const [id, data] of blockedDocs) merged.set(id, data);
     for (const [id, data] of courseDocs) merged.set(id, data);
-    renderStudentSlots(map, Array.from(merged.values()));
+    const docsArray = Array.from(merged.values());
+    renderStudentSlots(map, docsArray);
+    // Alimenta la vista-día con la semana + cache de docs (cero re-suscripción).
+    syncStudentDayView(weekDays, docsArray, classifySlot);
   };
 
   registerListener('calendar:student-blocked', onSnapshot(
@@ -459,5 +467,6 @@ export function setupStudentView() {
   clearCalendarListeners();
   document.getElementById('student-prev-week').dataset.action = 'student-prev-week';
   document.getElementById('student-next-week').dataset.action = 'student-next-week';
+  initStudentDayView({ onWeekJump: refreshStudentCalendar });
   refreshStudentCalendar();
 }

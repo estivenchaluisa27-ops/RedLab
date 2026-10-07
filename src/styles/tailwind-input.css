@@ -890,3 +890,101 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
     letter-spacing: 0.01em !important;
     text-transform: none !important;
 }
+
+/* ===== VISTA-DÍA MÓVIL DEL ESTUDIANTE (solo <md; la tabla lleva hidden md:table) ===== */
+@layer components {
+  /* Tira L–V: 5 tabs a ancho completo */
+  #student-day-strip {
+    display: flex;
+    gap: 0.25rem;
+    padding: 0.5rem 0.75rem;
+    background: #fff;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  #student-day-strip .day-tab {
+    flex: 1 1 0%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.1rem;
+    padding: 0.45rem 0.25rem;
+    border-radius: 0.5rem;
+    border: 1px solid transparent;
+    color: #64748b;
+    font-weight: 700;
+    text-transform: capitalize;
+    touch-action: manipulation;
+  }
+  #student-day-strip .day-tab-name { font-size: 0.7rem; line-height: 1.1; }
+  #student-day-strip .day-tab-num { font-size: 1.05rem; line-height: 1.1; }
+  /* Día activo: otro color + escala animada */
+  #student-day-strip .day-active {
+    background-color: #004274;
+    border-color: #003366;
+    color: #fff;
+    transform: scale(1.06);
+    transition: background-color 0.22s ease, color 0.22s ease, transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 4px 10px -4px rgba(0, 66, 116, 0.5);
+  }
+
+  /* Carrusel: 5 páginas con scroll-snap nativo */
+  #student-day-carousel {
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    background: #f8fafc;
+  }
+  #student-day-carousel > section {
+    flex: 0 0 100%;
+    width: 100%;
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  #student-day-carousel .day-page-title {
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-transform: capitalize;
+    color: #334155;
+    padding: 0.1rem 0.25rem;
+  }
+  /* Tarjetas: gesto vertical libre (pan-y) para que el swipe horizontal
+     llegue al carrusel; altura táctil cómoda */
+  #student-day-carousel .day-card {
+    display: flex;
+    align-items: stretch;
+    gap: 0.5rem;
+    touch-action: pan-y;
+  }
+  #student-day-carousel .day-card .slot {
+    min-height: 52px;
+    flex: 1 1 0%;
+    font-size: 0.85rem;
+  }
+  #student-day-carousel .day-card-hour {
+    flex: 0 0 3rem;
+    align-self: center;
+    text-align: right;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #student-day-strip .day-active { transition: none; transform: none; }
+  #student-day-carousel { scroll-behavior: auto; }
+}
+
+/* La salida compilada no conserva capas (@layer): por especificidad el
+   display:flex de los IDs ganaría a `md:hidden`. Esta regla con igual
+   especificidad y posterior en cascada garantiza el oculto en desktop. */
+@media (min-width: 768px) {
+  #student-day-strip,
+  #student-day-carousel { display: none; }
+}

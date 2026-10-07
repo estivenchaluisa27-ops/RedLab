@@ -2,6 +2,18 @@
  * src/state.js — Estado global de la aplicación
  */
 
+/**
+ * Día activo de la vista-día móvil del estudiante (índice 0-4 = lun-vie).
+ * Por defecto hoy si es L–V, si no lunes (0). Solo lo usa el módulo
+ * src/calendar/student-day-view.js; el resto del calendario no lo lee.
+ * @param {Date} [now]
+ * @returns {number}
+ */
+export function defaultActiveDayIndex(now = new Date()) {
+  const d = now.getDay();
+  return d >= 1 && d <= 5 ? d - 1 : 0;
+}
+
 export let state = {
   user: null,
   role: null,
@@ -10,6 +22,7 @@ export let state = {
   groupName: null,
   currentViewCourse: null,
   weekOffset: 0,
+  activeDayIndex: defaultActiveDayIndex(),
   selectedSlots: [],
   coursesCache: {},
   professorsCache: {},
@@ -25,6 +38,7 @@ export function resetState() {
     groupName: null,
     currentViewCourse: null,
     weekOffset: 0,
+    activeDayIndex: defaultActiveDayIndex(),
     selectedSlots: [],
     coursesCache: {},
     professorsCache: {},

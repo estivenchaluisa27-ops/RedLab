@@ -29,6 +29,7 @@ import {
   handleAdminClick, handleStudentClick, openAdminSlotInfo, updateAdminActionBox,
   refreshAdminCalendar, refreshStudentCalendar, clearCalendarListeners,
 } from './calendar/calendar.js';
+import { selectStudentDay } from './calendar/student-day-view.js';
 
 /**
  * Construye el mapa de handlers de click.
@@ -99,6 +100,7 @@ export function createClickActions({ auth }) {
     'admin-block': () => batchBlockAction('block'),
     'admin-unblock': () => batchBlockAction('unblock'),
     'student-slot-toggle': (btn) => handleStudentClick(btn),
+    'student-day-select': (btn) => selectStudentDay(btn.dataset.dayIndex),
     'student-prev-week': () => { state.weekOffset--; state.selectedSlots = []; refreshStudentCalendar(); },
     'student-next-week': () => { state.weekOffset++; state.selectedSlots = []; refreshStudentCalendar(); },
   };
