@@ -131,7 +131,7 @@ export function loadAdminDashboard() {
             <div class="mt-auto pt-2 flex justify-between items-center gap-2 text-sm font-normal text-slate-600 border-t border-slate-100">
               <span class="truncate"><i class="fas fa-user mr-1"></i>${escapeHtml(c.professorEmail)}</span>
               <div class="flex items-center gap-2 shrink-0">
-                <span class="font-normal text-slate-600"><i class="fas fa-clock mr-1"></i>${c.weeklyLimit}h/sem</span>
+                <span class="font-normal text-slate-600"><i class="fas fa-clock mr-1"></i>${c.weeklyLimit ?? 4}h/sem</span>
                 <div class="relative flex items-center">
                   <button type="button" data-action="toggle-course-menu" class="course-menu-toggle" title="Opciones" aria-haspopup="menu" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></button>
                   <div data-course-menu role="menu" class="course-menu">

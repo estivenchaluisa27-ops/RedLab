@@ -30,7 +30,7 @@ export let state = {
   // Config del laboratorio (P-A, doc `config/lab` vía src/settings/lab-config.js).
   // null hasta que el boot la cargue; los consumidores usan DEFAULTS como
   // fallback. Los defaults vivos están fijados en DEFAULTS (lab-config.js):
-  // horario 7–19, weekDays lun–vie [1..5], tope semanal 4, capacidad 4.
+  // horario 7–19, weekDays lun–vie [1..5], capacidad 4.
   labConfig: null
 };
 
