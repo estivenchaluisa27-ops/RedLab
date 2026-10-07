@@ -12,9 +12,15 @@ export const DEFAULTS = {
   startHour: 7,
   endHour: 19,
   weekDays: [1, 2, 3, 4, 5],
-  weeklyLimit: 4,
   allowedEmailDomain: 'uce.edu.ec',
 };
+
+// Nota: el límite semanal ya NO es global. Vive solo por curso
+// (doc `courses/*`.weeklyLimit) con default interno 4 — los forms de
+// curso usan value="4"/min="1" (index.html#c-limit) y la precedencia
+// es curso > 4 (ver auth.js/setupSession y reservations.js/submitReservation).
+// Un `weeklyLimit` heredado en un doc `config/lab` antiguo se ignora en
+// el merge (no es clave conocida) y no se valida.
 
 /**
  * Mezcla la config remota sobre los defaults.
@@ -67,10 +73,6 @@ export function validateLabConfig(config) {
     !config.weekDays.every((d) => Number.isInteger(d) && d >= 0 && d <= 6)
   ) {
     errors.push('weekDays debe ser un arreglo no vacío de días 0-6');
-  }
-
-  if (!isPositiveInt(config.weeklyLimit)) {
-    errors.push('weeklyLimit debe ser un entero > 0');
   }
 
   const domain = config.allowedEmailDomain;

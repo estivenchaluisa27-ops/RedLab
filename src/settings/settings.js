@@ -44,11 +44,6 @@ function renderForm(config) {
           <input type="number" name="slotCapacity" value="${cfg.slotCapacity}" min="1" step="1" required
                  class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-uce-500 outline-none text-sm">
         </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Límite Semanal (horas)</label>
-          <input type="number" name="weeklyLimit" value="${cfg.weeklyLimit}" min="1" step="1" required
-                 class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-uce-500 outline-none text-sm">
-        </div>
       </div>
       <div class="grid grid-cols-2 gap-4">
         <div>
@@ -117,7 +112,6 @@ export async function saveLabConfig(e, db) {
     startHour: Number(fd.get('startHour')),
     endHour: Number(fd.get('endHour')),
     weekDays,
-    weeklyLimit: Number(fd.get('weeklyLimit')),
     allowedEmailDomain: fd.get('allowedEmailDomain')?.trim() || DEFAULTS.allowedEmailDomain,
   };
 

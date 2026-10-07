@@ -50,7 +50,8 @@ export async function submitReservation() {
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
 
   try {
-    const limit = _state.weeklyLimit || _state.labConfig?.weeklyLimit || DEFAULTS.weeklyLimit;
+    // Tope semanal solo por curso (fijado en login) con default interno 4.
+    const limit = _state.weeklyLimit || 4;
     const newSlotsCount = _state.selectedSlots.length;
 
     const firstSlotDate = _state.selectedSlots[0].split('_')[0];

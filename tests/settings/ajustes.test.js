@@ -45,16 +45,16 @@ describe('setupAjustesView', () => {
     expect(form.querySelector('input[name="slotCapacity"]').value).toBe(String(DEFAULTS.slotCapacity));
     expect(form.querySelector('input[name="startHour"]').value).toBe(String(DEFAULTS.startHour));
     expect(form.querySelector('input[name="endHour"]').value).toBe(String(DEFAULTS.endHour));
-    expect(form.querySelector('input[name="weeklyLimit"]').value).toBe(String(DEFAULTS.weeklyLimit));
+    expect(form.querySelector('input[name="weeklyLimit"]')).toBeNull();
     expect(form.querySelector('input[name="allowedEmailDomain"]').value).toBe(DEFAULTS.allowedEmailDomain);
   });
 
   it('renderiza el form con valores de state.labConfig cuando existe', () => {
-    mockState.labConfig = { ...DEFAULTS, slotCapacity: 8, weeklyLimit: 6 };
+    mockState.labConfig = { ...DEFAULTS, slotCapacity: 8 };
     setupAjustesView();
     const form = document.querySelector('#ajustes-form form[data-action="save-lab-config"]');
     expect(form.querySelector('input[name="slotCapacity"]').value).toBe('8');
-    expect(form.querySelector('input[name="weeklyLimit"]').value).toBe('6');
+    expect(form.querySelector('input[name="weeklyLimit"]')).toBeNull();
   });
 
   it('pinta cfg [1..5] (getDay) marcando Lun–Vie con values getDay', () => {
@@ -83,7 +83,6 @@ describe('saveLabConfig', () => {
         <input type="number" name="slotCapacity" value="6">
         <input type="number" name="startHour" value="8">
         <input type="number" name="endHour" value="20">
-        <input type="number" name="weeklyLimit" value="5">
         <input type="checkbox" name="weekDays" value="1" checked>
         <input type="checkbox" name="weekDays" value="2" checked>
         <input type="checkbox" name="weekDays" value="3" checked>
@@ -109,7 +108,6 @@ describe('saveLabConfig', () => {
       startHour: 8,
       endHour: 20,
       weekDays: [1, 2, 3],
-      weeklyLimit: 5,
       allowedEmailDomain: 'uce.edu.ec',
     });
     expect(mockState.labConfig).toEqual(dataArg);
@@ -121,7 +119,6 @@ describe('saveLabConfig', () => {
         <input type="number" name="slotCapacity" value="6">
         <input type="number" name="startHour" value="8">
         <input type="number" name="endHour" value="20">
-        <input type="number" name="weeklyLimit" value="5">
         <input type="checkbox" name="weekDays" value="1" checked>
         <input type="checkbox" name="weekDays" value="2" checked>
         <input type="checkbox" name="weekDays" value="3" checked>

@@ -15,7 +15,6 @@ import { setupStudentView } from '../calendar/calendar.js';
 import { goAdminSection } from '../admin-router-controller.js';
 import { initPushNotifications } from '../notifications/push.js';
 import { registerListener, unregisterListener } from '../state.js';
-import { DEFAULTS } from '../settings/lab-config.js';
 
 let unsubscribeAuth = null;
 
@@ -137,9 +136,9 @@ export async function setupSession(role, userData, studentData, state, db) {
         const gData = groupDoc.data();
 
         state.groupName = gData.name;
-        // P-A: el tope semanal lee config/lab con fallback a DEFAULTS.
-        // Sin config cargada (null) el fallback es 4 = valor móvil actual.
-        state.weeklyLimit = cData.weeklyLimit || state.labConfig?.weeklyLimit || DEFAULTS.weeklyLimit;
+        // El tope semanal vive solo por curso con default interno 4.
+        // Precedencia: curso > 4 (sin config/lab en el medio).
+        state.weeklyLimit = cData.weeklyLimit || 4;
 
         if (nameEl) nameEl.innerHTML = `<div class="text-right leading-tight"><div class="font-bold text-white text-sm">${escapeHtml(gData.name)}</div><div class="text-xs text-blue-200">${escapeHtml(state.user.email)}</div><span class="course-badge mt-1">${escapeHtml(cData.subject)} (${escapeHtml(cData.parallel)})</span></div><div class="ml-3 bg-white/10 p-2 rounded-full"><i class="fas fa-user text-white"></i></div>`;
         showView('student');

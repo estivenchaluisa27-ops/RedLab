@@ -13,7 +13,6 @@ describe('lab-config defaults', () => {
       startHour: 7,
       endHour: 19,
       weekDays: [1, 2, 3, 4, 5],
-      weeklyLimit: 4,
       allowedEmailDomain: 'uce.edu.ec',
     });
   });
@@ -31,12 +30,17 @@ describe('mergeLabConfig', () => {
   it('aplica claves conocidas e ignora desconocidas y undefined', () => {
     const merged = mergeLabConfig(DEFAULTS, {
       slotCapacity: 6,
-      weeklyLimit: undefined,
+      startHour: undefined,
       inventado: true,
     });
     expect(merged.slotCapacity).toBe(6);
-    expect(merged.weeklyLimit).toBe(4);
+    expect(merged.startHour).toBe(DEFAULTS.startHour);
     expect(merged).not.toHaveProperty('inventado');
+  });
+
+  it('ignora el weeklyLimit heredado de docs antiguos (ya no es clave conocida)', () => {
+    const merged = mergeLabConfig(DEFAULTS, { weeklyLimit: 9 });
+    expect(merged).not.toHaveProperty('weeklyLimit');
   });
 });
 
@@ -99,7 +103,7 @@ describe('loadLabConfig', () => {
       },
     );
     expect(cfg.slotCapacity).toBe(6);
-    expect(cfg.weeklyLimit).toBe(DEFAULTS.weeklyLimit);
+    expect(cfg).not.toHaveProperty('weeklyLimit');
   });
 
   it('devuelve defaults si el doc remoto es inválido', async () => {
