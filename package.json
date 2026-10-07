@@ -31,5 +31,22 @@
     "@capacitor/local-notifications": "^8.2.1",
     "@capacitor/preferences": "^8.0.1",
     "@capacitor/push-notifications": "^8.1.2"
-  }
+  },
+  "description": "Sistema de gestión para laboratorio de redes: cursos, grupos, reservas de salas con calendario, notificaciones push en Android y panel de administración. Frontend web (SPA) + app Android (Capacitor) + push server propio en Fly.io.",
+  "main": "eslint.config.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/estivenchaluisa27-ops/RedLab.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/estivenchaluisa27-ops/RedLab/issues"
+  },
+  "homepage": "https://github.com/estivenchaluisa27-ops/RedLab#readme"
 }
