@@ -1,5 +1,5 @@
 ---
-updatedAtCommit: e4e32fff6bef7a46b06b050241ad3d64ca0bb0c6
+updatedAtCommit: 2f21260f583df871d2beb7e5ae7c5aeb41d428fe
 ---
 
 # RedLab — Flujos clave (verificados en código)
@@ -27,10 +27,23 @@ updatedAtCommit: e4e32fff6bef7a46b06b050241ad3d64ca0bb0c6
 ## 4. Delegación `data-action` {#4-data-action}
 
 1. `src/main.js:68-80`: un solo listener `click` en `document` resuelve `closest('[data-action]')` y despacha a `createClickActions({auth})` (`src/actions.js:38-107`); `submit` va por `createSubmitDispatcher`.
-2. Los renders asignan las acciones: `admin-slot-toggle` (`src/calendar/calendar.js:111`), `student-slot-toggle` (`:339`), `student-day-select` (`src/calendar/student-day-view.js:124`), `toggle-matrix-cell` (`src/calendar/calendar.js:192`), `adm-act`/`reject-req` (`:251-252`).
+2. Los renders asignan las acciones: `admin-slot-toggle` (`src/calendar/calendar.js:111`), `student-slot-toggle` (`:339`), `student-day-select` (`src/calendar/student-day-view.js:124`), `toggle-matrix-cell` (`src/calendar/calendar.js:192`), `adm-act`/`reject-req` (`:251-252`), `delete-course` (`src/courses/courses-list.js:140` → `src/actions.js:82` → `src/courses/courses.js:185`).
 
 ## 5. Cadena de build {#5-build}
 
 1. `npm run build:css` (`package.json:12`) compila `src/styles/tailwind-input.css` → `styles.css`.
 2. `npm run build:app` (`package.json:13` → `scripts/build-app.js:21-47`) copia `index.html, 404.html, styles.css, assets, src` a `www/`.
 3. `npm run cap:sync` (`package.json:14`) = `build:app` + `npx cap sync android`; `www/` está ignorado (`.gitignore:37-38`) y es `webDir` (`capacitor.config.json:4`). El APK debug se ensambla después con el proyecto Android generado (fuera del repo).
+
+## 6. Métricas de reservas (solo lectura) {#6-metricas}
+
+1. Entrada a `#/admin/metricas` (`src/router.js:24,36`) → `setupMetricasView(db, state)` (`src/main.js:70`, `rerunOnEveryEnter`); admin ve todos los cursos, profesor solo los de su `professorEmail` (`src/metrics/metrics-view.js:39`); si el caché aún no cargó, un único reintento diferido (`:205-217`).
+2. `fetchApprovedReservations` (`src/metrics/metrics-queries.js:22-31`) trae aprobadas del rango (`date>=,<=` + `status==approved`); filtro por curso en memoria (sin índice nuevo).
+3. `aggregateMetrics` (`src/metrics/metrics-aggregate.js:91-103`) produce horas por grupo semanal/mensual + ranking (1 doc = 1 hora; `toRanking` horas desc, nombre asc).
+4. `ensureChartJs` (`src/metrics/metrics-charts.js:26-40`) carga Chart.js `4.4.1` del CDN una vez; `renderBarChart` (`:50-81`) repinta destruyendo la instancia previa; sin conexión, tabla + aviso. Nunca muta datos.
+
+## 7. Eliminar curso en cascada (solo admin) {#7-eliminar-curso}
+
+1. Menú de la tarjeta del curso → `delete-course` solo pintado si `role==='admin'` (`src/courses/courses-list.js:140`) → dispatcher `src/actions.js:82` → `deleteCourse(courseId)` (`src/courses/courses.js:185`).
+2. Guardia `canDeleteCourse` (`:139-141`, no-admin retorna) + `notifyConfirm` con nombre del curso (`:193`); `firestore.rules:93` respalda (`allow delete iff isAdmin`).
+3. Cascada por lotes troceados (`chunkArray` `:169`, trozos de 400): `courses/{id}/groups/*` (`:198-210`) → `reservations where courseId==id` (`:212-225`) → `student_directory where courseId==id` (`:227-240`) → doc `courses/{id}` al final (`:243`); purga `coursesCache` (`:245-247`). Cubierto en `tests/courses/course-delete.test.js`.
