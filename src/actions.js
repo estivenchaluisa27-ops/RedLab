@@ -22,7 +22,7 @@ import {
 } from './reservations/reservations.js';
 import { addGroup, deleteGroup } from './groups/groups.js';
 import { saveGroupBasicInfo, saveLeaderInfo } from './groups/group-details.js';
-import { createCourse, saveCourseChanges } from './courses/courses.js';
+import { createCourse, saveCourseChanges, deleteCourse } from './courses/courses.js';
 import { openNotificationsModal } from './notifications/history.js';
 import { executeReport } from './reports/reports.js';
 import {
@@ -79,6 +79,7 @@ export function createClickActions({ auth }) {
       navigate(`#/admin/cursos/${encodeURIComponent(courseId)}/grupos/${encodeURIComponent(btn.dataset.id)}`);
     },
     'delete-group': (btn) => deleteGroup(btn.dataset.id),
+    'delete-course': (btn) => deleteCourse(btn.dataset.id),
     'add-group': () => addGroup(),
     'save-group-basic-info': () => saveGroupBasicInfo(),
     'save-leader-info': () => saveLeaderInfo(),

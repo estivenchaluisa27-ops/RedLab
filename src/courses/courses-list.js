@@ -137,6 +137,7 @@ export function loadAdminDashboard() {
                   <div data-course-menu role="menu" class="course-menu">
                     <button type="button" role="menuitem" data-action="open-course-manager" data-id="${escapeAttr(d.id)}" class="course-menu-item"><i class="fas fa-users-cog w-4 mr-2 text-center"></i>Gestionar Grupos</button>
                     <button type="button" role="menuitem" data-action="open-edit-course" data-id="${escapeAttr(d.id)}" class="course-menu-item"><i class="fas fa-pencil-alt w-4 mr-2 text-center"></i>Editar curso</button>
+                    ${_state.role === 'admin' ? `<button type="button" role="menuitem" data-action="delete-course" data-id="${escapeAttr(d.id)}" class="course-menu-item"><i class="fas fa-trash w-4 mr-2 text-center"></i>Eliminar curso</button>` : ''}
                   </div>
                 </div>
               </div>
