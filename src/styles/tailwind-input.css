@@ -416,8 +416,11 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
     .time-cell-compact { display: inline; }
     .day-full { display: none; }
     .day-abbr { display: inline; }
-    /* El color del slot ya codifica el estado (leyenda en index.html): ocultar texto que se saldría de la columna */
-    .slot span { display: none; }
+    /* El color del slot ya codifica el estado (leyenda en index.html): ocultar
+       texto que se saldría de la columna. Alcance limitado a la tabla
+       semanal: la vista-día móvil NECESITA el texto dentro de cada tarjeta
+       (.day-card .slot span), si no los bloques quedan vacíos. */
+    .calendar-table .slot span { display: none; }
     .slot-selected::after { content: '✓'; color: #ffffff; font-weight: 800; font-size: 0.9rem; }
 }
 
