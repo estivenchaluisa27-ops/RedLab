@@ -84,7 +84,7 @@ h1, h2, h3 { font-weight: 800; letter-spacing: -0.01em; }
 /* --- MEJORA VISUAL TABLA (PUNTO 2) --- */
 .calendar-wrapper { background: white; border-radius: 2px; box-shadow: 0 2px 4px rgba(0, 34, 68, 0.04), 0 12px 32px -18px rgba(0, 66, 116, 0.22); overflow: hidden; border: 1px solid #e2e8f0; }
 .calendar-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-.calendar-table th, .calendar-table td { border: 1px solid #e2e8f0; padding: 0; vertical-align: top; height: 64px; }
+.calendar-table th, .calendar-table td { border: 1px solid #e2e8f0; padding: 0; vertical-align: top; height: 44px; }
 /* La cabecera va mas baja que el cuerpo: solo lleva el nombre del dia y un
    numero, no un slot. Medido 64 -> 52 px en escritorio. */
 .calendar-table thead th { height: 52px; }
@@ -97,9 +97,9 @@ h1, h2, h3 { font-weight: 800; letter-spacing: -0.01em; }
 .time-cell-content { background-color: #f1f5f9; color: #475569; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; height: 100%; width: 100%; text-align: center; }
 .time-cell-compact { display: none; }
 .day-abbr { display: none; }
-.slot-container { width: 100%; height: 100%; padding: 3px; position: relative; }
+.slot-container { width: 100%; height: 100%; padding: 2px; position: relative; }
 .slot { width: 100%; height: 100%; border-radius: 6px; border: 1px solid transparent; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-size: 0.75rem; font-weight: 600; line-height: 1.2; overflow: hidden; }
-.occupancy-badge { font-size: 0.65rem; margin-top: 3px; padding: 2px 8px; border-radius: 12px; background-color: rgba(255,255,255,0.95); color: #1e293b; font-weight: 800; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+.occupancy-badge { font-size: 0.65rem; margin-top: 2px; padding: 1px 6px; border-radius: 12px; background-color: rgba(255,255,255,0.95); color: #1e293b; font-weight: 800; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
 .info-btn { position: absolute; top: 4px; right: 4px; background: white; border-radius: 50%; width: 22px; height: 22px; font-size: 11px; display: flex; align-items: center; justify-content: center; color: #3b82f6; z-index: 10; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.2); transition: transform 0.2s; border: 1px solid #bfdbfe; }
 .info-btn:hover { transform: scale(1.15); color: #1d4ed8; background-color: #eff6ff; }
 
