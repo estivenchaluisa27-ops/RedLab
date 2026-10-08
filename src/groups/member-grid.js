@@ -197,18 +197,20 @@ export function mountMemberGrid(container, opts = {}) {
     }
 
     rows.forEach((r, idx) => {
+      const isLeader = r.isLeader;
       const tr = document.createElement('tr');
-      tr.className = 'border-b last:border-0 hover:bg-slate-50 transition';
+      tr.className = isLeader
+        ? 'border-b last:border-0 bg-uce-50/70 shadow-[inset_4px_0_0_0_#004274] hover:bg-uce-50 transition'
+        : 'border-b last:border-0 hover:bg-slate-50 transition';
       tr.dataset.mgIndex = String(idx);
 
-      const isLeader = r.isLeader;
       const isDup = duplicates.has(String(r.cedula).trim()) && !isLeader;
 
       // Cédula
       const tdCed = document.createElement('td');
       tdCed.className = 'px-3 py-2 ' + (isDup ? 'bg-red-50 ' : '');
       if (isLeader) {
-        tdCed.innerHTML = `<div class="flex items-center gap-2"><span class="font-bold text-slate-700">${escapeHtml(r.cedula)}</span><i class="fas fa-crown text-amber-500 text-xs" title="Jefe de grupo"></i></div>`;
+        tdCed.innerHTML = `<span class="font-bold text-slate-700">${escapeHtml(r.cedula)}</span>`;
       } else {
         tdCed.setAttribute('contenteditable', 'true');
         tdCed.setAttribute('role', 'textbox');
