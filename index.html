@@ -106,6 +106,9 @@
                     <a href="#/admin/cursos" data-route="cursos" class="sidebar-item flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition">
                         <i class="fas fa-book w-5 text-center text-base"></i><span class="sidebar-label">Cursos</span>
                     </a>
+                    <a href="#/admin/metricas" data-route="metricas" class="sidebar-item flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition">
+                        <i class="fas fa-chart-bar w-5 text-center text-base"></i><span class="sidebar-label">Métricas</span>
+                    </a>
                     <a href="#/admin/usuarios" data-route="usuarios" class="sidebar-item flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition">
                         <i class="fas fa-users w-5 text-center text-base"></i><span class="sidebar-label">Usuarios</span>
                     </a>
@@ -333,6 +336,71 @@
                             </button>
                         </div>
                     </form>
+                </div>
+            </section>
+
+            <!-- Sección: Métricas (reservas aprobadas por grupo, solo lectura) -->
+            <section id="section-metricas" data-section="metricas" class="hidden fade-in max-w-5xl">
+                <div class="flex items-center gap-3 mb-6">
+                    <h2 class="text-xl font-bold text-uce-700">Métricas de reservas</h2>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg border border-slate-200 p-6">
+                    <div class="flex flex-col md:flex-row gap-3 md:items-end mb-2">
+                        <div class="flex-1 min-w-0">
+                            <label for="met-course-filter" class="block text-xs font-bold text-slate-500 uppercase mb-1">Curso</label>
+                            <select id="met-course-filter" class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-uce-500 outline-none text-sm text-slate-700 bg-white"></select>
+                        </div>
+                        <div>
+                            <span id="met-range-label" class="block text-xs font-bold text-slate-500 uppercase mb-1">Rango</span>
+                            <div role="group" aria-labelledby="met-range-label" class="flex gap-2">
+                                <button type="button" id="met-range-week" aria-pressed="true">Semana</button>
+                                <button type="button" id="met-range-month" aria-pressed="false">Mes</button>
+                            </div>
+                        </div>
+                    </div>
+                    <p id="met-period-label" class="text-xs text-slate-500 mb-4" aria-live="polite"></p>
+                    <div id="met-content">
+                        <div id="met-skeleton" class="hidden"></div>
+                        <p id="met-empty" class="hidden text-sm text-slate-500 italic p-4 text-center"></p>
+                        <div id="met-results" class="hidden">
+                            <div class="overflow-x-auto border rounded mb-6">
+                                <table class="w-full text-sm text-left">
+                                    <caption id="met-table-title" class="text-left font-bold text-slate-700 px-3 pt-3 pb-1">Horas aprobadas por grupo</caption>
+                                    <thead class="text-sky-600 font-bold border-b">
+                                        <tr>
+                                            <th scope="col" class="py-2 px-3 text-sky-600">Grupo</th>
+                                            <th scope="col" class="py-2 px-3 text-right text-sky-600">Horas</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="met-table-body"></tbody>
+                                </table>
+                            </div>
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                <div class="border rounded p-3">
+                                    <h3 class="font-bold text-slate-700 text-sm mb-2">Horas por grupo · semana</h3>
+                                    <div class="relative" style="height:260px">
+                                        <canvas id="met-chart-week" role="img" aria-label="Diagrama de barras: horas aprobadas por grupo en la semana actual"></canvas>
+                                        <p id="met-fallback-week" class="hidden text-xs text-slate-500 italic p-2"></p>
+                                    </div>
+                                </div>
+                                <div class="border rounded p-3">
+                                    <h3 class="font-bold text-slate-700 text-sm mb-2">Horas por grupo · mes</h3>
+                                    <div class="relative" style="height:260px">
+                                        <canvas id="met-chart-month" role="img" aria-label="Diagrama de barras: horas aprobadas por grupo en el mes actual"></canvas>
+                                        <p id="met-fallback-month" class="hidden text-xs text-slate-500 italic p-2"></p>
+                                    </div>
+                                </div>
+                                <div class="border rounded p-3 lg:col-span-2">
+                                    <h3 class="font-bold text-slate-700 text-sm mb-2">Ranking de grupos</h3>
+                                    <div class="relative" style="height:260px">
+                                        <canvas id="met-chart-ranking" role="img" aria-label="Diagrama de barras: ranking de grupos por horas aprobadas"></canvas>
+                                        <p id="met-fallback-ranking" class="hidden text-xs text-slate-500 italic p-2"></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-4">1 reserva aprobada = 1 hora de laboratorio. Datos de solo lectura.</p>
+                        </div>
+                    </div>
                 </div>
             </section>
 

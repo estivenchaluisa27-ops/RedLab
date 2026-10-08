@@ -14,6 +14,7 @@ import { initGroupDetails, setupGroupDetailsView, destroyGroupDetailsView } from
 import { initReservations, submitReservation } from './reservations/reservations.js';
 import { initNotifications } from './notifications/history.js';
 import { initReports, setupReportesView } from './reports/reports.js';
+import { setupMetricasView } from './metrics/metrics-view.js';
 import { initCalendar, setupAdminCalendarLogic, updateAdminActionBox, updateStudentUI } from './calendar/calendar.js';
 import { initMotionObserver, handlePress } from './utils/motion.js';
 import { initSentry } from './utils/sentry.js';
@@ -66,6 +67,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   registerSectionSetup('usuarios', () => setupUsuariosView(db, state));
   registerSectionSetup('ajustes', () => setupAjustesView());
   registerSectionSetup('reportes', () => setupReportesView(), { rerunOnEveryEnter: true });
+  registerSectionSetup('metricas', () => setupMetricasView(db, state), { rerunOnEveryEnter: true });
 
   // Sub-vistas de cursos: setup se invoca al montar cada sub-view
   registerSubviewSetup('curso-nuevo', () => { /* form vacío por defecto; no requiere setup adicional */ });

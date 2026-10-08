@@ -21,7 +21,7 @@ let _onRoute = null;
 let _beforeLeaveCbs = [];
 let _hashHandler = null;
 
-const SECTIONS = ['calendario', 'cursos', 'grupos', 'usuarios', 'reportes', 'ajustes'];
+const SECTIONS = ['calendario', 'cursos', 'metricas', 'grupos', 'usuarios', 'reportes', 'ajustes'];
 
 /**
  * Parsea el hash actual en { section, params }.
@@ -33,6 +33,7 @@ const SECTIONS = ['calendario', 'cursos', 'grupos', 'usuarios', 'reportes', 'aju
  *   #/admin/cursos/:courseId/grupos                     → { section: 'cursos',     params: { courseId, action: 'grupos' } }
  *   #/admin/cursos/:courseId/grupos/:groupId            → { section: 'cursos',     params: { courseId, action: 'grupos', groupId } }
  *   #/admin/reportes                                    → { section: 'reportes',   params: {} }
+ *   #/admin/metricas                                    → { section: 'metricas',   params: {} }
  *   #/admin/usuarios                                    → { section: 'usuarios',   params: {} }
  *   #/admin/ajustes                                     → { section: 'ajustes',     params: {} }
  * Lo que no matchee cae a 'calendario' como default seguro.
