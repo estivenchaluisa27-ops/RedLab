@@ -834,13 +834,13 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
    Vive en flujo encima del panel de pendientes (columna derecha h-fit): el
    sticky top:1rem anterior ya no anclaba a nada util y se elimina. */
 #admin-action-box {
-    border-radius: 2px !important;
+    border-radius: 10px !important;
     box-shadow: 0 1px 0 rgba(255, 255, 255, 0.07), 0 8px 24px -16px rgba(0, 20, 40, 0.45) !important;
     border: 1px solid #e2e8f0 !important;
 }
 #admin-action-box button {
     padding: 0.6rem 1.1rem !important;
-    border-radius: 2px !important;
+    border-radius: 6px !important;
     font-family: 'Space Grotesk', 'Archivo', sans-serif !important;
     font-size: 0.78rem !important;
     font-weight: 700 !important;
