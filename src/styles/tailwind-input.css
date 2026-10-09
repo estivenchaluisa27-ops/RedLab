@@ -1039,34 +1039,27 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  #student-day-strip .day-active { transition: none; transform: none; }
-  #student-day-carousel > section.day-page-enter { animation: none; }
-  #student-request-box { animation: none; }
-}
-
 /* ===== HOJA DE RESUMEN (estudiante) =====
-   Panel claro con la misma portada geométrica de los cursos
-   (cover-pattern.js, vía updateStudentUI). En escritorio vive en flujo en
-   la columna lateral; en móvil es overlay superior sobre el contenido:
-   aparece al seleccionar sin obligar a deslizar. Solo se muestra con
-   selección (updateStudentUI alterna `hidden`, que gana al fixed porque
-   esta regla no toca display). */
+   Hoja inferior en móvil (overlay abajo, donde está el dedo) y tarjeta en
+   flujo en la columna lateral en escritorio. Fondo completo azul claro con
+   retícula geométrica sutil (CSS puro, sin assets): evoca el patrón de
+   referencia sin costo de red. Solo se muestra con selección
+   (updateStudentUI alterna `hidden`, que gana al fixed porque esta regla
+   no toca display). */
 .request-sheet {
-  background: rgba(255, 255, 255, 0.98);
-  border: 1px solid #e2e8f0;
+  border: 1px solid #bfdbfe;
   border-radius: 16px;
   box-shadow: 0 2px 4px rgba(0, 34, 68, 0.04), 0 16px 40px -16px rgba(0, 66, 116, 0.30);
   overflow: hidden;
+  background-color: #dbeafe;
+  background-image:
+    radial-gradient(circle at 12% 20%, rgba(255, 255, 255, 0.55), transparent 42%),
+    radial-gradient(circle at 88% 85%, rgba(255, 255, 255, 0.4), transparent 46%),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.35) 0 1px, transparent 1px 26px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.35) 0 1px, transparent 1px 26px),
+    linear-gradient(135deg, #bfdbfe 0%, #dbeafe 55%, #eff6ff 100%);
 }
-.request-cover {
-  height: 56px;
-  background-color: #004274;
-  background-size: cover;
-  background-position: center;
-  border-bottom: 1px solid #f1f5f9;
-}
-.request-body { padding: 0.7rem 1rem 1rem; }
+.request-body { padding: 0.9rem 1rem 1rem; }
 .request-kicker {
   font-size: 0.72rem;
   font-weight: 700;
@@ -1089,20 +1082,33 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
 .request-actions .btn-navy,
 .request-actions .btn-outline-navy { flex: 1 1 0%; justify-content: center; }
 @media (max-width: 767px) {
+  /* Aire bajo el contenido para que la hoja fija no tape la última hora. */
+  #student-dashboard {
+    padding-bottom: 9.5rem;
+  }
   #student-request-box {
     position: fixed;
-    top: 0.75rem;
     left: 0.75rem;
     right: 0.75rem;
+    bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
     z-index: 40;
     margin: 0;
     box-shadow: 0 16px 40px -12px rgba(0, 20, 40, 0.45);
-    animation: sheetIn 0.25s ease-out;
+    animation: sheetUp 0.32s cubic-bezier(0.16, 1, 0.3, 1);
   }
 }
-@keyframes sheetIn {
-  from { opacity: 0; transform: translateY(-14px); }
+@keyframes sheetUp {
+  from { opacity: 0; transform: translateY(28px) scale(0.98); }
   to { opacity: 1; transform: none; }
+}
+
+/* Va DESPUÉS del bloque móvil a propósito: con igual especificidad (ID)
+   y ambos media queries activos, la regla posterior gana y el usuario con
+   movimiento reducido no ve la animación ni en móvil. */
+@media (prefers-reduced-motion: reduce) {
+  #student-day-strip .day-active { transition: none; transform: none; }
+  #student-day-carousel > section.day-page-enter { animation: none; }
+  #student-request-box { animation: none; }
 }
 
 /* La salida compilada no conserva capas (@layer): por especificidad el

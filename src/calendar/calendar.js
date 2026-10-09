@@ -5,7 +5,6 @@ import { escapeHtml, escapeAttr } from '../utils/escape.js';
 import { getWeekDays, formatDateYYYYMMDD, isPastDate } from '../utils/dates.js';
 import { openAttendanceModal, deleteReservation } from '../reservations/reservations.js';
 import { initStudentDayView, syncStudentDayView } from './student-day-view.js';
-import { coverPattern } from '../utils/cover-pattern.js';
 
 let _db = null;
 let _RESERVATIONS_COLLECTION = null;
@@ -330,13 +329,6 @@ export function updateStudentUI() {
   const b = document.getElementById('student-request-box');
   const txt = document.getElementById('student-request-count');
   const btn = document.getElementById('submit-request-btn');
-  // Banda decorativa: mismo generador de portadas de los cursos
-  // (cover-pattern.js), semilla fija para un patrón estable.
-  const cover = document.getElementById('student-request-cover');
-  if (cover && !cover.dataset.ready) {
-    cover.style.backgroundImage = coverPattern('resumen', 2);
-    cover.dataset.ready = '1';
-  }
   if (b && txt && btn) {
     if (state.selectedSlots.length > 0) {
       b.classList.remove('hidden');
