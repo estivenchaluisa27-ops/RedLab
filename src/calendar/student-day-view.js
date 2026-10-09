@@ -8,13 +8,15 @@
  * - Tira: 5 tabs (role=tab) con el día activo animado (.day-active).
  * - Carrusel: 5 páginas (section[data-day-index]) con scroll-snap nativo;
  *   cada página trae sus 13 tarjetas/hora (7:00–20:00).
- * - Sincronía tira<->carrusel solo al asentar página: evento `scrollend` con
- *   fallback debounce (~120ms) y flag isProgrammatic contra loops.
+ * - Sincronía tira<->carrusel: la tira sigue al dedo EN VIVO (cada scroll
+ *   actualiza el tab al cruzar la mitad de página) y al asentar se
+ *   re-renderiza la página; evento `scrollend` con fallback debounce
+ *   (~120ms) y flag isProgrammatic contra loops.
  * - Cambio de día = re-render cliente de esa página desde los docs cacheados
  *   (blockedDocs + courseDocs que calendar.js entrega en cada sync), cero
  *   re-suscripción a Firestore.
  * - Cambio de semana (solo en bordes, superando el umbral de overscroll):
- *   weekOffset±1 + aterrizaje lunes/viernes + selectedSlots=[] +
+ *   weekOffset±1 + aterrizaje siempre en lunes + selectedSlots=[] +
  *   refreshStudentCalendar(), con guardia isSettling anti re-suscripción
  *   múltiple. Si se suelta antes del umbral, retorno animado a la página.
  */
@@ -334,8 +336,27 @@ function scrollToPage(carousel, i) {
 
 function onScroll() {
   if (isSettling) return;
+  liveSyncStrip();
   if (settleTimer) clearTimeout(settleTimer);
   settleTimer = setTimeout(onSettled, SETTLE_DEBOUNCE_MS);
+}
+
+/**
+ * La tira sigue al dedo en vivo: al cruzar la mitad de página el tab activo
+ * cambia con su animación, a la par del carrusel (antes solo se actualizaba
+ * al asentar y tira y página se sentían desincronizadas). No re-renderiza
+ * la página: eso sigue siendo trabajo de onSettled. Durante scrolls
+ * programáticos (tira) no interviene: la tira ya quedó fijada por
+ * selectStudentDay y el flag isProgrammatic lo blinda.
+ */
+function liveSyncStrip() {
+  if (isProgrammatic) return;
+  const { strip, carousel } = els();
+  if (!strip || !carousel || !lastWeekDays) return;
+  const page = currentDayPage();
+  if (page === clampDayIndex(state.activeDayIndex)) return;
+  state.activeDayIndex = page;
+  paintStripActive(strip);
 }
 
 function onSettled() {
@@ -348,6 +369,8 @@ function onSettled() {
   const { strip, carousel } = els();
   if (!carousel) return;
   const page = currentDayPage();
+  // Con la tira ya sincronizada en vivo suele coincidir: no hay nada que
+  // re-renderizar (las páginas se pintaron en syncStudentDayView).
   if (page === clampDayIndex(state.activeDayIndex)) return;
   state.activeDayIndex = page;
   renderDayPage(carousel, page);

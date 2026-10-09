@@ -50,6 +50,18 @@ export function createClickActions({ auth }) {
     'close-change-password-modal': () => closeChangePasswordModal(),
     // Menú hamburguesa del estudiante (header): alterna el dropdown con
     // Cambiar clave / Cerrar sesión. El cierre por fuera/Escape vive en main.js.
+    // Limpiar selección (hoja de resumen móvil y caja desktop): vacía y
+    // re-renderiza. Seguro contra listeners zombie: refreshStudentCalendar
+    // re-registra con las mismas claves y registerListener desuscribe lo
+    // previo antes de reemplazar. updateStudentUI oculta la hoja al quedar
+    // en 0 (va dentro del refresh vía renderStudentSlots).
+    'student-clear-selection': () => {
+      // Blindaje: con el Confirmar deshabilitado (envío en vuelo o sin
+      // selección) no hay nada que limpiar ni batch que vaciar a mitad.
+      if (document.getElementById('submit-request-btn')?.disabled) return;
+      state.selectedSlots = [];
+      refreshStudentCalendar();
+    },
     'student-menu-toggle': (btn) => {
       const menu = document.getElementById('student-menu');
       if (!menu) return;
@@ -112,8 +124,8 @@ export function createClickActions({ auth }) {
     'admin-unblock': () => batchBlockAction('unblock'),
     'student-slot-toggle': (btn) => handleStudentClick(btn),
     'student-day-select': (btn) => selectStudentDay(btn.dataset.dayIndex),
-    'student-prev-week': () => { state.weekOffset--; state.selectedSlots = []; refreshStudentCalendar(); },
-    'student-next-week': () => { state.weekOffset++; state.selectedSlots = []; refreshStudentCalendar(); },
+    'student-prev-week': () => { state.weekOffset--; state.activeDayIndex = 0; state.selectedSlots = []; refreshStudentCalendar(); },
+    'student-next-week': () => { state.weekOffset++; state.activeDayIndex = 0; state.selectedSlots = []; refreshStudentCalendar(); },
   };
 }
 

@@ -42,9 +42,10 @@ export function clampDayIndex(i) {
 
 /**
  * Calcula el aterrizaje al salir por un borde de la tira L–V.
- * Solo hay salto de semana en los bordes con dirección hacia afuera:
- * viernes + adelante => semana siguiente, lunes; lunes + atrás => semana
- * anterior, viernes. Cualquier otro caso no cambia de semana.
+ * Solo hay salto de semana en los bordes con dirección hacia afuera, y
+ * SIEMPRE se aterriza en lunes (inicio de semana): viernes + adelante =>
+ * semana siguiente, lunes; lunes + atrás => semana anterior, lunes.
+ * Cualquier otro caso no cambia de semana.
  * @param {number} dayIndex - Índice actual 0-4
  * @param {number} direction - +1 (adelante) o -1 (atrás)
  * @returns {{ weekDelta: number, landingIndex: number }}
@@ -52,7 +53,7 @@ export function clampDayIndex(i) {
 export function nextWeekLanding(dayIndex, direction) {
   const idx = clampDayIndex(dayIndex);
   if (idx === 4 && direction > 0) return { weekDelta: 1, landingIndex: 0 };
-  if (idx === 0 && direction < 0) return { weekDelta: -1, landingIndex: 4 };
+  if (idx === 0 && direction < 0) return { weekDelta: -1, landingIndex: 0 };
   return { weekDelta: 0, landingIndex: idx };
 }
 /**

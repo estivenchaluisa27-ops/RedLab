@@ -40,8 +40,8 @@ describe('nextWeekLanding', () => {
     expect(nextWeekLanding(4, 1)).toEqual({ weekDelta: 1, landingIndex: 0 });
   });
 
-  it('lunes + atrás => semana anterior, aterriza en viernes', () => {
-    expect(nextWeekLanding(0, -1)).toEqual({ weekDelta: -1, landingIndex: 4 });
+  it('lunes + atrás => semana anterior, aterriza en lunes', () => {
+    expect(nextWeekLanding(0, -1)).toEqual({ weekDelta: -1, landingIndex: 0 });
   });
 
   it('no salta en días intermedios ni en dirección interior', () => {
@@ -53,7 +53,7 @@ describe('nextWeekLanding', () => {
 
   it('tolera índices fuera de rango antes de decidir', () => {
     expect(nextWeekLanding(9, 1)).toEqual({ weekDelta: 1, landingIndex: 0 });
-    expect(nextWeekLanding(-2, -1)).toEqual({ weekDelta: -1, landingIndex: 4 });
+    expect(nextWeekLanding(-2, -1)).toEqual({ weekDelta: -1, landingIndex: 0 });
   });
 });
 
@@ -272,5 +272,20 @@ describe('vista-día: el gesto no salta de más', () => {
     selectStudentDay(2);
     expect(carousel.scrollTo).toHaveBeenCalledTimes(1);
     expect(carousel.scrollTo).toHaveBeenCalledWith({ left: 2, behavior: 'auto' });
+  });
+
+  it('la tira sigue al dedo en vivo, sin esperar al settle', async () => {
+    const freeClassify = () => ({ type: 'free', className: 'slot-free', label: 'Disponible', disabled: false });
+    syncStudentDayView(getWeekDays(0), [], freeClassify);
+    await sleep(400); // expira el blindaje isProgrammatic del scroll inicial
+    state.activeDayIndex = 1;
+    const carousel = document.getElementById('student-day-carousel');
+    carousel.scrollLeft = 3; // clientWidth=0 en jsdom => pageWidth 1 => página 3
+    carousel.dispatchEvent(new Event('scroll'));
+    // Sin espera del debounce (~120ms): el tab ya cambió a la par del gesto.
+    expect(state.activeDayIndex).toBe(3);
+    const tabs = document.querySelectorAll('#student-day-strip [role="tab"]');
+    expect(tabs[3].classList.contains('day-active')).toBe(true);
+    expect(tabs[3].getAttribute('aria-selected')).toBe('true');
   });
 });
