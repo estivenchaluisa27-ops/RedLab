@@ -421,7 +421,7 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
        semanal: la vista-día móvil NECESITA el texto dentro de cada tarjeta
        (.day-card .slot span), si no los bloques quedan vacíos. */
     .calendar-table .slot span { display: none; }
-    .slot-selected::after { content: '✓'; color: #ffffff; font-weight: 800; font-size: 0.9rem; }
+    .calendar-table .slot-selected::after { content: '✓'; color: #ffffff; font-weight: 800; font-size: 0.9rem; }
 }
 
 /* ===== AUTH: TARJETA DARK GLASS NAVY (estilo TutoMatch adaptado) ===== */
@@ -982,10 +982,25 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
     min-height: 64px;
     border-radius: 14px;
     padding: 0.6rem 0.9rem;
+    padding-right: 2.6rem; /* aire para el check absoluto a la derecha */
     align-items: flex-start;
     justify-content: center;
     text-align: left;
     gap: 0.1rem;
+    position: relative; /* ancla del check ::after */
+  }
+  /* Check a la DERECHA del bloque: el ::after genérico quedaba en flujo
+     (abajo-izquierda). Esta regla con especificidad de ID lo saca del flujo
+     y lo centra verticalmente al borde derecho. */
+  #student-day-carousel .day-card .slot-selected::after {
+    content: '✓';
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 0.9rem;
+    position: absolute;
+    right: 0.9rem;
+    top: 50%;
+    transform: translateY(-50%);
   }
   /* Número de bloque + hora apilada (estética referencia: índice, rango en
      dos líneas, título en negrita + subtítulo). La paleta de estados se
@@ -1039,13 +1054,12 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
   }
 }
 
-/* ===== HOJA DE RESUMEN (estudiante) =====
-   Hoja inferior en móvil (overlay abajo, donde está el dedo) y tarjeta en
-   flujo en la columna lateral en escritorio. Fondo completo azul claro con
-   retícula geométrica sutil (CSS puro, sin assets): evoca el patrón de
-   referencia sin costo de red. Solo se muestra con selección
-   (updateStudentUI alterna `hidden`, que gana al fixed porque esta regla
-   no toca display). */
+/* ===== BLOQUE FLOTANTE DE OPCIONES (estudiante) =====
+   Emergente CENTRADO en móvil (overlay sobre el horario, donde está la
+   mirada: sin scrollear al final) y tarjeta en flujo en la columna lateral
+   en escritorio. Fondo completo azul claro con retícula geométrica sutil
+   (CSS puro, sin assets). Solo se muestra con selección (updateStudentUI
+   alterna `hidden`, que gana al fixed porque esta regla no toca display). */
 .request-sheet {
   border: 1px solid #bfdbfe;
   border-radius: 16px;
@@ -1082,24 +1096,24 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
 .request-actions .btn-navy,
 .request-actions .btn-outline-navy { flex: 1 1 0%; justify-content: center; }
 @media (max-width: 767px) {
-  /* Aire bajo el contenido para que la hoja fija no tape la última hora. */
-  #student-dashboard {
-    padding-bottom: 9.5rem;
-  }
+  /* Emergente centrado sobre el horario: fixed al viewport (ningún
+     ancestro lleva transform, así que no se degrada a absoluto). z-40:
+     sobre el contenido pero bajo los modales (z-50) y el menú (z-50). */
   #student-request-box {
     position: fixed;
-    left: 0.75rem;
-    right: 0.75rem;
-    bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(92vw, 24rem);
     z-index: 40;
     margin: 0;
-    box-shadow: 0 16px 40px -12px rgba(0, 20, 40, 0.45);
-    animation: sheetUp 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 24px 64px -12px rgba(0, 20, 40, 0.5);
+    animation: sheetPop 0.28s cubic-bezier(0.16, 1, 0.3, 1);
   }
 }
-@keyframes sheetUp {
-  from { opacity: 0; transform: translateY(28px) scale(0.98); }
-  to { opacity: 1; transform: none; }
+@keyframes sheetPop {
+  from { opacity: 0; transform: translate(-50%, -46%) scale(0.96); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
 
 /* Va DESPUÉS del bloque móvil a propósito: con igual especificidad (ID)
