@@ -926,15 +926,22 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
     box-shadow: 0 4px 10px -4px rgba(0, 66, 116, 0.5);
   }
 
-  /* Carrusel: 5 páginas con scroll-snap nativo */
+  /* Carrusel: 5 páginas con scroll-snap nativo + desplazamiento suave en
+     los saltos programáticos (tira). overscroll-x contenido para que el gesto
+     no rebote a la página; scrollbar oculta (es un pager, no una lista). */
   #student-day-carousel {
     display: flex;
     overflow-x: auto;
     overflow-y: hidden;
     scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
     -webkit-overflow-scrolling: touch;
     background: #f8fafc;
   }
+  #student-day-carousel::-webkit-scrollbar { display: none; }
   #student-day-carousel > section {
     flex: 0 0 100%;
     width: 100%;
@@ -953,12 +960,30 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
     padding: 0.1rem 0.25rem;
   }
   /* Tarjetas: gesto vertical libre (pan-y) para que el swipe horizontal
-     llegue al carrusel; altura táctil cómoda */
+     llegue al carrusel; altura táctil cómoda.
+     El pan-y va TAMBIÉN en el botón .slot: con el default `auto` el navegador
+     capturaba el gesto horizontal justo sobre cada bloque y el carrusel solo
+     respondía en los huecos. Sin selección de texto a mitad del swipe. */
   #student-day-carousel .day-card {
     display: flex;
     align-items: stretch;
     gap: 0.5rem;
     touch-action: pan-y;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  #student-day-carousel .day-card .slot {
+    touch-action: pan-y;
+  }
+  /* Entrada al asentar página (solo cambios de día dirigidos por JS, no en
+     cada re-render de datos): fundido sutil, sin desplazar (el swipe ya
+     dejó la página en su sitio). */
+  #student-day-carousel > section.day-page-enter {
+    animation: dayPageIn 0.22s ease-out;
+  }
+  @keyframes dayPageIn {
+    from { opacity: 0.35; }
+    to { opacity: 1; }
   }
   #student-day-carousel .day-card .slot {
     min-height: 52px;
@@ -966,18 +991,21 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
     font-size: 0.85rem;
   }
   #student-day-carousel .day-card-hour {
-    flex: 0 0 3rem;
+    flex: 0 0 7.4rem;
     align-self: center;
     text-align: right;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 700;
     color: #64748b;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   #student-day-strip .day-active { transition: none; transform: none; }
   #student-day-carousel { scroll-behavior: auto; }
+  #student-day-carousel > section.day-page-enter { animation: none; }
 }
 
 /* La salida compilada no conserva capas (@layer): por especificidad el
@@ -987,3 +1015,48 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
   #student-day-strip,
   #student-day-carousel { display: none; }
 }
+
+/* ===== HEADER ESTUDIANTE: marca + menú hamburguesa =====
+   Marca RedLab en Space Grotesk (tipografía de marca acordada en web;
+   Space Grotesk NO se usa para texto funcional). El menú reutiliza el
+   lenguaje del course-menu (dropdown blanco, items Archivo). */
+.student-brand {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 1.35rem;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  color: #ffffff;
+}
+.student-menu-wrap { position: relative; }
+.student-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  min-width: 200px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 12px 32px -12px rgba(0, 20, 40, 0.45);
+  padding: 0.25rem;
+  z-index: 50;
+}
+.student-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.65rem 0.75rem;
+  font-family: 'Archivo', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #334155;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+.student-menu-item:hover { background: #f1f5f9; color: #004274; }
+.student-menu-item i { color: #64748b; }
+.student-menu-item:hover i { color: #004274; }

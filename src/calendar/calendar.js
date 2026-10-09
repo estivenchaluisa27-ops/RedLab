@@ -30,8 +30,9 @@ export function clearCalendarListeners() {
 
 /**
  * Clasifica un slot según reservas y usuario.
- * Sin `capacity` usa el default móvil (DEFAULTS.slotCapacity = 4): el path
- * móvil (vista-día, tabla estudiante sin config) llama siempre con 4 args.
+ * Sin `capacity` usa el default móvil (DEFAULTS.slotCapacity = 4): la
+ * vista-día inyecta la capacidad de la config como 5.º arg cuando está
+ * disponible (state.labConfig) y cae al default si no.
  * El path escritorio/admin inyecta la capacidad de la config como 5.º arg.
  */
 export function classifySlot(dateStr, hourStr, reservations, userState, capacity) {

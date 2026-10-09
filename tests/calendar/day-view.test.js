@@ -6,6 +6,7 @@ import {
   initStudentDayView,
   syncStudentDayView,
   selectStudentDay,
+  formatHourRange,
 } from '../../src/calendar/student-day-view.js';
 
 describe('clampDayIndex', () => {
@@ -141,5 +142,63 @@ describe('vista-día móvil (tira + carrusel)', () => {
     expect(state.activeDayIndex).toBe(4);
     const tabs = document.querySelectorAll('#student-day-strip [role="tab"]');
     expect(tabs[4].classList.contains('day-active')).toBe(true);
+  });
+});
+
+describe('vista-día: rango horario y etiquetas de estado', () => {
+  // Semana lejana en el futuro: ningún slot es pasado y el texto depende
+  // solo de los docs (determinista, sin flakiness por fecha actual).
+  const futureWeek = getWeekDays(520);
+  const futureDate = formatDateYYYYMMDD(futureWeek[0]);
+  const stubClassify = (dateStr, h, arr) => {
+    if (arr.some((d) => d.status === 'blocked')) {
+      return { type: 'blocked', className: 'slot-blocked', label: 'Bloqueado', disabled: true };
+    }
+    // Producción cuenta grupos únicos (Set en classifySlot): replicarlo para
+    // que el stub no diverja con reservas duplicadas del mismo grupo.
+    const approved = new Set(arr.filter((d) => d.status === 'approved').map((d) => d.groupName)).size;
+    if (approved >= 4) return { type: 'full', className: 'slot-full', label: 'Lleno', disabled: true };
+    if (approved > 0) {
+      return { type: 'partial', className: 'slot-partial', label: 'Disp.', disabled: false, occupancy: approved };
+    }
+    return { type: 'free', className: 'slot-free', label: 'Disponible', disabled: false };
+  };
+
+  beforeAll(() => {
+    document.body.innerHTML = `<div id="student-day-strip" role="tablist"></div>`
+      + `<div id="student-day-carousel">`
+      + [0, 1, 2, 3, 4].map((i) => `<section data-day-index="${i}"></section>`).join('')
+      + `</div>`;
+    initStudentDayView({});
+  });
+
+  it('formatHourRange usa 24h con rango completo', () => {
+    expect(formatHourRange(7)).toBe('07:00 - 08:00');
+    expect(formatHourRange(13)).toBe('13:00 - 14:00');
+    expect(formatHourRange(19)).toBe('19:00 - 20:00');
+  });
+
+  it('la columna hora muestra el rango y cada bloque su estado', () => {
+    state.activeDayIndex = 0;
+    state.selectedSlots = [];
+    const docs = [
+      { id: 'b1', date: futureDate, hour: 8, status: 'blocked' },
+      { id: 'p1', date: futureDate, hour: 9, status: 'approved', groupName: 'G1' },
+      { id: 'f1', date: futureDate, hour: 10, status: 'approved', groupName: 'G1' },
+      { id: 'f2', date: futureDate, hour: 10, status: 'approved', groupName: 'G2' },
+      { id: 'f3', date: futureDate, hour: 10, status: 'approved', groupName: 'G3' },
+      { id: 'f4', date: futureDate, hour: 10, status: 'approved', groupName: 'G4' },
+    ];
+    syncStudentDayView(futureWeek, docs, stubClassify);
+    const sec = document.querySelector('#student-day-carousel section[data-day-index="0"]');
+    const text = (id) => document.getElementById(id)?.textContent ?? '';
+    expect(text(`${futureDate}_7`)).toContain('Disponible');
+    expect(text(`${futureDate}_8`)).toContain('Bloqueado');
+    expect(text(`${futureDate}_9`)).toContain('Parcial 1/4');
+    expect(text(`${futureDate}_10`)).toContain('Lleno');
+    const hours = [...sec.querySelectorAll('.day-card-hour')].map((el) => el.textContent);
+    expect(hours[0]).toBe('07:00 - 08:00');
+    expect(hours[1]).toBe('08:00 - 09:00');
+    expect(hours).toHaveLength(13);
   });
 });

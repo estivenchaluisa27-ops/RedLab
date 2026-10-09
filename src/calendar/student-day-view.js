@@ -22,6 +22,7 @@
 import { state } from '../state.js';
 import { clampDayIndex, nextWeekLanding, formatDateYYYYMMDD, isPastDate } from '../utils/dates.js';
 import { escapeAttr } from '../utils/escape.js';
+import { DEFAULTS } from '../settings/lab-config.js';
 
 const STRIP_ID = 'student-day-strip';
 const CAROUSEL_ID = 'student-day-carousel';
@@ -107,6 +108,7 @@ export function selectStudentDay(index, { scroll = true } = {}) {
   if (strip && lastWeekDays) paintStripActive(strip);
   if (carousel && lastWeekDays) {
     renderDayPage(carousel, next);
+    playPageEnter(carousel, next);
     if (scroll) scrollToPage(carousel, next, true);
   }
 }
@@ -154,22 +156,26 @@ function groupDocs(docs) {
 
 function cardFor(dateStr, h, arr, classify) {
   const id = `${dateStr}_${h}`;
+  // Capacidad real de la config (la vista-día antes hardcodeaba /4 en el
+  // badge y llamaba a classify sin 5.º arg: mismo default, pero sordo a
+  // cambios de config en Ajustes).
+  const cap = state.labConfig?.slotCapacity ?? DEFAULTS.slotCapacity;
   const past = isPastDate(dateStr, h);
   let cls = 'slot slot-free';
-  let inner = '<span class="opacity-50">Disponible</span>';
+  let inner = '<span>Disponible</span>';
   let status = 'free';
   let disabled = past;
   let docId = null;
 
   if (past) {
     cls = 'slot slot-past opacity-50';
-    inner = '<span class="text-xs">No Disp.</span>';
+    inner = '<span>No disponible</span>';
     status = 'past';
   } else if (arr.length > 0 && typeof classify === 'function') {
-    const result = classify(dateStr, String(h), arr, state);
+    const result = classify(dateStr, String(h), arr, state, cap);
     if (result.type === 'blocked') {
       cls = 'slot slot-blocked';
-      inner = '<span>No disp.</span>';
+      inner = '<span>Bloqueado</span>';
       status = 'blocked';
       disabled = true;
     } else if (result.type === 'my-approved' || result.type === 'my-pending') {
@@ -184,14 +190,14 @@ function cardFor(dateStr, h, arr, classify) {
       disabled = true;
     } else if (result.type === 'partial') {
       cls = 'slot slot-partial';
-      inner = `<span>Disp.</span><div class="occupancy-badge">${result.occupancy}/4</div>`;
+      inner = `<span>Parcial ${result.occupancy ?? 0}/${cap}</span><div class="occupancy-badge">${result.occupancy ?? 0}/${cap}</div>`;
       status = 'partial';
     }
   }
 
   if (!disabled && state.selectedSlots.includes(id)) {
     cls += ' slot-selected';
-    inner = '<span><i class="fas fa-check mb-1"></i><br>Selecc.</span>';
+    inner = '<span><i class="fas fa-check mb-1"></i><br>Seleccionado</span>';
   }
 
   const docAttr = docId ? ` data-doc-id="${escapeAttr(String(docId))}"` : '';
@@ -209,6 +215,15 @@ function ensureSection(carousel, i) {
   return sec;
 }
 
+/**
+ * Rango del bloque en 24h (`07:00 - 08:00`): mismo formato que la columna
+ * de la tabla desktop (calendar.js). Exportada para tests.
+ */
+export function formatHourRange(h) {
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${pad(h)}:00 - ${pad(h + 1)}:00`;
+}
+
 function renderDayPage(carousel, i) {
   if (!lastWeekDays) return;
   const sec = ensureSection(carousel, i);
@@ -219,7 +234,7 @@ function renderDayPage(carousel, i) {
   for (let h = FIRST_HOUR; h <= LAST_HOUR; h++) {
     const arr = groups.get(`${dateStr}_${h}`) || [];
     cards.push(`<div class="day-card">${cardFor(dateStr, h, arr, lastClassify)}`
-      + `<span class="day-card-hour">${h}:00</span></div>`);
+      + `<span class="day-card-hour">${formatHourRange(h)}</span></div>`);
   }
   const title = d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' });
   sec.setAttribute('aria-label', title);
@@ -230,6 +245,20 @@ function renderDayPage(carousel, i) {
 
 function pageWidth(carousel) {
   return carousel.clientWidth || 1;
+}
+
+/**
+ * Fundido sutil al asentar un cambio de día (tira o swipe). Solo se llama
+ * desde cambios de página dirigidos, nunca desde el re-render de datos de
+ * syncStudentDayView, para no re-disparar en cada snapshot de Firestore.
+ */
+function playPageEnter(carousel, i) {
+  if (prefersReducedMotion()) return;
+  const sec = carousel.querySelector(`section[data-day-index="${clampDayIndex(i)}"]`);
+  if (!sec) return;
+  sec.classList.remove('day-page-enter');
+  void sec.offsetWidth; // reflow: permite re-disparar la animación
+  sec.classList.add('day-page-enter');
 }
 
 export function currentDayPage() {
@@ -277,6 +306,7 @@ function onSettled() {
   if (page === clampDayIndex(state.activeDayIndex)) return;
   state.activeDayIndex = page;
   renderDayPage(carousel, page);
+  playPageEnter(carousel, page);
   if (strip && lastWeekDays) paintStripActive(strip);
 }
 

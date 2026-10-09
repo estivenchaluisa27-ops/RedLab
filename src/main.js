@@ -167,6 +167,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  // Menú hamburguesa del estudiante: cierra al tocar fuera, con Escape o al
+  // elegir una opción (la acción delegada igual se ejecuta).
+  const studentMenuBtn = document.getElementById('student-menu-btn');
+  const studentMenu = document.getElementById('student-menu');
+  const closeStudentMenu = () => {
+    if (!studentMenu || studentMenu.classList.contains('hidden')) return;
+    studentMenu.classList.add('hidden');
+    studentMenuBtn?.setAttribute('aria-expanded', 'false');
+    studentMenuBtn?.setAttribute('aria-label', 'Abrir menú');
+  };
+  if (studentMenuBtn && studentMenu) {
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('.student-menu-wrap')) {
+        // Click en una opción: cierra (el toggle lo maneja su propio botón).
+        if (e.target.closest('.student-menu-item')) closeStudentMenu();
+        return;
+      }
+      closeStudentMenu();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeStudentMenu();
+    });
+  }
+
   // Poblar avatar + nombre + rol del usuario actual en el footer del sidebar
   try {
     const { state } = await import('./state.js');

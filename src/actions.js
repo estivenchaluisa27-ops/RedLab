@@ -48,6 +48,16 @@ export function createClickActions({ auth }) {
     'open-notifications-modal': () => openNotificationsModal(),
     'open-change-password-modal': () => openChangePasswordModal(),
     'close-change-password-modal': () => closeChangePasswordModal(),
+    // Menú hamburguesa del estudiante (header): alterna el dropdown con
+    // Cambiar clave / Cerrar sesión. El cierre por fuera/Escape vive en main.js.
+    'student-menu-toggle': (btn) => {
+      const menu = document.getElementById('student-menu');
+      if (!menu) return;
+      const willShow = menu.classList.contains('hidden');
+      menu.classList.toggle('hidden', !willShow);
+      btn.setAttribute('aria-expanded', String(willShow));
+      btn.setAttribute('aria-label', willShow ? 'Cerrar menú' : 'Abrir menú');
+    },
     'open-reset-modal': () => openResetModal(),
     'close-reset-modal': () => closeResetModal(),
     'open-signup-modal': () => openSignupModal(),
