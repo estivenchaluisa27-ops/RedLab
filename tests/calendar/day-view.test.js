@@ -7,6 +7,7 @@ import {
   syncStudentDayView,
   selectStudentDay,
   formatHourRange,
+  formatHourParts,
 } from '../../src/calendar/student-day-view.js';
 
 describe('clampDayIndex', () => {
@@ -176,9 +177,10 @@ describe('vista-día: rango horario y etiquetas de estado', () => {
     expect(formatHourRange(7)).toBe('07:00 - 08:00');
     expect(formatHourRange(13)).toBe('13:00 - 14:00');
     expect(formatHourRange(19)).toBe('19:00 - 20:00');
+    expect(formatHourParts(7)).toEqual(['07:00', '08:00']);
   });
 
-  it('la columna hora muestra el rango y cada bloque su estado', () => {
+  it('la tarjeta trae índice, hora apilada y estado con subtítulo', () => {
     state.activeDayIndex = 0;
     state.selectedSlots = [];
     const docs = [
@@ -193,12 +195,69 @@ describe('vista-día: rango horario y etiquetas de estado', () => {
     const sec = document.querySelector('#student-day-carousel section[data-day-index="0"]');
     const text = (id) => document.getElementById(id)?.textContent ?? '';
     expect(text(`${futureDate}_7`)).toContain('Disponible');
+    expect(text(`${futureDate}_7`)).toContain('4 cupos libres');
     expect(text(`${futureDate}_8`)).toContain('Bloqueado');
     expect(text(`${futureDate}_9`)).toContain('Parcial 1/4');
     expect(text(`${futureDate}_10`)).toContain('Lleno');
-    const hours = [...sec.querySelectorAll('.day-card-hour')].map((el) => el.textContent);
-    expect(hours[0]).toBe('07:00 - 08:00');
-    expect(hours[1]).toBe('08:00 - 09:00');
+    // Hora apilada en dos líneas + índice 1..13
+    const hours = [...sec.querySelectorAll('.day-card-hour')].map(
+      (el) => [...el.querySelectorAll('span')].map((s) => s.textContent),
+    );
     expect(hours).toHaveLength(13);
+    expect(hours[0]).toEqual(['07:00', '08:00']);
+    expect(hours[1]).toEqual(['08:00', '09:00']);
+    const indexes = [...sec.querySelectorAll('.day-card-index')].map((el) => el.textContent);
+    expect(indexes).toEqual(Array.from({ length: 13 }, (_, i) => String(i + 1)));
+  });
+});
+
+describe('vista-día: el gesto no salta de más', () => {
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  let weekJumps = 0;
+
+  const touchEvent = (type, x) => {
+    const e = new Event(type);
+    e.changedTouches = [{ clientX: x }];
+    return e;
+  };
+
+  beforeAll(() => {
+    // Reutilizar el carrusel ya cableado por el suite anterior: reconstruir
+    // el DOM aquí dejaría los listeners en el nodo viejo (init es idempotente).
+    // Solo se re-cablea el destino del salto (la asignación corre antes del
+    // early-return de init).
+    initStudentDayView({ onWeekJump: () => { weekJumps += 1; } });
+  });
+
+  beforeEach(() => {
+    weekJumps = 0;
+    state.selectedSlots = [];
+  });
+
+  it('gesto jue→vie no dispara además el salto de semana', async () => {
+    const carousel = document.getElementById('student-day-carousel');
+    // clientWidth=0 en jsdom => pageWidth 1: scrollLeft N == página N.
+    state.activeDayIndex = 3;
+    carousel.dispatchEvent(touchEvent('touchstart', 300));
+    // El snap nativo ya movió a viernes antes del touchend:
+    carousel.scrollLeft = 4;
+    state.activeDayIndex = 4;
+    carousel.dispatchEvent(touchEvent('touchend', 150)); // dx=-150
+    await sleep(400); // ventana del settle diferido (350ms)
+    expect(weekJumps).toBe(0);
+    expect(state.weekOffset).toBe(0);
+  });
+
+  it('borde quieto en viernes sí salta de semana', async () => {
+    const carousel = document.getElementById('student-day-carousel');
+    state.activeDayIndex = 4;
+    carousel.scrollLeft = 4;
+    carousel.dispatchEvent(touchEvent('touchstart', 300));
+    carousel.dispatchEvent(touchEvent('touchend', 150)); // dx=-150
+    await sleep(400);
+    expect(weekJumps).toBe(1);
+    expect(state.weekOffset).toBe(1);
+    expect(state.activeDayIndex).toBe(0);
+    state.weekOffset = 0; // restaurar para otros suites
   });
 });

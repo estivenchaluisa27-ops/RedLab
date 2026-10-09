@@ -32,11 +32,17 @@ const EDGE_THRESHOLD_PX = 60;
 const SETTLE_DEBOUNCE_MS = 120;
 
 let initialized = false;
+let boundCarousel = null;
 let isProgrammatic = false;
 let isSettling = false;
 let settleTimer = null;
 let safetyTimer = null;
 let touchStartX = null;
+// Día donde EMPEZÓ el gesto actual: el salto de semana en bordes se decide
+// contra este valor, no contra el día activo en vivo. Sin el ancla, un solo
+// swipe que mueve de página (jue→vie por snap) leía el día ya actualizado
+// en touchend y disparaba ADEMÁS el salto de semana (doble avance).
+let gestureStartDay = null;
 let onWeekJump = null;
 
 // Último snapshot entregado por calendar.js: base del re-render cliente.
@@ -59,20 +65,33 @@ function prefersReducedMotion() {
 }
 
 /**
- * Cableado único de listeners del carrusel. Idempotente.
+ * Cableado único de listeners del carrusel. Idempotente por nodo: si el
+ * elemento fue reemplazado (re-render del DOM), se re-ata al nodo nuevo.
  * @param {{ onWeekJump?: Function }} [deps]
  */
 export function initStudentDayView({ onWeekJump: jump } = {}) {
   if (typeof jump === 'function') onWeekJump = jump;
-  if (initialized) return;
+  if (initialized) { ensureBound(); return; }
   const { carousel } = els();
   if (!carousel) return;
+  ensureBound();
+  initialized = true;
+}
+
+/**
+ * Ata los listeners al carrusel vivo si cambió desde el último bind.
+ * Sin esto, reemplazar el nodo (p. ej. innerHTML del contenedor) dejaba
+ * la vista-día sin swipe, sin tira y sin salto de semana, en silencio.
+ */
+function ensureBound() {
+  const { carousel } = els();
+  if (!carousel || carousel === boundCarousel) return;
   carousel.addEventListener('scroll', onScroll, { passive: true });
   // scrollend donde exista; donde no, el debounce de onScroll lo suple.
   carousel.addEventListener('scrollend', onSettled);
   carousel.addEventListener('touchstart', onTouchStart, { passive: true });
   carousel.addEventListener('touchend', onTouchEnd, { passive: true });
-  initialized = true;
+  boundCarousel = carousel;
 }
 
 /**
@@ -89,6 +108,7 @@ export function syncStudentDayView(weekDays, docsArray, classifySlot) {
   lastWeekDays = weekDays;
   lastDocs = Array.isArray(docsArray) ? docsArray : [];
   if (typeof classifySlot === 'function') lastClassify = classifySlot;
+  ensureBound();
   state.activeDayIndex = clampDayIndex(state.activeDayIndex);
   paintStrip(strip, weekDays);
   for (let i = 0; i < 5; i++) renderDayPage(carousel, i);
@@ -162,47 +182,57 @@ function cardFor(dateStr, h, arr, classify) {
   const cap = state.labConfig?.slotCapacity ?? DEFAULTS.slotCapacity;
   const past = isPastDate(dateStr, h);
   let cls = 'slot slot-free';
-  let inner = '<span>Disponible</span>';
+  let title = 'Disponible';
+  let sub = `${cap} cupos libres`;
   let status = 'free';
   let disabled = past;
   let docId = null;
 
   if (past) {
     cls = 'slot slot-past opacity-50';
-    inner = '<span>No disponible</span>';
+    title = 'No disponible';
+    sub = 'Hora pasada';
     status = 'past';
   } else if (arr.length > 0 && typeof classify === 'function') {
     const result = classify(dateStr, String(h), arr, state, cap);
     if (result.type === 'blocked') {
       cls = 'slot slot-blocked';
-      inner = '<span>Bloqueado</span>';
+      title = 'Bloqueado';
+      sub = 'No reservable';
       status = 'blocked';
       disabled = true;
     } else if (result.type === 'my-approved' || result.type === 'my-pending') {
       cls = `slot ${result.className}`;
-      inner = `<span>${result.label}</span>`;
+      title = result.label;
+      sub = result.type === 'my-approved' ? 'Tu reserva confirmada' : 'En revisión';
       status = result.type === 'my-approved' ? 'my-approved' : 'my-pending';
       docId = result.docId || null;
     } else if (result.type === 'full') {
       cls = 'slot slot-full';
-      inner = '<span>Lleno</span>';
+      title = 'Lleno';
+      sub = `${cap}/${cap} ocupados`;
       status = 'full';
       disabled = true;
     } else if (result.type === 'partial') {
+      const occ = result.occupancy ?? 0;
+      const free = Math.max(cap - occ, 0);
       cls = 'slot slot-partial';
-      inner = `<span>Parcial ${result.occupancy ?? 0}/${cap}</span><div class="occupancy-badge">${result.occupancy ?? 0}/${cap}</div>`;
+      title = `Parcial ${occ}/${cap}`;
+      sub = `${free} cupo${free === 1 ? '' : 's'} libre${free === 1 ? '' : 's'}`;
       status = 'partial';
     }
   }
 
   if (!disabled && state.selectedSlots.includes(id)) {
     cls += ' slot-selected';
-    inner = '<span><i class="fas fa-check mb-1"></i><br>Seleccionado</span>';
+    title = 'Seleccionado';
+    sub = 'Toca para quitar';
   }
 
   const docAttr = docId ? ` data-doc-id="${escapeAttr(String(docId))}"` : '';
   return `<button type="button" id="${escapeAttr(id)}" class="${cls}" data-action="student-slot-toggle"`
-    + ` data-status="${status}"${disabled ? ' disabled' : ''}${docAttr}>${inner}</button>`;
+    + ` data-status="${status}"${disabled ? ' disabled' : ''}${docAttr}>`
+    + `<span class="day-card-title">${title}</span><span class="day-card-sub">${sub}</span></button>`;
 }
 
 function ensureSection(carousel, i) {
@@ -216,12 +246,21 @@ function ensureSection(carousel, i) {
 }
 
 /**
+ * Partes del rango del bloque en 24h (`['07:00', '08:00']`): la tarjeta
+ * móvil las apila como en la referencia (inicio arriba, fin abajo).
+ * Exportada para tests.
+ */
+export function formatHourParts(h) {
+  const pad = (n) => String(n).padStart(2, '0');
+  return [`${pad(h)}:00`, `${pad(h + 1)}:00`];
+}
+
+/**
  * Rango del bloque en 24h (`07:00 - 08:00`): mismo formato que la columna
  * de la tabla desktop (calendar.js). Exportada para tests.
  */
 export function formatHourRange(h) {
-  const pad = (n) => String(n).padStart(2, '0');
-  return `${pad(h)}:00 - ${pad(h + 1)}:00`;
+  return formatHourParts(h).join(' - ');
 }
 
 function renderDayPage(carousel, i) {
@@ -233,8 +272,10 @@ function renderDayPage(carousel, i) {
   const cards = [];
   for (let h = FIRST_HOUR; h <= LAST_HOUR; h++) {
     const arr = groups.get(`${dateStr}_${h}`) || [];
-    cards.push(`<div class="day-card">${cardFor(dateStr, h, arr, lastClassify)}`
-      + `<span class="day-card-hour">${formatHourRange(h)}</span></div>`);
+    const [start, end] = formatHourParts(h);
+    cards.push(`<div class="day-card"><span class="day-card-index">${h - FIRST_HOUR + 1}</span>`
+      + `<span class="day-card-hour"><span>${start}</span><span>${end}</span></span>`
+      + `${cardFor(dateStr, h, arr, lastClassify)}</div>`);
   }
   const title = d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' });
   sec.setAttribute('aria-label', title);
@@ -315,24 +356,30 @@ function onSettled() {
 function onTouchStart(e) {
   const t = e.changedTouches && e.changedTouches[0];
   touchStartX = t ? t.clientX : null;
+  gestureStartDay = clampDayIndex(state.activeDayIndex);
 }
 
 function onTouchEnd(e) {
-  if (isSettling || touchStartX === null) return;
+  if (isSettling || touchStartX === null) { gestureStartDay = null; return; }
   const t = e.changedTouches && e.changedTouches[0];
-  if (!t) return;
+  if (!t) { gestureStartDay = null; return; }
   const dx = t.clientX - touchStartX;
   touchStartX = null;
+  const startDay = gestureStartDay ?? clampDayIndex(state.activeDayIndex);
+  gestureStartDay = null;
   const { carousel } = els();
   if (!carousel) return;
-  const active = clampDayIndex(state.activeDayIndex);
+  // Si el gesto ya cambió de página (el snap nativo se movió), no hay salto
+  // de semana: el settle pendiente sincroniza la tira. Solo los bordes
+  // quietos (empieza y termina en lun/vie) pueden saltar.
+  if (currentDayPage() !== startDay) return;
   if (Math.abs(dx) < EDGE_THRESHOLD_PX) {
     // Suelta antes del umbral en un borde: retorno animado a la página.
-    if (active === 0 || active === 4) scrollToPage(carousel, active, true);
+    if (startDay === 0 || startDay === 4) scrollToPage(carousel, startDay, true);
     return;
   }
-  if (dx < 0 && active === 4) jumpWeek(1);
-  else if (dx > 0 && active === 0) jumpWeek(-1);
+  if (dx < 0 && startDay === 4) jumpWeek(1);
+  else if (dx > 0 && startDay === 0) jumpWeek(-1);
 }
 
 function jumpWeek(direction) {

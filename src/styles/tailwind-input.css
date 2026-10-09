@@ -967,13 +967,58 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
   #student-day-carousel .day-card {
     display: flex;
     align-items: stretch;
-    gap: 0.5rem;
+    gap: 0.6rem;
     touch-action: pan-y;
     -webkit-user-select: none;
     user-select: none;
   }
   #student-day-carousel .day-card .slot {
     touch-action: pan-y;
+    flex: 1 1 0%;
+    min-height: 64px;
+    border-radius: 14px;
+    padding: 0.6rem 0.9rem;
+    align-items: flex-start;
+    justify-content: center;
+    text-align: left;
+    gap: 0.1rem;
+  }
+  /* Número de bloque + hora apilada (estética referencia: índice, rango en
+     dos líneas, título en negrita + subtítulo). La paleta de estados se
+     conserva; de la referencia solo viene la composición. */
+  #student-day-carousel .day-card-index {
+    flex: 0 0 1.6rem;
+    align-self: center;
+    text-align: center;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #94a3b8;
+    font-variant-numeric: tabular-nums;
+  }
+  #student-day-carousel .day-card-hour {
+    flex: 0 0 3.4rem;
+    align-self: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    font-size: 0.78rem;
+    line-height: 1.25;
+    font-weight: 600;
+    color: #64748b;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  #student-day-carousel .day-card-title {
+    font-size: 0.95rem;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+  #student-day-carousel .day-card-sub {
+    font-size: 0.78rem;
+    font-weight: 500;
+    line-height: 1.25;
+    opacity: 0.85;
   }
   /* Entrada al asentar página (solo cambios de día dirigidos por JS, no en
      cada re-render de datos): fundido sutil, sin desplazar (el swipe ya
@@ -986,19 +1031,7 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
     to { opacity: 1; }
   }
   #student-day-carousel .day-card .slot {
-    min-height: 52px;
-    flex: 1 1 0%;
     font-size: 0.85rem;
-  }
-  #student-day-carousel .day-card-hour {
-    flex: 0 0 7.4rem;
-    align-self: center;
-    text-align: right;
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: #64748b;
-    white-space: nowrap;
-    font-variant-numeric: tabular-nums;
   }
 }
 
