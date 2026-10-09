@@ -24,6 +24,12 @@
 
 <body class="min-h-screen text-slate-800 flex flex-col">
 
+    <!-- Splash de arranque: tapa TODAS las vistas (incluido el login) hasta
+         que onAuthStateChanged resuelve. showView() lo retira (ver dom.js);
+         el backstop bootSplashHide lo auto-oculta a los 10s si Firebase
+         cuelga sin callback. -->
+    <div id="boot-splash" class="boot-splash" aria-hidden="true"><div class="boot-splash-inner"><img src="/assets/escudo2.png" alt="" class="boot-splash-logo"><p class="boot-splash-brand">RedLab</p><div id="boot-splash-bones" class="boot-splash-bones"></div></div></div>
+
     
 
     <!-- Sin `hidden`: es la vista de arranque, para que no haya un hueco en blanco

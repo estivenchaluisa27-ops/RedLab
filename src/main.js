@@ -22,6 +22,7 @@ import { createSubmitDispatcher } from './utils/dispatcher.js';
 import { initAdminRouter, registerSectionSetup, registerSubviewSetup, registerSubviewOnLeave } from './admin-router-controller.js';
 import { createClickActions, createSubmitActions } from './actions.js';
 import { showView } from './utils/dom.js';
+import { showSkeleton } from './utils/skeleton.js';
 // P-A core escritorio: paneles Usuarios/Ajustes + parametrización config/lab.
 // Solo-escritorio; no altera el init móvil (se añade después, sin reordenar).
 import { setupUsuariosView, handleSaveAdmin, handleSaveProfessor, handleCSVImport, handleMoveStudent } from './users/users.js';
@@ -30,6 +31,9 @@ import { loadLabConfig } from './settings/lab-config.js';
 import { setupAjustesView, saveLabConfig } from './settings/settings.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
+  // Splash: bones inmediatos con la biblioteca (la cáscara estática ya pintó
+  // en el primer frame, antes que cualquier JS).
+  showSkeleton(document.getElementById('boot-splash-bones'), { variant: 'row', count: 3 });
   initSentry();
   initMotionObserver();
   document.addEventListener('pointerdown', handlePress, true);

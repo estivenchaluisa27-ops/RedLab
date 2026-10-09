@@ -1177,3 +1177,37 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
 .student-menu-item:hover { background: #f1f5f9; color: #004274; }
 .student-menu-item i { color: #64748b; }
 .student-menu-item:hover i { color: #004274; }
+
+/* ===== SPLASH DE ARRANQUE (anti-flash de login) =====
+   Overlay opaco sobre TODO hasta que Auth resuelve: el usuario con sesión
+   ya no ve el formulario de login en cada apertura. showView() lo retira
+   (dom.js); el backstop lo auto-oculta a los 10s si Firebase cuelga.
+   Los bones los pinta showSkeleton() (boneyard vendorizado): aquí solo la
+   cáscara de marca, cero shimmer manual. */
+.boot-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: linear-gradient(135deg, #004274 0%, #003366 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: bootSplashHide 0.4s ease 10s forwards;
+}
+.boot-splash-inner { width: min(86vw, 22rem); text-align: center; }
+.boot-splash-logo { height: 4.5rem; margin: 0 auto 0.5rem; object-fit: contain; }
+.boot-splash-brand {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 1.6rem;
+  letter-spacing: -0.01em;
+  color: #ffffff;
+  margin-bottom: 1.25rem;
+}
+.boot-splash-bones { min-height: 120px; text-align: left; }
+@keyframes bootSplashHide {
+  to { opacity: 0; visibility: hidden; pointer-events: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .boot-splash { animation: bootSplashHide 0.01s ease 10s forwards; }
+}

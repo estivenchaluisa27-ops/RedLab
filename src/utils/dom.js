@@ -41,6 +41,11 @@ export function toggleHidden(id) {
  * @param {'student'|'admin'|'login'} name
  */
 export function showView(name) {
+  // Splash de arranque: se retira en la primera navegación real. Todas las
+  // rutas terminales del boot (sesión por rol, login, fallo de Firebase)
+  // pasan por aquí, así que nunca queda colgado.
+  const splash = document.getElementById('boot-splash');
+  if (splash) splash.remove();
   const studentView = document.getElementById('student-dashboard');
   const adminView = document.getElementById('admin-dashboard');
   const loginView = document.getElementById('login-view');
