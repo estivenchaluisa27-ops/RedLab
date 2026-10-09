@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 
 import { clampDayIndex, nextWeekLanding, getWeekDays, formatDateYYYYMMDD } from '../../src/utils/dates.js';
 import { state } from '../../src/state.js';
@@ -259,5 +259,18 @@ describe('vista-día: el gesto no salta de más', () => {
     expect(state.weekOffset).toBe(1);
     expect(state.activeDayIndex).toBe(0);
     state.weekOffset = 0; // restaurar para otros suites
+  });
+
+  it('los saltos programáticos son instantáneos (behavior auto)', () => {
+    // Un salto animado emite scrolls a mitad de vuelo que onSettled leería
+    // como página destino y corrompería el día activo (el salto de semana
+    // aterrizaba en el día viejo). Por eso scrollToPage nunca anima.
+    const freeClassify = () => ({ type: 'free', className: 'slot-free', label: 'Disponible', disabled: false });
+    syncStudentDayView(getWeekDays(0), [], freeClassify);
+    const carousel = document.getElementById('student-day-carousel');
+    carousel.scrollTo = vi.fn();
+    selectStudentDay(2);
+    expect(carousel.scrollTo).toHaveBeenCalledTimes(1);
+    expect(carousel.scrollTo).toHaveBeenCalledWith({ left: 2, behavior: 'auto' });
   });
 });

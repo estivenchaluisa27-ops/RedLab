@@ -926,15 +926,18 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
     box-shadow: 0 4px 10px -4px rgba(0, 66, 116, 0.5);
   }
 
-  /* Carrusel: 5 páginas con scroll-snap nativo + desplazamiento suave en
-     los saltos programáticos (tira). overscroll-x contenido para que el gesto
-     no rebote a la página; scrollbar oculta (es un pager, no una lista). */
+  /* Carrusel: 5 páginas con scroll-snap nativo. Sin scroll-behavior:
+     los saltos programáticos deben ser INSTANTÁNEOS: con smooth, el
+     scrollTo('auto') heredaba la animación, los eventos de scroll a mitad
+     de vuelo disparaban onSettled antes de llegar y el día activo se
+     corrompía (el salto de semana aterrizaba en el día viejo). El swipe
+     con el dedo ya anima de forma nativa; los saltos de la tira llevan
+     además el fundido day-page-enter. */
   #student-day-carousel {
     display: flex;
     overflow-x: auto;
     overflow-y: hidden;
     scroll-snap-type: x mandatory;
-    scroll-behavior: smooth;
     overscroll-behavior-x: contain;
     scrollbar-width: none;
     -ms-overflow-style: none;
@@ -959,21 +962,22 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
     color: #334155;
     padding: 0.1rem 0.25rem;
   }
-  /* Tarjetas: gesto vertical libre (pan-y) para que el swipe horizontal
-     llegue al carrusel; altura táctil cómoda.
-     El pan-y va TAMBIÉN en el botón .slot: con el default `auto` el navegador
-     capturaba el gesto horizontal justo sobre cada bloque y el carrusel solo
-     respondía en los huecos. Sin selección de texto a mitad del swipe. */
+  /* Gesto: AMBOS ejes permitidos (pan-x pan-y). El navegador deriva cada
+     eje a su scroller: horizontal -> carrusel (cambio de día), vertical ->
+     página. Un pan-y aquí era lo contrario de lo que se quería: el
+     navegador intersecta el touch-action del elemento tocado con sus
+     ancestros hasta el scroller, así que pan-y VETABA el swipe horizontal
+     justo sobre las tarjetas y solo respondían los huecos. */
   #student-day-carousel .day-card {
     display: flex;
     align-items: stretch;
     gap: 0.6rem;
-    touch-action: pan-y;
+    touch-action: pan-x pan-y;
     -webkit-user-select: none;
     user-select: none;
   }
   #student-day-carousel .day-card .slot {
-    touch-action: pan-y;
+    touch-action: pan-x pan-y;
     flex: 1 1 0%;
     min-height: 64px;
     border-radius: 14px;
@@ -1037,8 +1041,34 @@ tbody tr:hover { background-color: rgba(0, 66, 116, 0.04); }
 
 @media (prefers-reduced-motion: reduce) {
   #student-day-strip .day-active { transition: none; transform: none; }
-  #student-day-carousel { scroll-behavior: auto; }
   #student-day-carousel > section.day-page-enter { animation: none; }
+}
+
+/* ===== CAJA DE SOLICITUD FLOTANTE (estudiante móvil) =====
+   En móvil el resumen + Confirmar vivía en la columna lateral bajo el
+   calendario: obligaba a deslizar hacia abajo para accionar. Como barra
+   fija abajo aparece donde está el dedo, solo cuando hay selección
+   (updateStudentUI alterna `hidden`, que gana al fixed). En escritorio
+   sigue en flujo en la columna lateral. Solo-CSS: cero lógica nueva. */
+@media (max-width: 767px) {
+  /* Aire bajo el contenido para que la barra fija no tape la última hora. */
+  #student-dashboard {
+    padding-bottom: 5.5rem;
+  }
+  #student-request-box {
+    position: fixed;
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+    z-index: 40;
+    margin: 0;
+    padding: 0.85rem 1rem;
+    border-radius: 14px;
+    box-shadow: 0 12px 32px -8px rgba(0, 20, 40, 0.5);
+  }
+  #student-request-box #student-request-count {
+    margin-bottom: 0.6rem;
+  }
 }
 
 /* La salida compilada no conserva capas (@layer): por especificidad el

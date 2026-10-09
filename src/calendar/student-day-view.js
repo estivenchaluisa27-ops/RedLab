@@ -112,7 +112,7 @@ export function syncStudentDayView(weekDays, docsArray, classifySlot) {
   state.activeDayIndex = clampDayIndex(state.activeDayIndex);
   paintStrip(strip, weekDays);
   for (let i = 0; i < 5; i++) renderDayPage(carousel, i);
-  scrollToPage(carousel, state.activeDayIndex, false);
+  scrollToPage(carousel, state.activeDayIndex);
 }
 
 /**
@@ -129,7 +129,7 @@ export function selectStudentDay(index, { scroll = true } = {}) {
   if (carousel && lastWeekDays) {
     renderDayPage(carousel, next);
     playPageEnter(carousel, next);
-    if (scroll) scrollToPage(carousel, next, true);
+    if (scroll) scrollToPage(carousel, next);
   }
 }
 
@@ -308,12 +308,16 @@ export function currentDayPage() {
   return clampDayIndex(Math.round(carousel.scrollLeft / pageWidth(carousel)));
 }
 
-function scrollToPage(carousel, i, smooth) {
+function scrollToPage(carousel, i) {
   const left = clampDayIndex(i) * pageWidth(carousel);
   isProgrammatic = true;
   try {
+    // Siempre instantáneo ('auto' sin scroll-behavior en CSS): un salto
+    // animado emite scrolls a mitad de vuelo que onSettled leería como
+    // página destino y corrompería el día activo. La fluidez la ponen el
+    // snap nativo (dedo) y el fundido day-page-enter (tira).
     if (typeof carousel.scrollTo === 'function') {
-      carousel.scrollTo({ left, behavior: smooth && !prefersReducedMotion() ? 'smooth' : 'auto' });
+      carousel.scrollTo({ left, behavior: 'auto' });
     } else {
       carousel.scrollLeft = left;
     }
@@ -374,8 +378,8 @@ function onTouchEnd(e) {
   // quietos (empieza y termina en lun/vie) pueden saltar.
   if (currentDayPage() !== startDay) return;
   if (Math.abs(dx) < EDGE_THRESHOLD_PX) {
-    // Suelta antes del umbral en un borde: retorno animado a la página.
-    if (startDay === 0 || startDay === 4) scrollToPage(carousel, startDay, true);
+    // Suelta antes del umbral en un borde: retorno instantáneo a la página.
+    if (startDay === 0 || startDay === 4) scrollToPage(carousel, startDay);
     return;
   }
   if (dx < 0 && startDay === 4) jumpWeek(1);
@@ -396,7 +400,7 @@ function jumpWeek(direction) {
     setTimeout(() => {
       isSettling = false;
       const { carousel } = els();
-      if (carousel && lastWeekDays) scrollToPage(carousel, state.activeDayIndex, false);
+      if (carousel && lastWeekDays) scrollToPage(carousel, state.activeDayIndex);
     }, 350);
   }
 }
